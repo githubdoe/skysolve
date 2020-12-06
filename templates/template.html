@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Flask Shop</title>
+    <link rel="stylesheet" href="../static/styles/bootstrap.min.css">
+    <script src="/static/js/jquery_3.5.1.min.js"></script>
+    <script src="/static/js/popper.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <style>
+        body {
+            background-color: rgba(114, 106, 109, 0.952);
+        }
+        
+        .btn-primary,
+        .btn-primary:hover,
+        .btn-primary:active,
+        .btn-primary:visited {
+            background-color: #e02020 !important;
+        }
+        
+        .btn-primary:hover {
+            background-color: #f54e4eb9 !important;
+        }
+        
+        .slidecontainer {
+            width: 100%;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 15px;
+            border-radius: 5px;
+            background: #6e0303;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+        
+        .slider:hover {
+            opacity: 1;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #f82727;
+            cursor: pointer;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+    </style>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        .img-magnifier-container {
+            position: relative;
+        }
+        
+        .img-magnifier-glass {
+            position: absolute;
+            border: 3px solid #000;
+            border-radius: 50%;
+            cursor: none;
+            /*Set the size of the magnifier glass:*/
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+
+
+    <style>
+        #myProgress {
+            width: 100%;
+            background-color: #ddd;
+        }
+        
+        #myBar {
+            width: 1%;
+            height: 30px;
+            text-align: center;
+            background-color: #cf440c;
+        }
+    </style>
+
+    <!--    toggle switch -->
+    <style>
+        .switchT {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 24px;
+        }
+        
+        .switchT input {
+            opacity: 50;
+            width: 0;
+            height: 0;
+        }
+        
+        .sliderT {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgb(134, 19, 19);
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+        
+        .sliderT:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: rgb(241, 65, 65);
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+        
+        input:checked+.sliderT {
+            background-color: #f0a9a9;
+        }
+        
+        input:focus+.sliderT {
+            box-shadow: 0 0 1px #2196F3;
+        }
+        
+        input:checked+.sliderT:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+        /* Rounded sliders */
+        
+        .sliderT.round {
+            border-radius: 34px;
+        }
+        
+        .sliderT.round:before {
+            border-radius: 50%;
+        }
+    </style>
+
+    <body>
+        <!-- Modal 
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+                    </div>
+                    <div class="modal-body">
+                        ...
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      -->
+
+
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col">
+                    <button class="btn btn-primary" onclick="ajax_get_Status('/pause')">Pause</button>
+
+                    <button type="button" class="btn btn-primary text-dark" onclick="ajax_get_Status('/Align')">Align</button>
+
+                    <button type="button" class="btn btn-primary" onclick="ajax_get_Status('/Solve')">Solve</button>
+                </div>
+                <div class="col">
+                    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#skyConfig">sky cfg</button>
+
+                    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#solveCfg">solve cfg</button>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col mx-2">
+                    <label class="form-check-label">
+                      <input  type="checkbox" id="autoStatusCB" checked="checked"  class=" pl-5 form-check-input" 
+                        onclick="updateStatusField() ; checked">Auto Status
+                    </label>
+                </div>
+                <div id="statusField" class="col-10 bg-danger">
+                    <p></p>
+                </div>
+            </div>
+
+
+        </div>
+
+
+        <div id="skyConfig" class="collapse">
+            <div class="btn-group" role="group" aria-label="bbbbbbbb">
+                <div class="dropdown">
+                    <button type="button" class="btn btn-lg text-warning dropdown-toggle" id="shutterButton" data-toggle="dropdown">
+                    shutter speed</button>
+
+
+
+                    <div class="dropdown-menu bg-dark" aria-labelledby="dropdownMenuButton" id="shutterMenu">
+                        {% for datum in shutterData %}
+                        <button class="dropdown-item text-warning bg-danger" type="button">{{ datum }}</button> {% endfor %}
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button type="button" class="btn btn-lg text-warning dropdown-toggle" id="ISOButton" data-toggle="dropdown">
+                    ISO
+                    </button>
+
+                    <div class="dropdown-menu bg-dark" aria-labelledby="dropdownMenuButton" id="ISOMenu">
+                        {% for datum in skyIsoData %}
+                        <button class="dropdown-item text-warning bg-danger" type="button">{{ datum }}</button> {% endfor %}
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button type="button" class="btn btn-lg text-warning dropdown-toggle" data-toggle="dropdown">
+                    image Size
+                    </button>
+
+                    <div class="dropdown-menu bg-dark" aria-labelledby="dropdownMenuButton">
+                        {% for datum in skyFrameData %}
+                        <button class="dropdown-item text-warning bg-danger" type="button">{{ datum }}</button> {% endfor %}
+                    </div>
+                </div>
+
+                <div class="pt-3">
+                    focus
+                    <label class="switchT">
+                        <input type="checkbox" id="doFocus" data-toggle="collapse" data-target="#collapseFocusBar" onclick="showFocus()">
+                        <span class="sliderT round"></span>
+                      </label>
+                </div>
+                <!--
+                <label for="doMagCB">Magnify</label>
+                <input type="checkbox" id="doMagCB" onclick="doMag()">
+                -->
+
+                <div class="btn-group-vertical  bg-danger ">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="increaseMagnification()">+</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="decreaseMagnification()">-</button>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="solveCfg" class="collapse">
+            <form action="/applySolve" method="POST">
+                <label for="App">Arcseconds per Pixel:</label>
+                <input type="number" class="bg-danger" id="App" name="App" min="1" max="300" value="27">
+                <label for="timeout">Max Time:"</label>
+                <input type="number" class- "bg-danger" id="timeout" , name="timeout" , min="30" value="30">
+                <input type="submit" name="save" class="btn btn-primary">Save</input>
+                <input type="submit" name="Apply" class="btn btn-primary">Apply</input>
+            </form>
+        </div>
+
+
+
+        <p id="demo"></p>
+
+
+        <div class="collapse" id="collapseFocusBar">
+            <div id="myProgress"></div>
+            <div id="myBar"></div>
+        </div>
+        </div>
+        <div class="img-magnifier-container">
+            <img src="{{ url_for('video_feed') }}" id="skyImage" style="width:95%"></a>
+        </div>
+        <div style="overflow-y: scroll; height: 150px; background: #f3d8d8;" id="solveLog"> 44444 </div>
+
+
+        <!-- SCRIPTS  -------------------------------------------->
+
+        <script>
+            $("#shutterMenu>button ").click(function() {
+                let x = $(this).text();
+                $("#shutterButton").html(x + " secs");
+                $.post("/setShutter/" + x, data = {
+                    suggest: x
+                }, function(result) {});
+            });
+        </script>
+
+        <script>
+            $("#ISOMenu>button ").click(function() {
+                let x = $(this).text();
+                $("#ISOButton").html(x)
+                $.post("/setISO/" + x, data = {
+                    suggest: x
+                }, function(result) {
+
+                });
+            });
+        </script>
+        <script>
+            function ajax_get_Status(cmdroute) {
+                console.log('fun', cmdroute)
+                $.ajax({
+                    url: cmdroute,
+                    method: 'POST',
+                    success: function(result) {
+                        document.getElementById("statusField").innerHTML = result;
+                    }
+                });
+            }
+        </script>
+
+        <!-- startup status timeout if auto status is checked at start of pages-->
+        <script>
+            $(document).ready(function() {
+                var checkBox = document.getElementById("autoStatusCB");
+                console.log("the check box is ", checkBox)
+                if (checkBox.checked == true) {
+                    console.log("checked is true ", checkBox)
+                    setTimeout(updateStatusField, 5000);
+                }
+            });
+        </script>
+
+        <!-- Update status and clear timeout if needed-->
+        <script>
+            function updateStatusField() {
+                console.log("updateStatusField called ")
+                $.ajax({
+                    url: '/skyStatus',
+                    type: 'post',
+                    success: function(data) {
+                        console.log("stt", data)
+                            // Perform operation on return value
+                        var st = document.getElementById("statusField");
+                        st.innerHTML = data
+                    },
+                    complete: function(data) {
+                        console.log("sttus complete")
+                        var checkBox = document.getElementById("autoStatusCB");
+                        if (checkBox.checked == true) {
+                            setTimeout(updateStatusField, 5000);
+                        } else {
+                            clearTimeout(updateStatusField);
+                        }
+                    }
+                });
+
+
+            }
+        </script>
+
+
+        <script>
+            $(function() {
+                //window.setInterval('updateLog() ', 5000);
+            });
+
+            function updateLog() {
+                $.get('/log', function(data, status) {
+                    $('#solveLog').append('<br>' + data);
+                });
+            }
+        </script>
+
+
+
+        <script>
+            var intervalID;
+
+            function showFocus() {
+                var f = document.getElementById("doFocus")
+                if (f.checked == true) {
+                    intervalID = setInterval(updateFocus, 500);
+                    console.log('setup focus');
+                } else {
+                    console.log('clear focus');
+                    clearInterval(intervalID);
+                };
+
+                function updateFocus() {
+                    var elem = document.getElementById("myBar");
+                    $.ajax({
+                        url: '/Focus',
+                        method: 'POST',
+                        success: function(result) {
+                            var width = parseInt(result)
+                            while (width < 50) {
+                                width *= 2;
+                            }
+                            elem.style.width = width + "%";
+                            elem.innerHTML = result;
+
+                        }
+                    });
+                }
+            }
+        </script>
+
+
+        <script>
+            var skyimageMag = 1;
+
+
+            function increaseMagnification() {
+                skyimageMag = skyimageMag * 1.5;
+                var zoom = skyimageMag
+                var sky = document.getElementById("skyImage");
+                sky.style.width = (100 * zoom) + "%";
+                sky.style.height = (100 * zoom) + "%";
+                console.log(" mag", zoom, sky.style.width)
+
+            }
+
+            function decreaseMagnification() {
+                skyimageMag = skyimageMag / 1.5;
+                if (skyimageMag < .1) {
+                    skyimageMag = 1.;
+                }
+                var zoom = skyimageMag
+                var sky = document.getElementById("skyImage");
+                sky.style.width = (100 * zoom) + "%";
+                sky.style.height = (100 * zoom) + "%";
+                console.log(" mag", zoom, sky.style.width)
+            }
+        </script>
+    </body>
+
+</html>
