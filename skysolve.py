@@ -88,7 +88,7 @@ def solveThread():
         solving = False
         
         return solved    
-abc
+
 app = Flask(__name__)
 
 skyStatusText = 'Initilizing Camera'
