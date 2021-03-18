@@ -208,10 +208,9 @@
                     <button type="button" class="btn btn-primary text-dark" onclick="ajax_get_Status('/Align')">Align</button>
 
                     <button type="button" class="btn btn-primary" onclick="ajax_get_Status('/Solve')">Solve</button>
-                </div>
-                <div class="col">
-                    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#skyConfig">sky cfg</button>
+                    <button type="button" class="btn btn-primary" >Test</button>
 
+                    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#skyConfig">sky cfg</button>
                     <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#solveCfg">solve cfg</button>
                 </div>
             </div>
@@ -233,18 +232,15 @@
 
 
         <div id="skyConfig" class="collapse">
-            <div class="btn-group" role="group" aria-label="bbbbbbbb">
-                <div class="dropdown">
-                    <button type="button" class="btn btn-lg text-warning dropdown-toggle" id="shutterButton" data-toggle="dropdown">
-                    shutter speed</button>
+            <div class="btn-group" role="group" aria-label="b">
+                <label class=" text-warning " for="shutter">Shutter Speed:</label>
+                <select class=" form-control-sm text-warning bg-dark"  id="shutterSelect">
+                    {% for datum in shutterData %}
+                  <option class="bg_dark text-warning" value={{ datum }}>{{ datum }}</option> 
+                   {% endfor %}
 
+                </select> 
 
-
-                    <div class="dropdown-menu bg-dark" aria-labelledby="dropdownMenuButton" id="shutterMenu">
-                        {% for datum in shutterData %}
-                        <button class="dropdown-item text-warning bg-danger" type="button">{{ datum }}</button> {% endfor %}
-                    </div>
-                </div>
                 <div class="dropdown">
                     <button type="button" class="btn btn-lg text-warning dropdown-toggle" id="ISOButton" data-toggle="dropdown">
                     ISO
@@ -315,15 +311,7 @@
 
         <!-- SCRIPTS  -------------------------------------------->
 
-        <script>
-            $("#shutterMenu>button ").click(function() {
-                let x = $(this).text();
-                $("#shutterButton").html(x + " secs");
-                $.post("/setShutter/" + x, data = {
-                    suggest: x
-                }, function(result) {});
-            });
-        </script>
+
 
         <script>
             $("#ISOMenu>button ").click(function() {
@@ -349,17 +337,7 @@
             }
         </script>
 
-        <!-- startup status timeout if auto status is checked at start of pages-->
-        <script>
-            $(document).ready(function() {
-                var checkBox = document.getElementById("autoStatusCB");
-                console.log("the check box is ", checkBox)
-                if (checkBox.checked == true) {
-                    console.log("checked is true ", checkBox)
-                    setTimeout(updateStatusField, 5000);
-                }
-            });
-        </script>
+
 
         <!-- Update status and clear timeout if needed-->
         <script>
@@ -463,6 +441,8 @@
                 console.log(" mag", zoom, sky.style.width)
             }
         </script>
+        <script src= '../static/js/skySolve.js'></script>
+
     </body>
 
 </html>
