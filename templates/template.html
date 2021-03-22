@@ -208,10 +208,14 @@
                     <button type="button" class="btn btn-primary text-dark" onclick="ajax_get_Status('/Align')">Align</button>
 
                     <button type="button" class="btn btn-primary" onclick="ajax_get_Status('/Solve')">Solve</button>
-                    <button type="button" class="btn btn-primary" >Test</button>
-
+                    <button type="button" class="btn btn-primary" id = "testMode" >Test</button>
+                    <button type="button" class="btn btn-primary" style="display: none;" id="stepPrev">Previous Image</button>
+                    <button type="button" class="btn btn-primary" style="display: none;" id="stepNext">Next Image</button>
+                    <button type="button" class="btn btn-primary" style="display: none;" id="solveThis">Solve This one</button>
+                   
                     <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#skyConfig">sky cfg</button>
                     <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#solveCfg">solve cfg</button>
+
                 </div>
             </div>
 
@@ -290,10 +294,22 @@
                 <input type="number" class- "bg-danger" id="timeout" , name="timeout" , min="30" value="30">
                 <input type="submit" name="save" class="btn btn-primary">Save</input>
                 <input type="submit" name="Apply" class="btn btn-primary">Apply</input>
+                <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#solveHistory">History</button>
+
             </form>
         </div>
+"
+        <div id="solveHistory" class="collapse">
+            <button type="button" class="btn-primary" id="ClearHistory" >Clear History</button>
+            <label class="form-check-label">
+            <input type="checkbox" id="showSolveHistory" checked="checked" 
+             > Show Solve History</label>
 
-
+            <label class="form-check-label">
+            <input  type="checkbox" id="showSolutionCB" 
+             > Show Solution
+             </label>
+        </div>
 
         <p id="demo"></p>
 
@@ -305,13 +321,51 @@
         </div>
         <div class="img-magnifier-container">
             <img src="{{ url_for('video_feed') }}" id="skyImage" style="width:95%"></a>
+
         </div>
-        <div style="overflow-y: scroll; height: 150px; background: #f3d8d8;" id="solveLog"> 44444 </div>
+  
+        <div style="overflow-y: scroll; height: 200px; background: #f3d8d8;"  id="solveStatusText">
+              initialiing camera Waiting for first Image </div>
 
 
         <!-- SCRIPTS  -------------------------------------------->
 
+        <script>
 
+            var output = document.getElementById('solveStatusText');
+        
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/solveLog');
+            xhr.send();
+            var position = 0;
+        
+            function handleNewData() {
+                // the response text include the entire response so far
+                // split the messages, then take the messages that haven't been handled yet
+                // position tracks how many messages have been handled
+                // messages end with a newline, so split will always show one extra empty message at the end
+                var messages = xhr.responseText.split('\n');
+                messages.slice(position, -1).forEach(function(value) {
+
+                    // build and append a new item to a list to log all output
+                    //value = "<br>" + value;
+                    output.innerHTML += ('<br>' + value);
+                    var element = document.getElementById("solveStatusText");
+                    element.scrollTop = element.scrollHeight;
+                });
+                position = messages.length - 1;
+            }
+        
+            var timer;
+            timer = setInterval(function() {
+                // check the response for new dat
+                handleNewData();
+                // stop checking once the response has ended
+                if (xhr.readyState == XMLHttpRequest.DONE) {
+                    clearInterval(timer);
+                }
+            }, 500);
+        </script>
 
         <script>
             $("#ISOMenu>button ").click(function() {
@@ -335,8 +389,10 @@
                     }
                 });
             }
-        </script>
 
+
+
+    </script>
 
 
         <!-- Update status and clear timeout if needed-->
@@ -347,13 +403,12 @@
                     url: '/skyStatus',
                     type: 'post',
                     success: function(data) {
-                        console.log("stt", data)
                             // Perform operation on return value
                         var st = document.getElementById("statusField");
                         st.innerHTML = data
                     },
                     complete: function(data) {
-                        console.log("sttus complete")
+
                         var checkBox = document.getElementById("autoStatusCB");
                         if (checkBox.checked == true) {
                             setTimeout(updateStatusField, 5000);
