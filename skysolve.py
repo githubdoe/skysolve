@@ -14,19 +14,19 @@ import subprocess
 import os
 import math
 
-app = 15
+app = 30
 solving = False
-maTime = 20
+maTime = 50
 searchEnable = False
 searchRadius = 90
 solveLog = []
 ra = 0
 dec = 0
 lastRA = ''
-saveSolution = ''
 solveStatus = ''
 computedPPa = ''
 frameStack = []
+nameStack = []
 focusStd = ''
 maxTime = 25
 testMode=False
@@ -34,23 +34,26 @@ testNdx = 0
 testFiles = []
 nextImage=False
 test_path = '/home/pi/pyPlateSolve/data'
-solve_path = '/home/pi/pyPlateSolve/skySolve/SolvedData'
+solve_path = '/home/pi/pyPlateSolve/skySolve/static'
 solveCurrent = False
 showSolution = False
 triggerSolutionDisplay = False
 
-source_Image = ''
+flag = False
 
 
 
 def solveThread():
-    global skyStatusText, focusStd, solveCurrent, source_Image
+    global skyStatusText, focusStd, solveCurrent, flag
     print ('solveThread()')
     while True:
+        if flag:
+            print ("framestack", len(frameStack))
+            flag = False
         while len(frameStack) == 0:  
             if solveCurrent:
-                solveCurrent = 0
-                print ('solveing source', source_Image)
+                solveCurrent = False
+                print ('solveing source')
                 solve('cap.jpg')
                 continue    
             pass
@@ -63,19 +66,18 @@ def solveThread():
         if len(frameStack) == 0:
             print ('empty stack', len(frameStack))
             continue
-        with open("cap.jpg", "wb") as f:
-            source_image = frameStack.pop()
-            f.write(source_image)
-            print ("wrote file",f.name)
-        print ('solve thread')
-        if solveCurrent:
-            print ('solving current')
-            solve('cap.jpg')
-            solveCurrent = False
+        with open(os.path.join(solve_path,"cap.jpg"), "wb") as f:
+            f.write(frameStack.pop())
+            name = nameStack.pop()
+            solveLog.append(name + '\n')
+            print ("wrote file",f.name,name)
+            print ('solve thread')
+
 
         if len(frameStack)> 0:
             print ('stack  not empty', len(frameStack))
             frameStack.clear()
+            nameStack.clear()
 
         try:
             img = Image.open("cap.jpg").convert("L")
@@ -106,7 +108,7 @@ def solve(fn, parms = []):
             solveLog.append(stdoutdata)
             print ("stdout", str(stdoutdata))
             if stdoutdata.startswith('Field center: (RA,Dec) = ('):
-                saveSolution = stdoutdata
+                saveSolution (stdoutdata)
                 solved = stdoutdata
             elif stdoutdata.startswith('Field size'):
                 solveStatus +=(". " + stdoutdata.split(":")[1].rstrip())
@@ -117,19 +119,33 @@ def solve(fn, parms = []):
 
     solveStatus+= ". scale " + ppa
     
-    skyStatusText = solveStatus
+
     print("solution results", solved, showSolution)
     if not solved:
-        solveStatus.Clear()
-        solveStatus.append("Failed")
+        solveStatus = "Failed"
+
     elif showSolution:
         triggerSolutionDisplay = True;
         print ("showing solution")
         
     solving = False
-    
+    skyStatusText = solveStatus
     return solved    
 
+def saveSolution(ln):
+
+    fields = ln.split()[-3:-1]
+    print ('f',fields)
+    ra = fields[0][1:-1]
+    dec = fields[1][0:-1]
+    ra = float(fields[0][1:-1])
+    dec = float(fields[1][0:-1])
+    print ('ra',ra,dec)
+    print (time.strftime('%H:%M:%S'))
+    # Write-Overwrites 
+    file1 = open(os.path.join(solve_path,"radec.txt"),"w")#write mode 
+    file1.write("%s %6.6lf %6.6lf \n"%(time.strftime('%H:%M:%S'),ra,dec)) 
+    file1.close() 
 
 app = Flask(__name__)
 
@@ -209,18 +225,6 @@ def get_message():
     time.sleep(1.0)
     s = time.ctime(time.time())
     return s
-import math
-ccc = 1
-@app.route('/log')
-def solvelog():
-    global ccc
-    def generate():
-        global ccc
-        ccc = ccc + 1
-        return ()
-
-
-    return app.response_class(generate(), mimetype='text/plain')
 
 cnt = 0
 @app.route('/skyStatus', methods=['post'])
@@ -237,7 +241,7 @@ def Focus():
 
 solveT = None
 def gen(camera):
-    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay
+    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay, flag, testMode
     print ('gen called', camera)
     """Video streaming generator function."""
     
@@ -246,23 +250,21 @@ def gen(camera):
         solveT.start()
  
     while True:
+        #print ("gen ",nextImage, testMode)
         if not testMode:
-
             frame = camera.get_frame()
             skyStatusText = "Camera running"
             frameStack.append(frame)
-            with open("cap.jpg", "wb") as f:
-                f.write(frame)
-
-
+            nameStack.append('camera')
+            flag = True
+            #with open("cap.jpg", "wb") as f:
+                #f.write(frame)
             yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
         else:
             if nextImage:
-
+                print ("gen next image")
                 nextImage = False
-                
-
                 if testNdx == len(testFiles):
                     testNdx = 0
                 fn = testFiles[testNdx]
@@ -273,10 +275,11 @@ def gen(camera):
                 with open(fn, 'rb') as infile:
                     frame = infile.read()
                     frameStack.append(frame)
-
+                    nameStack.append(fn)
+                    solveLog.append('next image ' + fn)
                     yield (b'--frame\r\n'
                     b'Content-Type: image/png\r\n\r\n' + frame + b'\r\n')
-                    time.sleep(4)
+
 
             elif triggerSolutionDisplay and showSolution:
                 print ("show solution")
@@ -303,7 +306,7 @@ def apply():
 
 @app.route('/testMode', methods=['POST'])
 def toggletestMode():
-    global testMode, testFiles, testNdx, nextImage
+    global testMode, testFiles, testNdx, nextImage, frameStack, nameStack, solveLog
     testMode =  not testMode
     print("testmodeccc", testMode)
     if (testMode):
@@ -313,16 +316,29 @@ def toggletestMode():
         testNdx = 0
         nextImage = True
         print("test files len", len(testFiles))
+        frameStack.clear()
+        nameStack.clear()
+        solveLog = [  x+ '\n' for x in testFiles]
+
     else:
         skyStatusText = 'exit text mode'
     return Response(skyStatusText)
 
 @app.route('/nextImage', methods=['POST'])
-def nextImage():
+def nextImagex():
     global nextImage, testNdx
     nextImage = True
     testNdx += 1
+    print ('next image pressed')
     skyStatusText="next image is "+ str(testNdx)
+    return Response(skyStatusText)
+
+@app.route('/retryImage', methods=['POST'])
+def retryImage():
+    global nextImage, testNdx
+    nextImage = True
+    print ('retry image pressed')
+    skyStatusText="retry image is "+ str(testNdx)
     return Response(skyStatusText)
 
 @app.route('/prevImage', methods=['POST'])

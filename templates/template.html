@@ -174,32 +174,50 @@
         .sliderT.round:before {
             border-radius: 50%;
         }
+
+    
+        /* The Modal (background) */
+
+        .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        /* Modal Content/Box */
+        .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+        }
+
+        /* The Close Button */
+        .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+        }
     </style>
 
     <body>
-        <!-- Modal 
-        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-                    </div>
-                    <div class="modal-body">
-                        ...
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save changes</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-      -->
-
-
+      
         <div class="container-fluid">
             <div class="row">
                 <div class="col">
@@ -211,6 +229,7 @@
                     <button type="button" class="btn btn-primary" id = "testMode" >Test</button>
                     <button type="button" class="btn btn-primary" style="display: none;" id="stepPrev">Previous Image</button>
                     <button type="button" class="btn btn-primary" style="display: none;" id="stepNext">Next Image</button>
+                    <button type="button" class="btn btn-primary" style="display: none;" id="retryNext">Retry</button>
                     <button type="button" class="btn btn-primary" style="display: none;" id="solveThis">Solve This one</button>
                    
                     <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#skyConfig">sky cfg</button>
@@ -286,6 +305,39 @@
             </div>
         </div>
 
+        <!-- Trigger/Open The Modal -->
+<button id="myBtn">Solver Configuration</button>
+
+<!-- The Modal -->
+<div id="myModal" class="modal">
+
+  <!-- Modal content -->
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <form action="/action_page.php">
+        <p>Field size estimate:</p>
+        <input type="radio" id="aPP" name="Arc Seconds per Pixel" value="aPP">
+        <label for="aPP">Arc Seconds per Pixel</label>   <input type="number" name="faPP" value="27"><br><br>
+        <input type="radio" id="FW" name="FW" value="FieldWidthDeg">
+        <label for="FW">Field Width Degrees</label><br>
+        <input type="radio" id="other" name="gender" value="other">
+        <label for="other">Other</label>
+      
+        <br>  
+      
+        <p>Please select your age:</p>
+        <input type="radio" id="age1" name="age" value="30">
+        <label for="age1">0 - 30</label><br>
+        <input type="radio" id="age2" name="age" value="60">
+        <label for="age2">31 - 60</label><br>  
+        <input type="radio" id="age3" name="age" value="100">
+        <label for="age3">61 - 100</label><br><br>
+        <input type="submit" value="Submit">
+      </form>
+    <p>Some text in the Modal..</p>
+  </div>
+
+</div>
         <div id="solveCfg" class="collapse">
             <form action="/applySolve" method="POST">
                 <label for="App">Arcseconds per Pixel:</label>
@@ -309,8 +361,9 @@
             <input  type="checkbox" id="showSolutionCB" 
              > Show Solution
              </label>
-        </div>
+       </div>
 
+ 
         <p id="demo"></p>
 
 
@@ -319,19 +372,43 @@
             <div id="myBar"></div>
         </div>
         </div>
-        <div class="img-magnifier-container">
+        <div class="img-magnifier-container" style="overflow: scroll;">
             <img src="{{ url_for('video_feed') }}" id="skyImage" style="width:95%"></a>
 
         </div>
   
-        <div style="overflow-y: scroll; height: 200px; background: #f3d8d8;"  id="solveStatusText">
+        <div style="overflow-y: scroll; height: 300px; color:rgb(247, 130, 130); background:rgb(26, 2, 9);"  id="solveStatusText">
               initialiing camera Waiting for first Image </div>
 
-
+              <img src="/static/cap.jpg?Dummy=1234 /" alt="Girl in a jacket" width="500" height="600">
         <!-- SCRIPTS  -------------------------------------------->
 
         <script>
+// Get the modal
+var modal = document.getElementById("myModal");
 
+// Get the button that opens the modal
+var btn = document.getElementById("myBtn");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
             var output = document.getElementById('solveStatusText');
         
             var xhr = new XMLHttpRequest();

@@ -47,6 +47,10 @@ $(document).ready(function(){
         function() {
             ajax_get_Status('/prevImage')
         })
+    $('#retryNext').click(
+        function() {
+            ajax_get_Status('/retryImage')
+        })
 
     $('#solveThis').click(
         function() {
@@ -60,15 +64,18 @@ $(document).ready(function(){
             var x = document.getElementById("stepNext");
             var y = document.getElementById("stepPrev");
             var z = document.getElementById("solveThis");
+            var zz = document.getElementById("retryNext");
             if (x.style.display === "none") {
                 x.style.display = "inline";
                 y.style.display = "inline";
                 z.style.display = "inline";
+                zz.style.display = "inline";
             }                   
             else {
                 x.style.display = "none";
                 y.style.display = "none";
                 z.style.display = "none";
+                zz.style.display = "none";
             }
         })
         $('#ClearHistory').click(
