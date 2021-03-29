@@ -13,6 +13,7 @@
     <style>
         body {
             background-color: rgba(114, 106, 109, 0.952);
+            color:#f3c5c5
         }
         
         .btn-primary,
@@ -29,7 +30,7 @@
         .slidecontainer {
             width: 100%;
         }
-        
+
         .slider {
             -webkit-appearance: none;
             width: 100%;
@@ -75,6 +76,10 @@
             opacity: 0;
             width: 0;
             height: 0;
+        }
+        .nightColor {
+            color:#f74a4a;
+            background-color:#1f0303;
         }
     </style>
 
@@ -189,14 +194,16 @@
         overflow: auto; /* Enable scroll if needed */
         background-color: rgb(0,0,0); /* Fallback color */
         background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        color:#f0a9a9
         }
 
         /* Modal Content/Box */
         .modal-content {
-        background-color: #fefefe;
+        background-color: #110a0a;
         margin: 15% auto; /* 15% from the top and centered */
         padding: 20px;
         border: 1px solid #888;
+        color:#9b6a6a;
         width: 80%; /* Could be more or less, depending on screen size */
         }
 
@@ -214,26 +221,42 @@
         text-decoration: none;
         cursor: pointer;
         }
+        fieldset {
+            margin: 8px;
+            border: 1px solid silver;
+            padding: 8px;    
+            border-radius: 4px;
+            color:#f0d3d3
+        }
+        body {
+            background-color: rgb(71, 35, 40);
+        }
+        button:hover {
+            background-color:#8b1717
+        }
+        
     </style>
 
-    <body>
+    <body >
       
-        <div class="container-fluid">
-            <div class="row">
+        <div class="container-fluid ">
+            <div class="row backgroud-color:white">
                 <div class="col">
-                    <button class="btn btn-primary" onclick="ajax_get_Status('/pause')">Pause</button>
+                    <button class="btn nightColor" onclick="ajax_get_Status('/pause')">Pause</button>
 
-                    <button type="button" class="btn btn-primary text-dark" onclick="ajax_get_Status('/Align')">Align</button>
-
-                    <button type="button" class="btn btn-primary" onclick="ajax_get_Status('/Solve')">Solve</button>
-                    <button type="button" class="btn btn-primary" id = "testMode" >Test</button>
-                    <button type="button" class="btn btn-primary" style="display: none;" id="stepPrev">Previous Image</button>
-                    <button type="button" class="btn btn-primary" style="display: none;" id="stepNext">Next Image</button>
-                    <button type="button" class="btn btn-primary" style="display: none;" id="retryNext">Retry</button>
-                    <button type="button" class="btn btn-primary" style="display: none;" id="solveThis">Solve This one</button>
+                    <button type="button" class="btn nightColor" onclick="ajax_get_Status('/Align')">Align</button>
+                    <button type="button" class="btn nightColor" onclick="ajax_get_Status('/Solve')">Solve</button>
+                    <button type="button" class="btn nightColor" id = "testMode" >Replay images</button>
+                    <button type="button" class="btn nightColor" id = "replayPosition" >Replay position</button>
+                    <button type="button" class="btn nightColor" style="display: none;" id="stepPrev">Previous Image</button>
+                    <button type="button" class="btn nightColor" style="display: none;" id="stepNext">Next Image</button>
+                    <button type="button" class="btn nightColor" style="display: none;" id="retryNext">Retry</button>
+                    <button type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
                    
-                    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#skyConfig">sky cfg</button>
-                    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#solveCfg">solve cfg</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig">sky cfg</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory">solve cfg</button>
+                    <!-- Trigger/Open The solver params -->
+                    <button id="openSolverConfig" class="btn nightColor">Solver Params</button>
 
                 </div>
             </div>
@@ -245,7 +268,7 @@
                         onclick="updateStatusField() ; checked">Auto Status
                     </label>
                 </div>
-                <div id="statusField" class="col-10 bg-danger">
+                <div id="statusField" class="col-10 nightColor">
                     <p></p>
                 </div>
             </div>
@@ -305,112 +328,207 @@
             </div>
         </div>
 
-        <!-- Trigger/Open The Modal -->
-<button id="myBtn">Solver Configuration</button>
 
-<!-- The Modal -->
-<div id="myModal" class="modal">
 
-  <!-- Modal content -->
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <form action="/action_page.php">
-        <p>Field size estimate:</p>
-        <input type="radio" id="aPP" name="Arc Seconds per Pixel" value="aPP">
-        <label for="aPP">Arc Seconds per Pixel</label>   <input type="number" name="faPP" value="27"><br><br>
-        <input type="radio" id="FW" name="FW" value="FieldWidthDeg">
-        <label for="FW">Field Width Degrees</label><br>
-        <input type="radio" id="other" name="gender" value="other">
-        <label for="other">Other</label>
-      
-        <br>  
-      
-        <p>Please select your age:</p>
-        <input type="radio" id="age1" name="age" value="30">
-        <label for="age1">0 - 30</label><br>
-        <input type="radio" id="age2" name="age" value="60">
-        <label for="age2">31 - 60</label><br>  
-        <input type="radio" id="age3" name="age" value="100">
-        <label for="age3">61 - 100</label><br><br>
-        <input type="submit" value="Submit">
-      </form>
-    <p>Some text in the Modal..</p>
-  </div>
+        <!-- The Modal  for config params-->
+        <div id="solveParamsModal" class="modal">
 
-</div>
-        <div id="solveCfg" class="collapse">
-            <form action="/applySolve" method="POST">
-                <label for="App">Arcseconds per Pixel:</label>
-                <input type="number" class="bg-danger" id="App" name="App" min="1" max="300" value="27">
-                <label for="timeout">Max Time:"</label>
-                <input type="number" class- "bg-danger" id="timeout" , name="timeout" , min="30" value="30">
-                <input type="submit" name="save" class="btn btn-primary">Save</input>
-                <input type="submit" name="Apply" class="btn btn-primary">Apply</input>
-                <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#solveHistory">History</button>
+            <!-- Modal content -->
+            <div class="modal-content">
+                <span id="solveParamsClose" class="close">&times;</span>
+                <h2>Plate Solver Parameters</h2>
+                <p>These default values are good for the RPI High Quality Camera with 25mm  lens"<br>
+                    For more info about the solver see <a href=" http://astrometry.net/doc/readme.html"> astrometry.net/doc/readme.html</a> 
+                    Under solving heading.</p>
 
-            </form>
+                    <form action="/applySolve2" method="POST">
+                        <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Image Field Size </legend>
+                    <input type="radio" id="aPP" name="FW" value="aPP" checked>
+                    <label for="aPP">Arc Seconds per Pixel  :</label><input width = "100" class="nightColor" type="number" name="aPPValue" value="{{solveP['PPA']}}"> For 16mm lens try 40<br>
+                    <input type="radio"  id="FW2" name="FW" value="FieldWidthDeg">
+                    <label for="FW2">Field Width Degrees    :</label><input class="nightColor" name="fieldValue" type="number" value = "{{solveP['FieldWidth']}}"><br>
+                    <input type="radio" id="other" name="FW" value="other">
+                    <label for="other">Software Determined (takes longer to solve)</label>
+                </fieldset>
+                    <br>  
+                    <label for="CPUtimeout">Max time for Solve</label>
+                    <input type = "number" id="CPUtimeout" class="nightColor" value = "{{solveP['Timeout']}}"> Seconds<br>
+                    <label for="solveDepth">Depth</label>
+                    <input type = "number" id="SolveDpeth" class="nightColor" value = "{{solveP['Depth']}}"> <br>
+                    <label for="SolveSigma">Sigma</label>
+                    <input type = "number" id="SolveSigma" class="nightColor" value = "{{solveP['Sigma']}}"> 
+                    <label for = "searchRadius"> Search Radius in Deg from last solved location (blank for do not use)  :</label>
+                    <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius" value = "{{solveP['SearchRadius']}}" ><br>
+
+                    <input type="submit" class="btn nightColor" value="Submit">
+                </form>
+            </div>
+
         </div>
-"
-        <div id="solveHistory" class="collapse">
-            <button type="button" class="btn-primary" id="ClearHistory" >Clear History</button>
-            <label class="form-check-label">
-            <input type="checkbox" id="showSolveHistory" checked="checked" 
-             > Show Solve History</label>
 
-            <label class="form-check-label">
-            <input  type="checkbox" id="showSolutionCB" 
-             > Show Solution
+        <!-- The Modal  for stars image-->
+        <div id="starsModal" class="modal">
+
+            <!-- Modal content -->
+            <div class="modal-content">
+                <span id="starsClose" class="close">&times;</span>
+                <img src="/static/cap-objs.png" id="starsSrc"/>
+
+            </div>
+        </div>
+
+        <!-- Modal for observing session-->
+        <div id="observingModal" class="modal">
+            <div class="modal-content">
+                <span id="observnigClose" class="close">&times;</span>
+
+                <form action="/Observe" method="POST">
+                    <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Observing log </legend>
+                        <p> Save each solved postion in a file for later play back to Skysafari.<br>
+                            Can also save each image.</p>
+                    <input type="checkbox" id="saveImage" name="saveImages">
+                    <label for="saveImage">Save each image if logging is enabled.</label>   
+                    <br>
+                    <input type="radio" id="SaveObS" name="SaveOBS">
+                    <label for="SaveObs">Save each solved position into observing log.</label><br>
+
+                    <label for="FW2">Append to last session:</label><br>
+
+                    <label for = "delta"> Delta of position needed to be different in order to be saved in deg :</label>
+                    <input type="number" step=".01" name="deltaDiff" class="nightColor">
+                    <br>
+                    <input type="submit" class="btn nightColor" value="Submit">
+                    </fieldset>
+                </form>
+                <br>
+                <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Observing log replay </legend>
+                <a class="btn nightColor" role="button" href="/static/obs.log"
+                download="observinglog.txt" style="margin:20px; ""> Download observing log </a>
+    
+                Replay of observations (send each to SykySafari)<button style="margin:20px"; id="startObs"; class="btn nightColor">Start </button>
+                <div> <button class="btn nightColor" style= "margin:10px;" id="prevObs"> < </button>
+
+                    <button class="btn nightColor" style= "margin:10px;" id="nextObs"> > </button>
+                    <input class="nightColor" type = "text"; id="currentObs"; size="80"> </input>
+                </div>
+                </fieldset>
+
+
+             
+
+
+            </div>
+        </div>
+
+        <div id="solveHistory" class="collapse" >
+            <button type="button" class="btn nightColor" id="ClearLog" >Clear Log</button>
+
+
+
+            <input  type="checkbox" id="showSolutionCB" >
+            <label class="form-check-label">  Show Solution
+
              </label>
+             
+             <button type="button" class="btn nightColor" id="ShowStars" >show found stars</button>
+             <button type="button" class="btn nightColor" id="observingSession"> setup observing session</button>
+            
        </div>
 
  
-        <p id="demo"></p>
-
-
         <div class="collapse" id="collapseFocusBar">
             <div id="myProgress"></div>
             <div id="myBar"></div>
         </div>
-        </div>
-        <div class="img-magnifier-container" style="overflow: scroll;">
-            <img src="{{ url_for('video_feed') }}" id="skyImage" style="width:95%"></a>
+        
+        <div class="img-magnifier-container" style="overflow: auto;">
+            <img src="{{ url_for('video_feed') }}" id="skyImage" style="width:35%">
 
         </div>
-  
-        <div style="overflow-y: scroll; height: 300px; color:rgb(247, 130, 130); background:rgb(26, 2, 9);"  id="solveStatusText">
+        <br>Log
+        <div style="overflow-y: scroll;  height: 300px; color:rgb(247, 130, 130); background:rgb(26, 2, 9);"  id="solveStatusText">
               initialiing camera Waiting for first Image </div>
 
-              <img src="/static/cap.jpg?Dummy=1234 /" alt="Girl in a jacket" width="500" height="600">
         <!-- SCRIPTS  -------------------------------------------->
 
         <script>
-// Get the modal
-var modal = document.getElementById("myModal");
+            // Get the modal solve param config
+            var solveParamsModal = document.getElementById("solveParamsModal");
 
-// Get the button that opens the modal
-var btn = document.getElementById("myBtn");
+            // Get the button that opens the modal
+            var btn = document.getElementById("openSolverConfig");
 
-// Get the <span> element that closes the modal
-var span = document.getElementsByClassName("close")[0];
+            // Get the <span> element that closes the modal
+            var span = document.getElementById("solveParamsClose");
 
-// When the user clicks on the button, open the modal
-btn.onclick = function() {
-  modal.style.display = "block";
-}
+            // When the user clicks on the button, open the modal
+            btn.onclick = function() {
 
-// When the user clicks on <span> (x), close the modal
-span.onclick = function() {
-  modal.style.display = "none";
-}
+                solveParamsModal.style.display = "block";
+            }
 
-// When the user clicks anywhere outside of the modal, close it
-window.onclick = function(event) {
-  if (event.target == modal) {
-    modal.style.display = "none";
-  }
-}
+            // When the user clicks on <span> (x), close the modal
+            span.onclick = function() {
+            solveParamsModal.style.display = "none";
+            }
+
+
+
+            // Get the button that opens the modal image
+            var btn = document.getElementById("ShowStars");
+
+            // Get the <span> element that closes the modal
+            var starsspan = document.getElementById("starsClose");
+
+            // When the user clicks on the button, open the modal
+            btn.onclick = function() {
+                var src = document.getElementById("starsSrc");
+                var d = new Date();
+                var n = d.getTime();
+                var fn = "/static/cap-objs.png";
+                var x = fn.concat( "?dummy=",n,"?");
+                src.src = x
+                starsModal.style.display = "block";
+            }
+
+            // When the user clicks on <span> (x), close the modal
+            starsspan.onclick = function() {
+            starsModal.style.display = "none";
+            }
+
+
+            // Get the button that opens the modal image
+            var btn = document.getElementById("observingSession");
+
+            // Get the <span> element that closes the modal
+            var observingspan = document.getElementById("observnigClose");
+
+            // When the user clicks on the button, open the modal
+            btn.onclick = function() {
+                observingModal.style.display = "block";
+            }
+
+            // When the user clicks on <span> (x), close the modal
+            observingspan.onclick = function() {
+                observingModal.style.display = "none";
+            }
+
+            // When the user clicks anywhere outside of the modal, close it
+            window.onclick = function(event) {
+                if (event.target == observingModal) {
+                    observingModal.style.display = "none";
+                }
+                if (event.target == solveParamsModal) {
+                    solveParamsModal.style.display = "none";
+                }
+                if (event.target == starsModal) {
+                    starsModal.style.display = "none";
+                }
+            }
+
             var output = document.getElementById('solveStatusText');
         
+            //Process log text from the app
             var xhr = new XMLHttpRequest();
             xhr.open('GET', '/solveLog');
             xhr.send();
@@ -455,22 +573,6 @@ window.onclick = function(event) {
                 });
             });
         </script>
-        <script>
-            function ajax_get_Status(cmdroute) {
-                console.log('fun', cmdroute)
-                $.ajax({
-                    url: cmdroute,
-                    method: 'POST',
-                    success: function(result) {
-                        document.getElementById("statusField").innerHTML = result;
-                    }
-                });
-            }
-
-
-
-    </script>
-
 
         <!-- Update status and clear timeout if needed-->
         <script>
@@ -548,7 +650,7 @@ window.onclick = function(event) {
 
 
         <script>
-            var skyimageMag = 1;
+            var skyimageMag = .25;
 
 
             function increaseMagnification() {

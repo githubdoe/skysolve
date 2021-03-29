@@ -38,19 +38,59 @@ $(document).ready(function(){
     // starting values
     sks.consts.shutter().val(1);
 
+    function ajax_get_Status(cmdroute) {
+        $.ajax({
+            url: cmdroute,
+            method: 'POST',
+            success: function(result) {
+                document.getElementById("statusField").innerHTML = result;
+            }
+        });
+    }
+
     $('#stepNext').click(
         function() {
             ajax_get_Status('/nextImage')
         })
 
-    $('#stepPrev').click(
-        function() {
-            ajax_get_Status('/prevImage')
-        })
     $('#retryNext').click(
         function() {
             ajax_get_Status('/retryImage')
         })
+
+    function ajax_get_Obs(cmdroute) {
+        $.ajax({
+            url: cmdroute,
+            method: 'POST',
+            success: function(result) {
+                console.log("result",result);
+                var txt = document.getElementById("currentObs");
+                txt.value = result
+            }
+        });
+    }
+
+    $('#startObs').click(
+        function() {
+            console.log("start obs");
+            ajax_get_Obs('/startObs')
+        })
+
+    $('#nextObs').click(
+        function() {
+            ajax_get_Obs('/nextObs')
+        })
+
+    $('#prevObs').click(
+        function() {
+            ajax_get_Obs('/prevObs')
+        })
+
+    $('#stepPrev').click(
+        function() {
+            ajax_get_Obs('/prevImage')
+        })
+
 
     $('#solveThis').click(
         function() {
@@ -78,7 +118,7 @@ $(document).ready(function(){
                 zz.style.display = "none";
             }
         })
-        $('#ClearHistory').click(
+        $('#ClearLog').click(
             function(){
                 var text = document.getElementById('solveStatusText');
                 text.innerHTML = "";
@@ -86,7 +126,7 @@ $(document).ready(function(){
         )
         $('#showSolutionCB').click(
             function() {
-                console.log( sks.consts.showSolution)
+
                 var checkBox = document.getElementById("showSolutionCB");
                 if (checkBox.checked == true) {
                     sks.consts.showSolution = 1;
@@ -95,7 +135,7 @@ $(document).ready(function(){
                     sks.consts.showSolution = 0;
                 }
                 let x = sks.consts.showSolution;
-                console.log(x)
+
                 $.post("/showSolution/" + x, data = {
                     suggest: x
                 }, function(result) {});

@@ -13,10 +13,12 @@ from PIL import Image
 import subprocess
 import os
 import math
+import json
+from shutil import copyfile
 
 app = 30
 solving = False
-maTime = 50
+maxTime = 50
 searchEnable = False
 searchRadius = 90
 solveLog = []
@@ -28,19 +30,27 @@ computedPPa = ''
 frameStack = []
 nameStack = []
 focusStd = ''
-maxTime = 25
 testMode=False
 testNdx = 0
 testFiles = []
 nextImage=False
+root_path = os.getcwd()
+print ('roor',root_path)
 test_path = '/home/pi/pyPlateSolve/data'
-solve_path = '/home/pi/pyPlateSolve/skySolve/static'
+solve_path = os.path.join(root_path,'static')
+print ('ff',solve_path)
+
 solveCurrent = False
 showSolution = False
 triggerSolutionDisplay = False
-
+saveObs = False
 flag = False
+obsList = []
+ndx = 0
 
+skyConfig = {'camera': {'shutter': 1},
+    'solver':{'maxTime': 20, 'sigma':9, 'depth':20, 'UselastDelta':False},
+    'observing':{'saveImage': True, 'savePosition': True} }
 
 
 def solveThread():
@@ -54,7 +64,7 @@ def solveThread():
             if solveCurrent:
                 solveCurrent = False
                 print ('solveing source')
-                solve('cap.jpg')
+                solve(os.path.join(solve_path,'cap.jpg'))
                 continue    
             pass
         #skyStatusText = datetime.now().strftime("%H:%M:%S")
@@ -67,8 +77,13 @@ def solveThread():
             print ('empty stack', len(frameStack))
             continue
         with open(os.path.join(solve_path,"cap.jpg"), "wb") as f:
-            f.write(frameStack.pop())
-            name = nameStack.pop()
+            try:
+                f.write(frameStack.pop())
+                name = nameStack.pop()
+            except Exception as e:
+                print (e)
+                solveLog.append(str(e) + '\n')
+                continue
             solveLog.append(name + '\n')
             print ("wrote file",f.name,name)
             print ('solve thread')
@@ -90,7 +105,7 @@ def solveThread():
 
 def solve(fn, parms = []):
     global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, lastRA, solveStatus,\
-        showSolution, triggerSolutionDisplay
+        showSolution, triggerSolutionDisplay, skyStatusText
     solving = True
     solved = ''
 
@@ -102,50 +117,73 @@ def solve(fn, parms = []):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     solveLog.clear()
     ppa = ''
+    starNames={}
+    radec = ''
     while not p.poll():
         stdoutdata = p.stdout.readline().decode(encoding='UTF-8')
         if stdoutdata:
             solveLog.append(stdoutdata)
             print ("stdout", str(stdoutdata))
+
             if stdoutdata.startswith('Field center: (RA,Dec) = ('):
-                saveSolution (stdoutdata)
+
                 solved = stdoutdata
+                fields = solved.split()[-3:-1]
+                print ('f',fields)
+                ra = fields[0][1:-1]
+                dec = fields[1][0:-1]
+                ra = float(fields[0][1:-1])
+                dec = float(fields[1][0:-1])
+
+                radec="%s %6.6lf %6.6lf \n"%(time.strftime('%H:%M:%S'),ra,dec)
+
+
+
             elif stdoutdata.startswith('Field size'):
                 solveStatus +=(". " + stdoutdata.split(":")[1].rstrip())
             elif stdoutdata.find('pixel scale') > 0:
                 computedPPa = stdoutdata.split("scale ")[1].rstrip()
+            elif 'The star' in stdoutdata:
+                stdoutdata = stdoutdata.replace(')','')
+                con = stdoutdata[-4:-1]
+                if con not in starNames:
+                    starNames[con]=1
+
         else:
             break
 
     solveStatus+= ". scale " + ppa
     
-
     print("solution results", solved, showSolution)
     if not solved:
-        solveStatus = "Failed"
+        skyStatusText = "Failed"
 
-    elif showSolution:
-        triggerSolutionDisplay = True;
-        print ("showing solution")
+    else:
+        # Write-Overwrites 
+        file1 = open(os.path.join(solve_path,"radec.txt"),"w")#write mode 
+        file1.write(radec) 
+        file1.close() 
+        constellations = ', '.join(starNames.keys())
+        print (' config was',skyConfig['observing']['savePosition'])
+        if skyConfig['observing']['savePosition']:
+            obsfile = open(os.path.join(solve_path,"obs.log"),"a+")
+            obsfile.write(radec.rstrip() + " " + constellations + '\n')
+            obsfile.close()
+            print ("wrote obs log")
+
+        if skyConfig['observing']['saveImage']:
+            fn = datetime.now().strftime("%m_%d_%y_%H:%M:%S")+'.jpg'
+            copyfile(os.path.join(solve_path,"cap.jpg"), os.path.join(solve_path, 'history',fn))
+
+
+        if showSolution:
+            triggerSolutionDisplay = True
+        skyStatusText = radec.rstrip() + " " + constellations
+        print ("from solve skystatusText is",skyStatusText)
         
     solving = False
-    skyStatusText = solveStatus
+
     return solved    
-
-def saveSolution(ln):
-
-    fields = ln.split()[-3:-1]
-    print ('f',fields)
-    ra = fields[0][1:-1]
-    dec = fields[1][0:-1]
-    ra = float(fields[0][1:-1])
-    dec = float(fields[1][0:-1])
-    print ('ra',ra,dec)
-    print (time.strftime('%H:%M:%S'))
-    # Write-Overwrites 
-    file1 = open(os.path.join(solve_path,"radec.txt"),"w")#write mode 
-    file1.write("%s %6.6lf %6.6lf \n"%(time.strftime('%H:%M:%S'),ra,dec)) 
-    file1.close() 
 
 app = Flask(__name__)
 
@@ -156,9 +194,11 @@ def index():
     shutterValues = ['.01', '.05', '.1','.15','.2','.5','.7','1','1.5', '2.', '3','4','5','10']
     skyFrameValues = ['400x300', '640x480', '800x600', '1024x768', '1280x720', '1920x1080', '2000x1000']
     isoValues = ['100','200','400','800']
+    solveParams = { 'PPA': 27, 'FieldWidth': 14, 'Timeout': 34, 'Sigma': 9 , 'Depth':20, 'SearchRadius': 10}
 
     return render_template('template.html', shutterData = shutterValues, skyFrameData = skyFrameValues,
-            skyIsoData = isoValues)
+            skyIsoData = isoValues, solveP = solveParams)
+
 # 
 
 @app.route("/solveLog")
@@ -171,7 +211,7 @@ def streamSolveLog():
             #print (len(solveLog))
             if len(solveLog) > 0:
                 str = solveLog.pop(0)
-                print ("log", str)
+                #print ("log", str)
                 yield str
 
     return app.response_class(generate(), mimetype="text/plain")
@@ -286,7 +326,7 @@ def gen(camera):
                 triggerSolutionDisplay = False
                 fn = os.path.join(solve_path, 'cap-ngc.png')
 
-                skyStatusText = " solution %s"%(fn)
+                #skyStatusText = " solution %s"%(fn)
                 with open(fn, 'rb') as infile:
                     frame = infile.read()
 
@@ -297,10 +337,12 @@ def gen(camera):
                     yield (b'--frame\r\n'
                     b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-@app.route('/applySolve', methods=['POST'])
+@app.route('/applySolve2', methods=['POST'])
 def apply():
     print ("submit")
     print (request.form.values)
+    req = request.form
+    print ("fw =" ,req.get("FW"), "appValue = ",req.get("aPPValue"))
     #print (request.form.['submit_button'])
     return Response(status=204)
 
@@ -351,6 +393,45 @@ def prevImage():
     skyStatusText="next image is "+ str(testNdx)
     return Response(skyStatusText)
 
+@app.route('/Observe', methods=['POST'])
+def setObserveParams():
+    print (request.form.values, request.form.getlist('saveImages'))
+    skyStatusText = "observing session parameters received."
+    return Response(status=205)
+
+@app.route('/startObs', methods=['POST'])
+def startObs():
+    global ndx, obsList
+    ndx = 0
+    with open(os.path.join(solve_path,'obs.log'), 'r') as infile:
+        obsList = infile.readlines()
+
+    return updateRADEC()
+
+def updateRADEC():
+    global ndx, obsList
+    radec = obsList[ndx]
+    file1 = open(os.path.join(solve_path,"radec.txt"),"w")#write mode 
+    file1.write(radec) 
+    file1.close() 
+    return Response(radec.rstrip())
+
+@app.route('/nextObs', methods=['POST'])
+def nextObs():
+    global ndx, obsList
+    ndx +=1
+    if ndx > len(obsList):
+        ndx-=1
+    return updateRADEC()
+
+@app.route('/prevObs', methods=['POST'])
+def prevObs():
+    global ndx, obsList
+    ndx -=1
+    if ndx < 0:
+        ndx = 0
+    return updateRADEC()
+
 @app.route('/solveThis', methods=['POSt'])
 def solveThis():
     global solveCurrent
@@ -372,5 +453,5 @@ def video_feed():
 
 if __name__ == '__main__':
     print("working dir", os.getcwd())
-    os.chdir(solve_path)
+
     app.run(host='0.0.0.0', debug=True)
