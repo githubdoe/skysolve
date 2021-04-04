@@ -13,9 +13,28 @@ sks.consts = {
         return x;
 
     },
+    ISO: function() {
+        var x = $('#ISOSelect');
+        return x;
+    },
+    frame: function() {
+        var x = $('#frameSelect');
+        return x;
+    },
+
     showHistory: 0,
     showSolution: 0
 };
+
+function setIniShutter( shutVal){
+    sks.consts.shutter().val(shutVal);
+}
+function setIniISO( ISOVal){
+    sks.consts.ISO().val(ISOVal);
+}
+function setIniFrame( frameVal){
+    sks.consts.frame().val(frameVal);
+}
 
 $(document).ready(function(){
 
@@ -35,8 +54,26 @@ $(document).ready(function(){
                 suggest: x
             }, function(result) {});
     });
-    // starting values
-    sks.consts.shutter().val(1);
+
+    sks.consts.ISO().change(
+        function() {
+
+            let x = sks.consts.ISO().val();
+            console.log("ISO is being set", x);
+            $.post("/setISO/" + x, data = {
+                suggest: x
+            }, function(result) {});
+    });
+
+    sks.consts.frame().change(
+        function() {
+            console.log("frame size change");
+            let x = sks.consts.frame().val();
+            $.post("/setFrame/" + x, data = {
+                suggest: x
+            }, function(result) {});
+    });
+
 
     function ajax_get_Status(cmdroute) {
         $.ajax({
@@ -58,6 +95,19 @@ $(document).ready(function(){
             ajax_get_Status('/retryImage')
         })
 
+    $('#idPause').click (
+        function() {
+            ajax_get_Status('/pause')
+        })
+    $('#idAlign').click (
+        function() {
+            ajax_get_Status('/Align')
+        })
+    $('#idSolve').click (
+        function() {
+            ajax_get_Status('/Solve')
+        })
+
     function ajax_get_Obs(cmdroute) {
         $.ajax({
             url: cmdroute,
@@ -69,6 +119,7 @@ $(document).ready(function(){
             }
         });
     }
+
 
     $('#startObs').click(
         function() {

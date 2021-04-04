@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, Response
 import time
-from camera_pi import Camera, FileCamera
-import picamera
+from camera_pi import  skyCamera
+
+
 from fractions import Fraction
 import pprint
-import base_camera
 import configparser
 from datetime import datetime
 import threading
@@ -15,6 +15,13 @@ import os
 import math
 import json
 from shutil import copyfile
+from enum import Enum, auto
+
+class Mode(Enum):
+    PAUSED = auto()
+    ALIGN = auto()
+    SOLVING = auto()
+    PLAYBACK = auto()
 
 app = 30
 solving = False
@@ -30,12 +37,13 @@ computedPPa = ''
 frameStack = []
 nameStack = []
 focusStd = ''
-testMode=False
+state = Mode.ALIGN
+
 testNdx = 0
 testFiles = []
 nextImage=False
 root_path = os.getcwd()
-print ('roor',root_path)
+
 test_path = '/home/pi/pyPlateSolve/data'
 solve_path = os.path.join(root_path,'static')
 print ('ff',solve_path)
@@ -48,9 +56,29 @@ flag = False
 obsList = []
 ndx = 0
 
-skyConfig = {'camera': {'shutter': 1},
+"""
+skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'Frame': '2000x1500'},
     'solver':{'maxTime': 20, 'sigma':9, 'depth':20, 'UselastDelta':False},
-    'observing':{'saveImage': True, 'savePosition': True} }
+    'observing':{'saveImage': False, 'savePosition': True , 'obsDelta': .1}}
+"""
+
+def saveConfig():
+    with open('skyConfig.txt', 'w') as f:
+        json.dump(skyConfig, f) 
+
+#saveConfig()
+print ('cwd',os.getcwd())
+for i in range (130):
+    solveLog.append("                       \n")
+
+with open('skyConfig.txt') as f:
+    skyConfig = json.load(f)
+
+#print (skyConfig)
+skyCam = None
+
+
+
 
 
 def solveThread():
@@ -84,9 +112,7 @@ def solveThread():
                 print (e)
                 solveLog.append(str(e) + '\n')
                 continue
-            solveLog.append(name + '\n')
-            print ("wrote file",f.name,name)
-            print ('solve thread')
+
 
 
         if len(frameStack)> 0:
@@ -191,20 +217,23 @@ skyStatusText = 'Initilizing Camera'
 
 @app.route("/" , methods=['GET','POST' ])
 def index():
+    global skyCam
     shutterValues = ['.01', '.05', '.1','.15','.2','.5','.7','1','1.5', '2.', '3','4','5','10']
-    skyFrameValues = ['400x300', '640x480', '800x600', '1024x768', '1280x720', '1920x1080', '2000x1000']
+    skyFrameValues = ['400x300', '640x480', '800x600', '1024x768', '1280x960', '1920x1440', '2000x1000', '2000x1500']
     isoValues = ['100','200','400','800']
     solveParams = { 'PPA': 27, 'FieldWidth': 14, 'Timeout': 34, 'Sigma': 9 , 'Depth':20, 'SearchRadius': 10}
-
+    if not skyCam:
+        skyCam= skyCamera(shutter  = int(1000000 * float(skyConfig['camera']['shutter'] )))
+    
     return render_template('template.html', shutterData = shutterValues, skyFrameData = skyFrameValues,
-            skyIsoData = isoValues, solveP = solveParams)
+            skyIsoData = isoValues, solveP = solveParams, obsParms = skyConfig['observing'], cameraParms=skyConfig['camera'])
 
 # 
 
 @app.route("/solveLog")
 def streamSolveLog():
     global solveLog
-    print("solveLog")
+
     def generate():
         global solveLog
         while True:
@@ -218,29 +247,60 @@ def streamSolveLog():
 
 @app.route('/pause', methods = ['POST'])
 def pause():
-    global skyStatusText
-    print("put")
+    global skyStatusText, skyCam, state
+    if skyCam:
+        skyCam.pause()
+    state = Mode.PAUSED
+
     skyStatusText = 'Paused'
     return Response(skyStatusText)
 
 @app.route('/Align', methods = ['POST'])
 def Align():
-    global skyStatusText
-    print("put", request)
+    global skyStatusText, skyCam, state
+    if skyCam:
+        skyCam.resume()
+    state = Mode.ALIGN
     skyStatusText = 'Align Mode'
     return Response(skyStatusText)
 
 @app.route('/Solve', methods = ['POST'])
 def Solving():
-    global skyStatusText
-    print("put")
+    global skyStatusText, state, skyCam
+    if skyCam:
+        skyCam.resume()
+    state = Mode.SOLVING
     skyStatusText = 'Solving Mode'
     return Response(skyStatusText)
+
+
+
+@app.route('/setISO/<value>', methods = ['POST'])
+def setISO(value):
+    global solveLog, skyStatusText, isoglobal
+    solveLog.append("ISO changing will take 10 seconds to stabilize gain.\n")
+    skyStatusText = "changing to ISO" + value
+    isoglobal = value
+    skyCam.setISO(value)
+
+    skyConfig['camera']['ISO'] = value
+    saveConfig()
+
+    return Response(status = 204)
+
+@app.route('/setFrame/<value>', methods = ['POST'])
+def setFrame(value):
+    skyCam.setResolution(value)
+    skyConfig['camera']['frame'] = value
+    saveConfig()
+    return Response(status = 204)
 
 @app.route('/setShutter/<value>', methods = ['POST'])
 def setShutter(value):
     print ("shutter value", value)
-    Camera.theCam.shutter_speed = int(1000000 * float(value))
+    skyCam.setShutter(int(1000000 * float(value)))
+    skyConfig['camera']['shutter'] = value
+    saveConfig()
     return Response(status = 204)
 
 @app.route('/showSolution/<value>',methods = ['POSt'])
@@ -254,23 +314,12 @@ def setShowSolutions(value):
     print ("showSolution is", showSolution)
     return Response(status = 204)
 
-@app.route('/setISO/<value>', methods = ['POST'])
-def setISO(value):
-    print ("ISO value", value)
-    Camera.theCam.iso = int(value)
-    return Response(status = 204)
 
-def get_message():
-    '''this could be any function that blocks until data is ready'''
-    time.sleep(1.0)
-    s = time.ctime(time.time())
-    return s
 
-cnt = 0
+
 @app.route('/skyStatus', methods=['post'])
 def skyStatus():
     global skyStatusText
-    print ("sky status is:", skyStatusText)
     return Response(skyStatusText)
 
 @app.route('/Focus', methods=['post'])
@@ -280,23 +329,25 @@ def Focus():
 
 
 solveT = None
-def gen(camera):
-    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay, flag, testMode
-    print ('gen called', camera)
-    """Video streaming generator function."""
-    
+def gen():
+    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay, flag, testMode, state
+    print ('gen called')
+    #Video streaming generator function.
+
     if not solveT:  #start up solver if not already running.
         solveT = threading.Thread( target = solveThread)
         solveT.start()
  
     while True:
         #print ("gen ",nextImage, testMode)
-        if not testMode:
-            frame = camera.get_frame()
+        if state is Mode.ALIGN or state is Mode.SOLVING:
+            frame = skyCam.get_frame()
             skyStatusText = "Camera running"
             frameStack.append(frame)
             nameStack.append('camera')
             flag = True
+            skyStatusText = datetime.now().strftime("%H:%M:%S")
+            solveLog.append(skyStatusText + '\n')
             #with open("cap.jpg", "wb") as f:
                 #f.write(frame)
             yield (b'--frame\r\n'
@@ -348,11 +399,11 @@ def apply():
 
 @app.route('/testMode', methods=['POST'])
 def toggletestMode():
-    global testMode, testFiles, testNdx, nextImage, frameStack, nameStack, solveLog
-    testMode =  not testMode
-    print("testmodeccc", testMode)
-    if (testMode):
-        skyStatusText = 'Test mode'
+    global testMode, testFiles, testNdx, nextImage, frameStack, nameStack, solveLog, state
+
+    if  not state is  state.PLAYBACK:
+        skyStatusText = 'PLAYBACK mode'
+        state = Mode.PLAYBACK
         testFiles = [test_path + '/' + fn for fn in os.listdir(test_path)  if any(fn.endswith(ext) for ext in ['jpg', 'png'])]
         testFiles.sort(key=os.path.getmtime)
         testNdx = 0
@@ -363,7 +414,8 @@ def toggletestMode():
         solveLog = [  x+ '\n' for x in testFiles]
 
     else:
-        skyStatusText = 'exit text mode'
+        state = Mode.ALIGN
+        skyStatusText = 'ALIGN Mode'
     return Response(skyStatusText)
 
 @app.route('/nextImage', methods=['POST'])
@@ -444,10 +496,10 @@ def solveThis():
 
 @app.route('/video_feed')
 def video_feed():
-    """Video streaming route. Put this in the src attribute of an img tag."""
+    #Video streaming route. Put this in the src attribute of an img tag.
 
     #return Response(gen(FileCamera()),
-    return Response(gen(Camera((2000,1000), 1000000, 800)),
+    return Response(gen(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
@@ -455,3 +507,4 @@ if __name__ == '__main__':
     print("working dir", os.getcwd())
 
     app.run(host='0.0.0.0', debug=True)
+    

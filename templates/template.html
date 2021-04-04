@@ -242,19 +242,16 @@
         <div class="container-fluid ">
             <div class="row backgroud-color:white">
                 <div class="col">
-                    <button class="btn nightColor" onclick="ajax_get_Status('/pause')">Pause</button>
-
-                    <button type="button" class="btn nightColor" onclick="ajax_get_Status('/Align')">Align</button>
-                    <button type="button" class="btn nightColor" onclick="ajax_get_Status('/Solve')">Solve</button>
-                    <button type="button" class="btn nightColor" id = "testMode" >Replay images</button>
-                    <button type="button" class="btn nightColor" id = "replayPosition" >Replay position</button>
+                    <button class="btn nightColor" style="margin:10px; "id="idPause" ">Pause</button>
+                    <button type="button" class="btn nightColor"  style="margin:10px;" id="idAlign" ">Align</button>
+                    <button type="button" class="btn nightColor"  style="margin:10px;" id = "idSolve" ">Solve</button>
+                    <button type="button" class="btn nightColor"  style="margin:10px;" id = "testMode" >Replay images</button>
                     <button type="button" class="btn nightColor" style="display: none;" id="stepPrev">Previous Image</button>
                     <button type="button" class="btn nightColor" style="display: none;" id="stepNext">Next Image</button>
-                    <button type="button" class="btn nightColor" style="display: none;" id="retryNext">Retry</button>
+                    <button type="button" class="btn nightColor" style="display: none;" id="retryNext">Refresh image</button>
                     <button type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
-                   
-                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig">sky cfg</button>
-                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory">solve cfg</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig">camera params</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory">solver cfg</button>
                     <!-- Trigger/Open The solver params -->
                     <button id="openSolverConfig" class="btn nightColor">Solver Params</button>
 
@@ -263,64 +260,59 @@
 
             <div class="row">
                 <div class="col mx-2">
-                    <label class="form-check-label">
+                    <label class="form-check-label nightColor">
                       <input  type="checkbox" id="autoStatusCB" checked="checked"  class=" pl-5 form-check-input" 
-                        onclick="updateStatusField() ; checked">Auto Status
+                        onclick="updateStatusField() ; checked">Update every 5 secs 
                     </label>
                 </div>
+                <div class="nightColor">Status:</div>
                 <div id="statusField" class="col-10 nightColor">
-                    <p></p>
                 </div>
             </div>
-
 
         </div>
 
 
         <div id="skyConfig" class="collapse">
             <div class="btn-group" role="group" aria-label="b">
-                <label class=" text-warning " for="shutter">Shutter Speed:</label>
-                <select class=" form-control-sm text-warning bg-dark"  id="shutterSelect">
+
+                
+                <label class=" text-danger" for="shutterSelect" >Shutter Speed:</label>
+                <select class=" form-control-sm nightColor"  id="shutterSelect">
                     {% for datum in shutterData %}
-                  <option class="bg_dark text-warning" value={{ datum }}>{{ datum }}</option> 
+                  <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
                    {% endfor %}
 
                 </select> 
 
-                <div class="dropdown">
-                    <button type="button" class="btn btn-lg text-warning dropdown-toggle" id="ISOButton" data-toggle="dropdown">
-                    ISO
-                    </button>
 
-                    <div class="dropdown-menu bg-dark" aria-labelledby="dropdownMenuButton" id="ISOMenu">
-                        {% for datum in skyIsoData %}
-                        <button class="dropdown-item text-warning bg-danger" type="button">{{ datum }}</button> {% endfor %}
-                    </div>
-                </div>
-                <div class="dropdown">
-                    <button type="button" class="btn btn-lg text-warning dropdown-toggle" data-toggle="dropdown">
-                    image Size
-                    </button>
+                <label class=" text-danger " style="margin-left:20px;" for="ISOSelect">ISO:</label>
+                <select class=" form-control-sm nightColor"  id="ISOSelect">
 
-                    <div class="dropdown-menu bg-dark" aria-labelledby="dropdownMenuButton">
+                    {% for datum in skyIsoData %}
+                    <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                    {% endfor %}
+    
+                </select> 
+
+                <label class=" text-danger" style="margin-left:20px;" for="frameSelect">Image Resolution:</label>
+                <select class=" form-control-sm nightColor"  id="frameSelect">
                         {% for datum in skyFrameData %}
-                        <button class="dropdown-item text-warning bg-danger" type="button">{{ datum }}</button> {% endfor %}
-                    </div>
-                </div>
+                        <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                        {% endfor %}
 
-                <div class="pt-3">
+                </select>
+
+                <div class="pt-3 nightColor">
                     focus
-                    <label class="switchT">
+                    <label class="switchT nightCOlor">
                         <input type="checkbox" id="doFocus" data-toggle="collapse" data-target="#collapseFocusBar" onclick="showFocus()">
                         <span class="sliderT round"></span>
                       </label>
                 </div>
-                <!--
-                <label for="doMagCB">Magnify</label>
-                <input type="checkbox" id="doMagCB" onclick="doMag()">
-                -->
 
-                <div class="btn-group-vertical  bg-danger ">
+
+                <div class="btn-group-horizontal  nightColor ">                 zoom image
                     <button type="button" class="btn btn-primary btn-sm" onclick="increaseMagnification()">+</button>
                     <button type="button" class="btn btn-primary btn-sm" onclick="decreaseMagnification()">-</button>
                 </div>
@@ -386,16 +378,14 @@
                     <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Observing log </legend>
                         <p> Save each solved postion in a file for later play back to Skysafari.<br>
                             Can also save each image.</p>
-                    <input type="checkbox" id="saveImage" name="saveImages">
+                    <input type="checkbox" id="saveImage" value="on", name="saveImages" {{ 'checked' if obsParms['saveImage'] else ''}} >
                     <label for="saveImage">Save each image if logging is enabled.</label>   
                     <br>
-                    <input type="radio" id="SaveObS" name="SaveOBS">
-                    <label for="SaveObs">Save each solved position into observing log.</label><br>
-
-                    <label for="FW2">Append to last session:</label><br>
-
-                    <label for = "delta"> Delta of position needed to be different in order to be saved in deg :</label>
-                    <input type="number" step=".01" name="deltaDiff" class="nightColor">
+                    <input type="radio" id="SaveObS" name="SaveOBS" {{ 'checked' if obsParms['savePosition'] else ''}}>
+                    <label for="SaveObs">Append each solved position to observing log.</label><br>
+ 
+                    <label for = "delta"> Delta of position needed to be different in order to be saved. (in degees) :</label>
+                    <input type="number" step=".01" name="deltaDiff" value = {{obsParms['obsDelta' ] }} class="nightColor">
                     <br>
                     <input type="submit" class="btn nightColor" value="Submit">
                     </fieldset>
@@ -422,8 +412,6 @@
 
         <div id="solveHistory" class="collapse" >
             <button type="button" class="btn nightColor" id="ClearLog" >Clear Log</button>
-
-
 
             <input  type="checkbox" id="showSolutionCB" >
             <label class="form-check-label">  Show Solution
@@ -452,6 +440,13 @@
         <!-- SCRIPTS  -------------------------------------------->
 
         <script>
+            $(document).ready(function(){
+                setIniShutter('{{cameraParms['shutter']}}');
+
+                setIniISO('{{cameraParms['ISO']}}');
+
+                setIniFrame('{{cameraParms['Frame']}}');
+            });
             // Get the modal solve param config
             var solveParamsModal = document.getElementById("solveParamsModal");
 
@@ -563,6 +558,7 @@
         </script>
 
         <script>
+
             $("#ISOMenu>button ").click(function() {
                 let x = $(this).text();
                 $("#ISOButton").html(x)
