@@ -251,11 +251,99 @@
                     <button type="button" class="btn nightColor" style="display: none;" id="retryNext">Refresh image</button>
                     <button type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig">camera params</button>
-                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory">solver cfg</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory">results cfg</button>
+
                     <!-- Trigger/Open The solver params -->
                     <button id="openSolverConfig" class="btn nightColor">Solver Params</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#helpButtons">help</button>
 
                 </div>
+            </div>
+            <div class="row">
+                <div class="collapse col text-center" id="helpButtons">
+                        <button type="button" class="btn  nightColor" data-toggle="collapse" data-target="#helpScreen" style="margin-right:2px;">General</button>
+                        <button type="button" class="btn nightColor" data-toggle="collapse" style="margin-right:2px;" data-target="#cameraHelp"> Camera</button>
+                        <button type="button" class="btn  nightColor" data-toggle="collapse" style="margin-right:2px;" data-target="#solutionHelp">Results Config</button>
+                        <button type="button" class="btn  nightColor" data-toggle="collapse" style="margin-right:2px;" data-target="#solverHelp">Solver</button>
+                        <button type="button" class="btn  nightColor" data-toggle="collapse" style="margin-right:2px;" data-target="#demoHelp">Demo</button>
+                </div>
+            </div>
+            <div id="helpScreen" class="collapse">
+                <ul class= "nightColor list-unstyled">
+                    <li> <p>Starts in <b>Align</b> mode which is used to setup camera parameters and manually center view with center of scope.</p></li>
+                    <li><p><b>Pause</b> mode stops camera from taking images. Align or Solve mode start enable the camera to take images.</p></li>
+                    <li><p><b>Solve</b> mode will try to solve each image taken and will loop as fast as the shutter and solving allow. <br>
+                           The solution will be stored in a file that the encoder.py program will see.  (Encoder.py will be run automatically and will update
+                           SkySafari when contacted by it.</p></li>
+                    <li><p><b>Replay Images</b> will stop the camera and allow you to view and solve images from your observing history (see history help)<br>
+                            </p></li>
+                    <li><p> <b>Refresh Image</b> will update the current history image.  Sometimes the current image is not updated on the display.</p></li>
+                    <li>
+                        <p>
+                            The current image is displayed below the status display.<br>
+                            The status display updates every 5 seconds or at the end of various commands.<br>
+                            The log is displayed below the image.   The log will display data from the solve operation as well as from other commands.
+                        </p>
+                    </li>
+
+                </ul>
+            </div>
+            <div id="cameraHelp" class="collapse">
+                <ul class="nightColor list-unstyled">
+                    <li> <p>The <b>Camera Params</b> button displays three camera parameter: shutter, ISO, and frame size (resolution)<br>
+                        It also displays a focus toggle switch and image display size controls.</p>
+                    </li>
+                    <li> <p>It an take a little time for a changed value of shutter, ISO, or Frame Size to take affect.<br>
+                        ISO will take at least 10 seconds.</p>
+                    </li>
+                    <li>
+                        <p>
+                            The <b>frame size</b> (resolution) sets the size of the image taken by the camera.  The smaller it is the faster the solver will work.<br>
+                            However smaller images are down sampled and may lose star images.  You need to find a trade off between speed and desired resolution.
+                        </p>
+                    </li>
+                    <li>
+                        <p>
+                            The Focus Bar shows the amount of contrast in the image.  Higher contrast is usually a good indication of good focus.
+                             The bar will change values as you slowly adjust focus.  Try to adjust for maximum value.
+                        </p>
+                    </li>
+                    <li>
+                        <p>
+                            The <b>+/- zoom buttons change the size of the image.</b>
+                        </p>
+                    </li>
+
+                </ul>
+            </div>
+            <div id="solutionHelp" class="collapse">
+                
+                <ul class="nightColor list-unstyled">
+                    <li><p>You can clear the log display.</p>    </li>
+                    <li> <p>
+                            You can show the solution (input image with labeled stars and constellation lines)<br>
+                            This will show after the solution is found.
+                        </p>
+                    </li>
+                    <li>
+                        <p>
+                            You can display what the solver thinks are stars in the image.
+                        </p>
+  
+                    </li>
+                    <li> <p>  You can configure an observing session. </p>
+                        <ul class = "nightColor list">
+                            <li> <p> You can save either or both the input image or the resulting location for each solved imaged in the observing history.<br>
+                            You can figure what gets saved using the Observing session form. </p>  </li>
+                            <li>
+                                <p>
+                                    You can configure how much the solved image location must change before it saves a new position and image.
+                                </p>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                
             </div>
 
             <div class="row">
@@ -273,6 +361,7 @@
         </div>
 
 
+        
         <div id="skyConfig" class="collapse">
             <div class="btn-group" role="group" aria-label="b">
 
@@ -302,12 +391,16 @@
                         {% endfor %}
 
                 </select>
+                <label class=" text-danger" style="margin-left:20px;" for="formatSelect">Image Format:</label>
+                <select class=" form-control-sm nightColor"  id="formatSelect">
+                        {% for datum in skyFormatData %}
+                        <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                        {% endfor %}
 
-                <div class="pt-3 nightColor">
-                    focus
-                    <label class="switchT nightCOlor">
-                        <input type="checkbox" id="doFocus" data-toggle="collapse" data-target="#collapseFocusBar" onclick="showFocus()">
-                        <span class="sliderT round"></span>
+                </select>
+                <div class="nightColor">
+                        <button type="button" class="nightColor" style="margin-left:10px; margin-right:10px;" id="doFocus" 
+                        data-toggle="collapse" data-target="#collapseFocusBar" onclick="showFocus()">Focus bar</button>
                       </label>
                 </div>
 
@@ -335,22 +428,22 @@
 
                     <form action="/applySolve2" method="POST">
                         <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Image Field Size </legend>
-                    <input type="radio" id="aPP" name="FW" value="aPP" checked>
-                    <label for="aPP">Arc Seconds per Pixel  :</label><input width = "100" class="nightColor" type="number" name="aPPValue" value="{{solveP['PPA']}}"> For 16mm lens try 40<br>
-                    <input type="radio"  id="FW2" name="FW" value="FieldWidthDeg">
-                    <label for="FW2">Field Width Degrees    :</label><input class="nightColor" name="fieldValue" type="number" value = "{{solveP['FieldWidth']}}"><br>
-                    <input type="radio" id="other" name="FW" value="other">
+                    <input type="radio" id="FieldWidthModeaPP" name="FieldWidthMode" value="FieldWidthModeaPP" {{ solveP['FieldWidthModeaPP']}}>
+                    <label for="FieldWidthModeaPP">Arc Seconds per Pixel  :</label><input width = "100" class="nightColor" type="number" name="aPPValue" value="{{solveP['aPPValue']}}"> For 16mm lens try 40<br>
+                    <input type="radio"  id="FieldWidthModeField" name="FieldWidthMode" value="FieldWidthModeField"  {{ solveP['FieldWidthModeField']}}>
+                    <label for="FieldWidthMOdeField">Field Width Degrees    :</label><input class="nightColor" name="fieldValue" type="number" value = "{{solveP['fieldValue']}}"><br>
+                    <input type="radio" id="FieldWidthModeOther" name="FieldWidthMode" value="FieldWidthModeOther" {{ solveP['FieldWidthModeOther']}}>
                     <label for="other">Software Determined (takes longer to solve)</label>
                 </fieldset>
                     <br>  
                     <label for="CPUtimeout">Max time for Solve</label>
-                    <input type = "number" id="CPUtimeout" class="nightColor" value = "{{solveP['Timeout']}}"> Seconds<br>
+                    <input type = "number" id="CPUtimeout" name="CPUTimeout" class="nightColor" value = "{{solveP['maxTime']}}"> Seconds<br>
                     <label for="solveDepth">Depth</label>
-                    <input type = "number" id="SolveDpeth" class="nightColor" value = "{{solveP['Depth']}}"> <br>
+                    <input type = "number" id="SolveDpeth" name = "solveDepth" class="nightColor" value = "{{solveP['solveDepth']}}"> <br>
                     <label for="SolveSigma">Sigma</label>
-                    <input type = "number" id="SolveSigma" class="nightColor" value = "{{solveP['Sigma']}}"> 
+                    <input type = "number" id="SolveSigma" name = "solveSigma" class="nightColor" value = "{{solveP['solveSigma']}}"> 
                     <label for = "searchRadius"> Search Radius in Deg from last solved location (blank for do not use)  :</label>
-                    <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius" value = "{{solveP['SearchRadius']}}" ><br>
+                    <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius" value = "{{solveP['searchRadius']}}" ><br>
 
                     <input type="submit" class="btn nightColor" value="Submit">
                 </form>
@@ -378,29 +471,40 @@
                     <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Observing log </legend>
                         <p> Save each solved postion in a file for later play back to Skysafari.<br>
                             Can also save each image.</p>
-                    <input type="checkbox" id="saveImage" value="on", name="saveImages" {{ 'checked' if obsParms['saveImage'] else ''}} >
-                    <label for="saveImage">Save each image if logging is enabled.</label>   
+                    <div>
+                        <a class="btn nightColor" role="button" href="/static/obs.log"
+                            download="observinglog.txt" style="margin:20px; ""> Download observing log text file</a>
+
+                        <button class="btn nightColor" id="clearImages">clear observing history images</button>
+                        <button class="btn nightColor" id="downloadImages"> Download history images as a zip</button></div>
+                        <a class="btn nightColor" role="button" href="/zip"
+                            download="historyImages.zip" style="margin:20px; ""> Download images as a zip</a>
+
+                    <input type="checkbox" id="saveImages", name="saveImages" {{ 'checked' if obsParms['saveImages'] else ''}} >
+                    <label for="saveImages">Save each solved image to history.</label>   
+                    <label style = "margin-left:20px;" for = "delta"> Delta of position needed to be different in order to be saved. (in degees) :</label>
+                    <input type="number" step=".01" name="deltaDiff" value = {{obsParms['obsDelta' ] }} class="nightColor">
                     <br>
-                    <input type="radio" id="SaveObS" name="SaveOBS" {{ 'checked' if obsParms['savePosition'] else ''}}>
+                    <input type="checkbox" style="margin-left: 30px;" id="SaveObS" name="SaveOBS" {{ 'checked' if obsParms['savePosition'] else ''}}>
                     <label for="SaveObs">Append each solved position to observing log.</label><br>
  
-                    <label for = "delta"> Delta of position needed to be different in order to be saved. (in degees) :</label>
-                    <input type="number" step=".01" name="deltaDiff" value = {{obsParms['obsDelta' ] }} class="nightColor">
+
                     <br>
                     <input type="submit" class="btn nightColor" value="Submit">
                     </fieldset>
                 </form>
                 <br>
                 <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Observing log replay </legend>
-                <a class="btn nightColor" role="button" href="/static/obs.log"
-                download="observinglog.txt" style="margin:20px; ""> Download observing log </a>
+
     
                 Replay of observations (send each to SykySafari)<button style="margin:20px"; id="startObs"; class="btn nightColor">Start </button>
+                <button class="btn nightColor" style="margin-right: 30px" id = "clearObsLog"> clear Observing log</button>
                 <div> <button class="btn nightColor" style= "margin:10px;" id="prevObs"> < </button>
 
                     <button class="btn nightColor" style= "margin:10px;" id="nextObs"> > </button>
                     <input class="nightColor" type = "text"; id="currentObs"; size="80"> </input>
                 </div>
+
                 </fieldset>
 
 
@@ -440,12 +544,19 @@
         <!-- SCRIPTS  -------------------------------------------->
 
         <script>
+        function testValue(value) {
+            console.log('value',value)
+        }
+
             $(document).ready(function(){
-                setIniShutter('{{cameraParms['shutter']}}');
+                setIniShutter('{{ cameraParms['shutter'] }}');
+                testValue('{{ solveP['FieldWidthMode']}}');
 
                 setIniISO('{{cameraParms['ISO']}}');
 
                 setIniFrame('{{cameraParms['Frame']}}');
+
+                setIniFormat('{{cameraParms['format']}}');
             });
             // Get the modal solve param config
             var solveParamsModal = document.getElementById("solveParamsModal");
@@ -616,8 +727,8 @@
             var intervalID;
 
             function showFocus() {
-                var f = document.getElementById("doFocus")
-                if (f.checked == true) {
+                var f = document.getElementById("collapseFocusBar")
+                if (f.style.display != "none") {
                     intervalID = setInterval(updateFocus, 500);
                     console.log('setup focus');
                 } else {

@@ -78,13 +78,14 @@ class skyCamera():
     abortMode = False
     runMode = True
     cameraStopped = True
-
-    def __init__(self, shutter=1000000, ISO=800, resolution=(2000,1500)):
+    format = 'jpeg'
+    def __init__(self, shutter=1000000, ISO=800, resolution=(2000,1500), format = 'jpeg'):
         self.camera = picamera.PiCamera()
         self.camera.resolution = (2000,1500)
         self.shutter=shutter
         self.ISO=ISO
         self.resolution=resolution
+        self.format = format
         self.setupGain()
         self.thread = threading.Thread(target=self._thread)
         self.thread.start()
@@ -116,6 +117,12 @@ class skyCamera():
         self.camera.resolution = res
         self.runMode = True
 
+    def setFormat(self,type):
+        self.format = type
+        self.runMode = False
+        while not self.cameraStopped:
+            time.sleep(.2)
+        self.runMode = True
     def setShutter(self, value):
         self.camera.shutter_speed = value
 
@@ -182,16 +189,17 @@ class skyCamera():
             if self.abortMode:
                 break
             print ("camera started")
-            for _ in self.camera.capture_continuous(stream, 'jpeg',
+            for _ in self.camera.capture_continuous(stream, self.format,
                                                     use_video_port=False):
 
+
+                # return current frame
+                stream.seek(0)
+                yield stream.read()
                 if not self.runMode:
                     self.cameraStopped = True
                     print ("camera stopped")
                     break
-                # return current frame
-                stream.seek(0)
-                yield stream.read()
                 self.cameraStopped = False
 
                 # reset stream for next frame

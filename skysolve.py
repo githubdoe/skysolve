@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, Response
+from flask import Flask, render_template, request, Response, send_file
 import time
 from camera_pi import  skyCamera
 
@@ -16,7 +16,7 @@ import math
 import json
 from shutil import copyfile
 from enum import Enum, auto
-
+import imghdr
 class Mode(Enum):
     PAUSED = auto()
     ALIGN = auto()
@@ -49,19 +49,19 @@ solve_path = os.path.join(root_path,'static')
 print ('ff',solve_path)
 
 solveCurrent = False
-showSolution = False
 triggerSolutionDisplay = False
 saveObs = False
 flag = False
 obsList = []
 ndx = 0
+lastObs = ""
 
 """
-skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'Frame': '2000x1500'},
-    'solver':{'maxTime': 20, 'sigma':9, 'depth':20, 'UselastDelta':False},
-    'observing':{'saveImage': False, 'savePosition': True , 'obsDelta': .1}}
+skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'Frame': '2000x1500','format': 'jpeg'},
+    'solver':{'maxTime': 20, 'solveSigma':9, 'solveDepth':20, 'UselastDelta':False, 'FieldWidthMode':'aPP',
+        'FieldWidthModeaPP': 'checked', 'FieldWidthModeField':"", 'FieldWidthModeOther':'', 'aPPValue': 27, 'fieldValue': 14, 'searchRadius': 10},
+    'observing':{'saveImages': False, 'showSolution': False, 'savePosition': True , 'obsDelta': .1}}
 """
-
 def saveConfig():
     with open('skyConfig.txt', 'w') as f:
         json.dump(skyConfig, f) 
@@ -74,46 +74,46 @@ for i in range (130):
 with open('skyConfig.txt') as f:
     skyConfig = json.load(f)
 
+
+
+imageName = 'cap.'+skyConfig['camera']['format']
+
 #print (skyConfig)
 skyCam = None
 
-
-
-
-
 def solveThread():
     global skyStatusText, focusStd, solveCurrent, flag
-    print ('solveThread()')
+
     while True:
         if flag:
-            print ("framestack", len(frameStack))
             flag = False
         while len(frameStack) == 0:  
             if solveCurrent:
                 solveCurrent = False
                 print ('solveing source')
-                solve(os.path.join(solve_path,'cap.jpg'))
+                solve(os.path.join(solve_path,imageName))
                 continue    
             pass
         #skyStatusText = datetime.now().strftime("%H:%M:%S")
         #skyStatusText = FileCamera.current
 
-        print ('solveThread image', skyStatusText, len(frameStack))
-        #with open("cap.jpg", "wb") as f:
+
+        #with open(imageName, "wb") as f:
             #f.write(frame)
         if len(frameStack) == 0:
             print ('empty stack', len(frameStack))
             continue
-        with open(os.path.join(solve_path,"cap.jpg"), "wb") as f:
+        with open(os.path.join(solve_path,imageName), "wb") as f:
             try:
-                f.write(frameStack.pop())
+                fr = frameStack.pop()
+                type = imghdr.what("", h= fr)
+                print ('image type is ', type)
+                f.write(fr)
                 name = nameStack.pop()
             except Exception as e:
                 print (e)
                 solveLog.append(str(e) + '\n')
                 continue
-
-
 
         if len(frameStack)> 0:
             print ('stack  not empty', len(frameStack))
@@ -121,17 +121,19 @@ def solveThread():
             nameStack.clear()
 
         try:
-            img = Image.open("cap.jpg").convert("L")
+            img = Image.open(os.path.join(solve_path,imageName)).convert("L")
             imgarr = numpy.array(img) 
+            avg = imgarr.mean()
 
-            focusStd = f"{imgarr.std():.2f}"
+            focusStd = f"{100 * imgarr.std()/avg:.2f}"
+
 
         except Exception as e:
             print (e)
 
 def solve(fn, parms = []):
     global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, lastRA, solveStatus,\
-        showSolution, triggerSolutionDisplay, skyStatusText
+        triggerSolutionDisplay, skyStatusText, lastObs
     solving = True
     solved = ''
 
@@ -145,6 +147,8 @@ def solve(fn, parms = []):
     ppa = ''
     starNames={}
     radec = ''
+    ra = 0
+    dec = 0
     while not p.poll():
         stdoutdata = p.stdout.readline().decode(encoding='UTF-8')
         if stdoutdata:
@@ -180,7 +184,6 @@ def solve(fn, parms = []):
 
     solveStatus+= ". scale " + ppa
     
-    print("solution results", solved, showSolution)
     if not solved:
         skyStatusText = "Failed"
 
@@ -197,14 +200,32 @@ def solve(fn, parms = []):
             obsfile.close()
             print ("wrote obs log")
 
-        if skyConfig['observing']['saveImage']:
-            fn = datetime.now().strftime("%m_%d_%y_%H:%M:%S")+'.jpg'
-            copyfile(os.path.join(solve_path,"cap.jpg"), os.path.join(solve_path, 'history',fn))
+        if skyConfig['observing']['saveImages']:
+            saveimage = False
+            if skyConfig['observing']['obsDelta'] > 0:
+                print ("checking delta")
+                if lastObs:
+                    print ("there was a last obs")
+                    old = lastObs.split(" ")
+                    ra1 = math.radians(float(old[1]))
+                    dec1 = math.radians(float(old[2]))
+                    ra2 = math.radians(float(ra))
+                    dec2 = math.radians(float(dec))
+
+                    delta = math.degrees(math.acos( math.sin(dec1) * math.sin(dec2) + math.cos(dec1)* math.cos(dec2)*math.cos(ra1 - ra2)))
+                    print ('delta angle', delta)
+                    if delta > skyConfig['observing']['obsDelta']:
+                        saveimage = True
+            if saveimage:
+                fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.")+skyConfig['camera']['format']
+                copyfile(os.path.join(solve_path,imageName), os.path.join(solve_path, 'history',fn))
 
 
-        if showSolution:
+        lastObs = radec
+        if skyConfig['observing']['showSolution']:
             triggerSolutionDisplay = True
         skyStatusText = radec.rstrip() + " " + constellations
+        print ('skyConfig', triggerSolutionDisplay)
         print ("from solve skystatusText is",skyStatusText)
         
     solving = False
@@ -221,12 +242,13 @@ def index():
     shutterValues = ['.01', '.05', '.1','.15','.2','.5','.7','1','1.5', '2.', '3','4','5','10']
     skyFrameValues = ['400x300', '640x480', '800x600', '1024x768', '1280x960', '1920x1440', '2000x1000', '2000x1500']
     isoValues = ['100','200','400','800']
+    formatValues=['jpeg','png']
     solveParams = { 'PPA': 27, 'FieldWidth': 14, 'Timeout': 34, 'Sigma': 9 , 'Depth':20, 'SearchRadius': 10}
     if not skyCam:
-        skyCam= skyCamera(shutter  = int(1000000 * float(skyConfig['camera']['shutter'] )))
+        skyCam= skyCamera(shutter  = int(1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'] )
     
-    return render_template('template.html', shutterData = shutterValues, skyFrameData = skyFrameValues,
-            skyIsoData = isoValues, solveP = solveParams, obsParms = skyConfig['observing'], cameraParms=skyConfig['camera'])
+    return render_template('template.html', shutterData = shutterValues, skyFrameData = skyFrameValues, skyFormatData = formatValues,
+            skyIsoData = isoValues, solveP = skyConfig['solver'], obsParms = skyConfig['observing'], cameraParms=skyConfig['camera'])
 
 # 
 
@@ -260,8 +282,11 @@ def Align():
     global skyStatusText, skyCam, state
     if skyCam:
         skyCam.resume()
-    state = Mode.ALIGN
-    skyStatusText = 'Align Mode'
+    if state is Mode.PLAYBACK:
+        skyStatusText = 'you must [press replay images first to Cancel playback].'
+    else:
+        state = Mode.ALIGN
+        skyStatusText = 'Align Mode'
     return Response(skyStatusText)
 
 @app.route('/Solve', methods = ['POST'])
@@ -279,7 +304,7 @@ def Solving():
 def setISO(value):
     global solveLog, skyStatusText, isoglobal
     solveLog.append("ISO changing will take 10 seconds to stabilize gain.\n")
-    skyStatusText = "changing to ISO" + value
+    skyStatusText = "changing to ISO " + value
     isoglobal = value
     skyCam.setISO(value)
 
@@ -295,6 +320,17 @@ def setFrame(value):
     saveConfig()
     return Response(status = 204)
 
+@app.route('/setFormat/<value>', methods = ['POST'])
+def setFormat(value):
+    global skyStatusText, imageName
+    skyStatusText = "changing Image Format to " + value
+    imageName = 'cap.'+value
+    skyCam.setFormat(value)
+    skyConfig['camera']['format'] = value
+    saveConfig()
+
+    return Response(status = 204)
+
 @app.route('/setShutter/<value>', methods = ['POST'])
 def setShutter(value):
     print ("shutter value", value)
@@ -305,18 +341,34 @@ def setShutter(value):
 
 @app.route('/showSolution/<value>',methods = ['POSt'])
 def setShowSolutions(value):
-    global showSolution
+    global skyConfig
     print ('show solutions', value)
     if (value == '1'):
-        showSolution = True
-    else :
-        showSolution = False
-    print ("showSolution is", showSolution)
+        skyConfig['observing']['showSolution']= value == '1'
+    saveConfig()
     return Response(status = 204)
 
 
+@app.route('/saveImages/<value>',methods = ['POST'])
+def saveSolvedImage(value):
+    global skyConfig
+    print ('save images ', value)
+    skyConfig['observing']['saveImages'] = value == '1'
+    saveConfig()
+    print ("config", skyConfig)
+    return Response(status = 204)
+@app.route('/clearObsLog', methods = ['POST'])
+
+def clearObsLog():
+    global ndx, obsList
+    ndx = 0
+    obsList.clear()
+    with open(os.path.join(solve_path,'obs.log'), 'w') as infile:
+        pass #this will write an empty file erasing the previous contents
+    return Response("observing log cleared")
 
 
+    
 @app.route('/skyStatus', methods=['post'])
 def skyStatus():
     global skyStatusText
@@ -339,20 +391,22 @@ def gen():
         solveT.start()
  
     while True:
-        #print ("gen ",nextImage, testMode)
+        #print ("gen ",nextImage, state)
         if state is Mode.ALIGN or state is Mode.SOLVING:
+            print ("getting frame from camera")
             frame = skyCam.get_frame()
+            print ("received frame")
             skyStatusText = "Camera running"
             frameStack.append(frame)
             nameStack.append('camera')
             flag = True
-            skyStatusText = datetime.now().strftime("%H:%M:%S")
-            solveLog.append(skyStatusText + '\n')
-            #with open("cap.jpg", "wb") as f:
+            skyStatusText = 'image ' + datetime.now().strftime("%H:%M:%S")
+            #with open(imageName, "wb") as f:
                 #f.write(frame)
             yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
         else:
+
             if nextImage:
                 print ("gen next image")
                 nextImage = False
@@ -372,7 +426,7 @@ def gen():
                     b'Content-Type: image/png\r\n\r\n' + frame + b'\r\n')
 
 
-            elif triggerSolutionDisplay and showSolution:
+            elif triggerSolutionDisplay and skyConfig['observing']['showSolution']:
                 print ("show solution")
                 triggerSolutionDisplay = False
                 fn = os.path.join(solve_path, 'cap-ngc.png')
@@ -387,13 +441,26 @@ def gen():
                     time.sleep(2)
                     yield (b'--frame\r\n'
                     b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        
+        #print ('no action', state, nextImage)
 
 @app.route('/applySolve2', methods=['POST'])
 def apply():
     print ("submit")
     print (request.form.values)
     req = request.form
-    print ("fw =" ,req.get("FW"), "appValue = ",req.get("aPPValue"))
+
+    mode = skyConfig['solver']['FieldWidthMode']= req.get("FieldWidthMode")
+    skyConfig['solver']['FieldWidthModeaPP'] = skyConfig['solver']['FieldWidthModeField'] = skyConfig['solver']['FieldWidthOther'] = ''
+    skyConfig['solver'][mode] = 'checked'
+    print ('config', mode, skyConfig)
+    skyConfig['solver']['fieldValue'] = float(req.get("fieldValue"))
+    skyConfig['solver']['aPPValue'] = float(req.get("aPPValue"))
+    skyConfig['solver']['searchRadius'] = float(req.get("searchRadius"))
+    skyConfig['solver']['solveSigma'] = int(req.get("solveSigma"))
+    skyConfig['solver']['solveDepth'] = int(req.get("solveDepth"))
+    saveConfig()
+
     #print (request.form.['submit_button'])
     return Response(status=204)
 
@@ -488,10 +555,50 @@ def prevObs():
 def solveThis():
     global solveCurrent
     solveCurrent = True
-    print ("solve current set")
+
     skyStatusText="Solving"
     return Response(skyStatusText)
+from zipfile import ZipFile
 
+
+# Zip the files from given directory that matches the filter
+def zipFilesInDir(dirName, zipFileName):
+   # create a ZipFile object
+   with ZipFile(zipFileName, 'w') as zipObj:
+        valid_images = [".jpg",".png"]
+        imgs = []
+        for f in os.listdir(dirName):
+            ext = os.path.splitext(f)[1]
+            if ext.lower() not in valid_images:
+                continue
+            imgs.append(f)
+        print ("images", imgs)
+        for filename in imgs:
+            # create complete filepath of file in directory
+            filePath = os.path.join(solve_path,'history', filename)
+            # Add file to zip
+            zipObj.write(filePath,filename)
+
+@app.route('/clearImages', methods=['POST'])
+def clearImages():
+    global solve_path
+    valid_images = [".jpg",".png", ".jpeg"]
+    imgs = []
+    for f in os.listdir(os.path.join(solve_path, 'history')):
+        ext = os.path.splitext(f)[1]
+        if ext.lower() not in valid_images:
+            continue
+        os.remove(f)
+    return Response("images deleted")
+
+@app.route('/zip', methods=['GET'])
+def zipImages():
+    global solve_path
+    print ("download zip file")
+    zipFilesInDir(os.path.join(solve_path, 'history'), os.path.join(solve_path,'history','history.zip'))
+    return send_file(os.path.join(solve_path,'history','history.zip'),
+                     attachment_filename='history.zip',
+                     mimetype='application/zip')
 
 
 @app.route('/video_feed')

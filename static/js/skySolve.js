@@ -21,6 +21,15 @@ sks.consts = {
         var x = $('#frameSelect');
         return x;
     },
+    format: function() {
+        var x = $('#formatSelect');
+        return x;
+    },
+    saveObs: function() {
+        var x = $('#saveObs');
+        return x;
+    },
+
 
     showHistory: 0,
     showSolution: 0
@@ -35,13 +44,14 @@ function setIniISO( ISOVal){
 function setIniFrame( frameVal){
     sks.consts.frame().val(frameVal);
 }
+function setIniFormat(formatVal){
+    sks.consts.format().val(formatVal);
+}
 
 $(document).ready(function(){
 
     var checkBox = document.getElementById("autoStatusCB");
-    console.log("the check box is ", checkBox)
     if (checkBox.checked == true) {
-        console.log("checked is true ", checkBox)
         setTimeout(updateStatusField, 5000);
     }
 
@@ -74,6 +84,21 @@ $(document).ready(function(){
             }, function(result) {});
     });
 
+    sks.consts.format().change(
+        function() {
+            let x = sks.consts.format().val();
+            $.post("/setFormat/" + x, data = {
+                suggest: x
+            }, function(result) {});
+    });
+
+    sks.consts.saveObs().change(
+        function() {
+            let x = sks.consts.saveObs().val();
+            $.post("/saveObs/" + x, data = {
+                suggest:x
+            }, function(result) {});            
+    });
 
     function ajax_get_Status(cmdroute) {
         $.ajax({
@@ -142,12 +167,23 @@ $(document).ready(function(){
             ajax_get_Obs('/prevImage')
         })
 
+    $('#clearObsLog').click(
+        function() {
+            ajax_get_Status('/clearObsLog')
+        })
+    
 
     $('#solveThis').click(
         function() {
             console.log("imageStep pressed")
             ajax_get_Status('/solveThis')
         })
+    $('#clearImages').click(
+        function(){
+            ajax_get_status('/clearImages')
+        }
+    )
+    
 
     $('#testMode').click(
         function() {
@@ -188,6 +224,23 @@ $(document).ready(function(){
                 let x = sks.consts.showSolution;
 
                 $.post("/showSolution/" + x, data = {
+                    suggest: x
+                }, function(result) {});
+            }
+        ) 
+        $('#saveImages').click(
+            function() {
+
+                var checkBox = document.getElementById("saveImages");
+                if (checkBox.checked == true) {
+                    sks.consts.showSolution = 1;
+                }
+                else {
+                    sks.consts.showSolution = 0;
+                }
+                let x = sks.consts.showSolution;
+
+                $.post("/saveImages/" + x, data = {
                     suggest: x
                 }, function(result) {});
             }
