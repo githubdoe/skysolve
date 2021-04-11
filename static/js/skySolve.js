@@ -180,7 +180,7 @@ $(document).ready(function(){
         })
     $('#clearImages').click(
         function(){
-            ajax_get_status('/clearImages')
+            ajax_get_Status('/clearImages')
         }
     )
     

@@ -434,7 +434,7 @@
                     <label for="FieldWidthMOdeField">Field Width Degrees    :</label><input class="nightColor" name="fieldValue" type="number" value = "{{solveP['fieldValue']}}"><br>
                     <input type="radio" id="FieldWidthModeOther" name="FieldWidthMode" value="FieldWidthModeOther" {{ solveP['FieldWidthModeOther']}}>
                     <label for="other">Software Determined (takes longer to solve)</label>
-                </fieldset>
+                </fieldset>   FieldWidthOther
                     <br>  
                     <label for="CPUtimeout">Max time for Solve</label>
                     <input type = "number" id="CPUtimeout" name="CPUTimeout" class="nightColor" value = "{{solveP['maxTime']}}"> Seconds<br>
@@ -476,9 +476,9 @@
                             download="observinglog.txt" style="margin:20px; ""> Download observing log text file</a>
 
                         <button class="btn nightColor" id="clearImages">clear observing history images</button>
-                        <button class="btn nightColor" id="downloadImages"> Download history images as a zip</button></div>
                         <a class="btn nightColor" role="button" href="/zip"
                             download="historyImages.zip" style="margin:20px; ""> Download images as a zip</a>
+                        </div>
 
                     <input type="checkbox" id="saveImages", name="saveImages" {{ 'checked' if obsParms['saveImages'] else ''}} >
                     <label for="saveImages">Save each solved image to history.</label>   
@@ -528,7 +528,7 @@
        </div>
 
  
-        <div class="collapse" id="collapseFocusBar">
+        <div class="collapse" id="collapseFocusBar" data-shown="false">
             <div id="myProgress"></div>
             <div id="myBar"></div>
         </div>
@@ -537,7 +537,7 @@
             <img src="{{ url_for('video_feed') }}" id="skyImage" style="width:35%">
 
         </div>
-        <br>Log
+        <br>Log:
         <div style="overflow-y: scroll;  height: 300px; color:rgb(247, 130, 130); background:rgb(26, 2, 9);"  id="solveStatusText">
               initialiing camera Waiting for first Image </div>
 
@@ -710,29 +710,19 @@
 
 
         <script>
-            $(function() {
-                //window.setInterval('updateLog() ', 5000);
-            });
-
-            function updateLog() {
-                $.get('/log', function(data, status) {
-                    $('#solveLog').append('<br>' + data);
-                });
-            }
-        </script>
-
-
-
-        <script>
             var intervalID;
 
             function showFocus() {
                 var f = document.getElementById("collapseFocusBar")
-                if (f.style.display != "none") {
+                var shown = f.getAttribute("data-shown");
+                console.log("shown value is ", shown);
+                if (shown == 'false') {
                     intervalID = setInterval(updateFocus, 500);
                     console.log('setup focus');
+                    f.setAttribute("data-shown", true);
                 } else {
                     console.log('clear focus');
+                    f.setAttribute("data-shown", false);
                     clearInterval(intervalID);
                 };
 

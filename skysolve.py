@@ -82,7 +82,7 @@ imageName = 'cap.'+skyConfig['camera']['format']
 skyCam = None
 
 def solveThread():
-    global skyStatusText, focusStd, solveCurrent, flag
+    global skyStatusText, focusStd, solveCurrent, flag,state
 
     while True:
         if flag:
@@ -136,11 +136,19 @@ def solve(fn, parms = []):
         triggerSolutionDisplay, skyStatusText, lastObs
     solving = True
     solved = ''
+    fieldwidthParm = ''
+    if skyConfig['solver']['FieldWidthMode'] == 'FieldWidthModeApp':
+        field = ['-u', 'app', '-L', str(skyConfig['solver']['appValue'])]
+    elif skyConfig['solver']['FieldWidthMode'] == 'FieldWidthModeField':
+        field = ['u', 'degw', '-L', str(skyConfig['solver']['fieldValue'])]    
+    else: field = []
+    parms = parms + field
+    parms = parms + ['--cpulimit', str(skyConfig['solver']['maxTime'])]
+    if skyConfig['solver']['searchRadius']>0  and lastRA != '':
+        parms = parms + ['--ra', ra, '--dec', dec, '--radius', str(skyConfig['solver']['searchRadius'])]
+    cmd = ["solve-field", fn,"--depth" ,str(skyConfig['solver']['solveDepth']), "--sigma", str(skyConfig['solver']['solveSigma']),
+        '--overwrite'] + parms
 
-    parms = parms + ['-u', 'app', '-L', str(app), '--cpulimit', str(maxTime)]
-    if searchEnable and lastRA != '':
-        parms = parms + ['--ra', ra, '--dec', dec, '--radius', str(searchRadius)]
-    cmd = ["solve-field", fn,"--depth" ,"20", "--sigma", "9", '--overwrite'] + parms
     print ("solving ",cmd)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     solveLog.clear()
@@ -216,6 +224,8 @@ def solve(fn, parms = []):
                     print ('delta angle', delta)
                     if delta > skyConfig['observing']['obsDelta']:
                         saveimage = True
+                else:
+                    saveimage = True
             if saveimage:
                 fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.")+skyConfig['camera']['format']
                 copyfile(os.path.join(solve_path,imageName), os.path.join(solve_path, 'history',fn))
@@ -382,20 +392,20 @@ def Focus():
 
 solveT = None
 def gen():
-    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay, flag, testMode, state
+    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay, flag, testMode, state, solveCurrent
     print ('gen called')
     #Video streaming generator function.
 
     if not solveT:  #start up solver if not already running.
         solveT = threading.Thread( target = solveThread)
         solveT.start()
- 
+
     while True:
         #print ("gen ",nextImage, state)
         if state is Mode.ALIGN or state is Mode.SOLVING:
-            print ("getting frame from camera")
+
             frame = skyCam.get_frame()
-            print ("received frame")
+
             skyStatusText = "Camera running"
             frameStack.append(frame)
             nameStack.append('camera')
@@ -405,6 +415,8 @@ def gen():
                 #f.write(frame)
             yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            if state is Mode.SOLVING:
+                solveCurrent = True
         else:
 
             if nextImage:
@@ -451,7 +463,7 @@ def apply():
     req = request.form
 
     mode = skyConfig['solver']['FieldWidthMode']= req.get("FieldWidthMode")
-    skyConfig['solver']['FieldWidthModeaPP'] = skyConfig['solver']['FieldWidthModeField'] = skyConfig['solver']['FieldWidthOther'] = ''
+    skyConfig['solver']['FieldWidthModeaPP'] = skyConfig['solver']['FieldWidthModeField'] = skyConfig['solver']['FieldWidthModeOther'] = ''
     skyConfig['solver'][mode] = 'checked'
     print ('config', mode, skyConfig)
     skyConfig['solver']['fieldValue'] = float(req.get("fieldValue"))
@@ -588,7 +600,7 @@ def clearImages():
         ext = os.path.splitext(f)[1]
         if ext.lower() not in valid_images:
             continue
-        os.remove(f)
+        os.remove(os.path.join(solve_path, 'history',f));
     return Response("images deleted")
 
 @app.route('/zip', methods=['GET'])
