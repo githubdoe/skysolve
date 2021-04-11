@@ -2,7 +2,6 @@
 import io
 import time
 import picamera
-from base_camera import BaseCamera
 from fractions import Fraction
 import threading
 try:
@@ -302,31 +301,3 @@ class Camera(BaseCamera):
 
 
 """
-
-import os           
-class FileCamera(BaseCamera):
-    theCam = None
-    file_names = []
-    current = None
-    ndx = 0
-    def __init__(self):
-        relevant_path = "/home/pi/pyPlateSolve/data"
-        included_extensions = ['jpg','jpeg']
-        file_names = [fn for fn in os.listdir(relevant_path)  if any(fn.endswith(ext) for ext in ['jpg'])]
-
-        n = len(file_names)
-
-
-        
-    @staticmethod
-    def frames():
-        print('frames called')
-        while True:
-            fn = os.path.join(FileCamera.relevant_path, FileCamera.file_names[FileCamera.ndx % FileCamera.n])
-            FileCamera.current = fn
-            print ('yieding', fn)
-            with open(fn, 'rb') as infile:
-                yield infile.read()
-            FileCamera.ndx += 1
-            time.sleep(5)
-
