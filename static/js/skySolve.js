@@ -30,7 +30,7 @@ sks.consts = {
         return x;
     },
 
-
+    demoMode: false,
     showHistory: 0,
     showSolution: 0
 };
@@ -144,7 +144,23 @@ $(document).ready(function(){
             }
         });
     }
-
+    function showReplaybuttons(show){
+        var x = document.getElementById("stepNext");
+        var y = document.getElementById("stepPrev");
+        var z = document.getElementById("solveThis");
+        var zz = document.getElementById("retryNext");
+        if (show) {
+            x.style.display = "inline";
+            y.style.display = "inline";
+            z.style.display = "inline";
+            zz.style.display = "inline";
+        }  else {
+            x.style.display = "none";
+            y.style.display = "none";
+            z.style.display = "none";
+            zz.style.display = "none"; 
+        }              
+    }
 
     $('#startObs').click(
         function() {
@@ -184,27 +200,33 @@ $(document).ready(function(){
         }
     )
     
-
+    $('#demoMode').click(
+        function(){
+            if (sks.consts.demoMode) {
+                showReplaybuttons(false);
+                sks.consts.demoMode = false;
+            }
+            else {
+                ajax_get_Status('/demoMode');
+                showReplaybuttons(true);
+                sks.consts.demoMode=true;
+            }
+        }
+    )
+    
     $('#testMode').click(
         function() {
-            ajax_get_Status('/testMode');
+            if (!sks.consts.demoMode)
+                ajax_get_Status('/testMode');
             var x = document.getElementById("stepNext");
-            var y = document.getElementById("stepPrev");
-            var z = document.getElementById("solveThis");
-            var zz = document.getElementById("retryNext");
             if (x.style.display === "none") {
-                x.style.display = "inline";
-                y.style.display = "inline";
-                z.style.display = "inline";
-                zz.style.display = "inline";
+                showReplaybuttons(true);
             }                   
             else {
-                x.style.display = "none";
-                y.style.display = "none";
-                z.style.display = "none";
-                zz.style.display = "none";
+                showReplaybuttons(false);
             }
         })
+
         $('#ClearLog').click(
             function(){
                 var text = document.getElementById('solveStatusText');

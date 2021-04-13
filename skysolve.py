@@ -44,8 +44,11 @@ testFiles = []
 nextImage=False
 root_path = os.getcwd()
 
-test_path = '/home/pi/pyPlateSolve/data'
+
 solve_path = os.path.join(root_path,'static')
+history_path = os.path.join(solve_path, 'history')
+demo_path = os.path.join(solve_path, 'demo')
+test_path = history_path
 print ('ff',solve_path)
 
 solveCurrent = False
@@ -433,7 +436,7 @@ def gen():
                     frame = infile.read()
                     frameStack.append(frame)
                     nameStack.append(fn)
-                    solveLog.append('next image ' + fn)
+                    solveLog.append('next image ' + fn + '\n')
                     yield (b'--frame\r\n'
                     b'Content-Type: image/png\r\n\r\n' + frame + b'\r\n')
 
@@ -476,6 +479,23 @@ def apply():
     #print (request.form.['submit_button'])
     return Response(status=204)
 
+@app.route('/demoMode', methods=['POST'])
+def demoMode():
+    global testMode, testFiles, testNdx, nextImage, frameStack, nameStack, solveLog, state
+
+    skyStatusText = 'Demo images will be set for playback'
+    state = Mode.PLAYBACK
+    testFiles = [demo_path + '/' + fn for fn in os.listdir(demo_path)  if any(fn.endswith(ext) for ext in ['jpg', 'png'])]
+    testFiles.sort(key=os.path.getmtime)
+    testNdx = 0
+    nextImage = True
+    print("demo files len", len(testFiles))
+    frameStack.clear()
+    nameStack.clear()
+    solveLog = [  x+ '\n' for x in testFiles]
+
+    return Response(skyStatusText)
+
 @app.route('/testMode', methods=['POST'])
 def toggletestMode():
     global testMode, testFiles, testNdx, nextImage, frameStack, nameStack, solveLog, state
@@ -483,7 +503,7 @@ def toggletestMode():
     if  not state is  state.PLAYBACK:
         skyStatusText = 'PLAYBACK mode'
         state = Mode.PLAYBACK
-        testFiles = [test_path + '/' + fn for fn in os.listdir(test_path)  if any(fn.endswith(ext) for ext in ['jpg', 'png'])]
+        testFiles = [history_path + '/' + fn for fn in os.listdir(history_path)  if any(fn.endswith(ext) for ext in ['jpg', 'png'])]
         testFiles.sort(key=os.path.getmtime)
         testNdx = 0
         nextImage = True
@@ -491,7 +511,11 @@ def toggletestMode():
         frameStack.clear()
         nameStack.clear()
         solveLog = [  x+ '\n' for x in testFiles]
-
+        if len(testFiles) == 0:
+            skyStatusText("no image files in hisotry")
+        else :
+            skyStatusText = 'PLAYBACK mode ' + str(len(testFiles)) + " images found."
+        
     else:
         state = Mode.ALIGN
         skyStatusText = 'ALIGN Mode'
