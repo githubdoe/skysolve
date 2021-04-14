@@ -549,14 +549,14 @@
         }
 
             $(document).ready(function(){
-                setIniShutter('{{ cameraParms['shutter'] }}');
-                testValue('{{ solveP['FieldWidthMode']}}');
+                setIniShutter("{ cameraParms['shutter'] }}");
+                testValue("{{ solveP['FieldWidthMode']}}");
 
-                setIniISO('{{cameraParms['ISO']}}');
+                setIniISO("{{cameraParms['ISO']}}");
 
-                setIniFrame('{{cameraParms['Frame']}}');
+                setIniFrame("{{cameraParms['Frame']}}");
 
-                setIniFormat('{{cameraParms['format']}}');
+                setIniFormat("{{cameraParms['format']}}");
             });
             // Get the modal solve param config
             var solveParamsModal = document.getElementById("solveParamsModal");
