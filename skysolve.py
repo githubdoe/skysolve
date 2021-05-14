@@ -35,7 +35,7 @@ lastRA = ''
 solveStatus = ''
 computedPPa = ''
 frameStack = []
-nameStack = []
+
 focusStd = ''
 state = Mode.ALIGN
 
@@ -54,7 +54,7 @@ print ('ff',solve_path)
 solveCurrent = False
 triggerSolutionDisplay = False
 saveObs = False
-flag = False
+
 obsList = []
 ndx = 0
 lastObs = ""
@@ -85,11 +85,10 @@ imageName = 'cap.'+skyConfig['camera']['format']
 skyCam = None
 
 def solveThread():
-    global skyStatusText, focusStd, solveCurrent, flag,state
+    global skyStatusText, focusStd, solveCurrent,state
 
     while True:
-        if flag:
-            flag = False
+
         while len(frameStack) == 0:  
             if solveCurrent:
                 solveCurrent = False
@@ -108,11 +107,10 @@ def solveThread():
             continue
         with open(os.path.join(solve_path,imageName), "wb") as f:
             try:
-                fr = frameStack.pop()
-                type = imghdr.what("", h= fr)
-                print ('image type is ', type)
+                fr = frameStack.pop(0)
+
                 f.write(fr)
-                name = nameStack.pop()
+
             except Exception as e:
                 print (e)
                 solveLog.append(str(e) + '\n')
@@ -121,7 +119,7 @@ def solveThread():
         if len(frameStack)> 0:
             print ('stack  not empty', len(frameStack))
             frameStack.clear()
-            nameStack.clear()
+
 
         try:
             img = Image.open(os.path.join(solve_path,imageName)).convert("L")
@@ -395,7 +393,7 @@ def Focus():
 
 solveT = None
 def gen():
-    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay, flag, testMode, state, solveCurrent
+    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay, testMode, state, solveCurrent
     print ('gen called')
     #Video streaming generator function.
 
@@ -411,8 +409,8 @@ def gen():
 
             skyStatusText = "Camera running"
             frameStack.append(frame)
-            nameStack.append('camera')
-            flag = True
+
+
             skyStatusText = 'image ' + datetime.now().strftime("%H:%M:%S")
             #with open(imageName, "wb") as f:
                 #f.write(frame)
@@ -435,7 +433,7 @@ def gen():
                 with open(fn, 'rb') as infile:
                     frame = infile.read()
                     frameStack.append(frame)
-                    nameStack.append(fn)
+
                     solveLog.append('next image ' + fn + '\n')
                     yield (b'--frame\r\n'
                     b'Content-Type: image/png\r\n\r\n' + frame + b'\r\n')
@@ -481,7 +479,7 @@ def apply():
 
 @app.route('/demoMode', methods=['POST'])
 def demoMode():
-    global testMode, testFiles, testNdx, nextImage, frameStack, nameStack, solveLog, state
+    global testMode, testFiles, testNdx, nextImage, frameStack,  solveLog, state
 
     skyStatusText = 'Demo images will be set for playback'
     state = Mode.PLAYBACK
@@ -491,25 +489,23 @@ def demoMode():
     nextImage = True
     print("demo files len", len(testFiles))
     frameStack.clear()
-    nameStack.clear()
     solveLog = [  x+ '\n' for x in testFiles]
 
     return Response(skyStatusText)
 
 @app.route('/testMode', methods=['POST'])
 def toggletestMode():
-    global testMode, testFiles, testNdx, nextImage, frameStack, nameStack, solveLog, state
+    global testMode, testFiles, testNdx, nextImage, frameStack,  solveLog, state
 
     if  not state is  state.PLAYBACK:
         skyStatusText = 'PLAYBACK mode'
         state = Mode.PLAYBACK
-        testFiles = [history_path + '/' + fn for fn in os.listdir(history_path)  if any(fn.endswith(ext) for ext in ['jpg', 'png'])]
+        testFiles = [history_path + '/' + fn for fn in os.listdir(history_path)  if any(fn.endswith(ext) for ext in ['jpg','jpeg', 'png'])]
         testFiles.sort(key=os.path.getmtime)
         testNdx = 0
         nextImage = True
         print("test files len", len(testFiles))
         frameStack.clear()
-        nameStack.clear()
         solveLog = [  x+ '\n' for x in testFiles]
         if len(testFiles) == 0:
             skyStatusText("no image files in hisotry")
@@ -601,7 +597,7 @@ from zipfile import ZipFile
 def zipFilesInDir(dirName, zipFileName):
    # create a ZipFile object
    with ZipFile(zipFileName, 'w') as zipObj:
-        valid_images = [".jpg",".png"]
+        valid_images = [".jpg",".png",".jpeg"]
         imgs = []
         for f in os.listdir(dirName):
             ext = os.path.splitext(f)[1]

@@ -238,7 +238,8 @@
     </style>
 
     <body >
-      
+
+
         <div class="container-fluid ">
             <div class="row backgroud-color:white">
                 <div class="col">
@@ -265,7 +266,7 @@
                         <button type="button" class="btn nightColor" data-toggle="collapse" style="margin-right:2px;" data-target="#cameraHelp"> Camera</button>
                         <button type="button" class="btn  nightColor" data-toggle="collapse" style="margin-right:2px;" data-target="#solutionHelp">Results Config</button>
                         <button type="button" class="btn  nightColor" data-toggle="collapse" style="margin-right:2px;" data-target="#solverHelp">Solver</button>
-                        <button type="button" class="btn  nightColor" data-toggle="collapse" style="margin-right:2px;" data-target="#demoHelp">Demo</button>
+                        <button type="button" class="btn  nightColor" data-toggle="collapse" style="margin-right:2px;" data-target="#demoHelp">History and Demo</button>
                 </div>
             </div>
             <div id="helpScreen" class="collapse">
@@ -316,36 +317,60 @@
 
                 </ul>
             </div>
+ 
             <div id="solutionHelp" class="collapse">
+
+                <h5 class = "nightColor">Results Config</h5>
+                <dl class=" row nightColor">
+                    <dt class = "col-sm-2">Clear log</dt>
+                    <dd class="col-sm-4">Clears the log display on the screen.</dd>
+                    <div class="w-100"></div>
+
+                <dt class="col-sm-2">Show found stars</dt>
+                    <dd class = "col-sm-4">Displays what the solver thinks are stars in the image. </dd>
+                    <div class = "w-100"></div>
+
+                <dt class="col-sm-2">Setup observing session</dt>
+                    <dd class="col-sm-5"> Configure an observing session.
+                    <div class="w-100"></div>
+
+                        <ul class = "nightColor list">
+                            <li> <p> Save either or both the input image or the resulting location for each solved imaged in the observing history.<br>
+                            You can setup what gets saved using the <b> Setup Observing session</b> button. </p>  </li>
+                            <li>
+                                <p>
+                                    Set how much the solved location must change before it saves a new position and image.
+                                </p>
+                            </li>
+                        </ul>
+                    </dd>
                 
+            </div>
+            <div id="demoHelp" class="collapse">
                 <ul class="nightColor list-unstyled">
-                    <li><p>You can clear the log display.</p>    </li>
-                    <li> <p>
-                            You can show the solution (input image with labeled stars and constellation lines)<br>
-                            This will show after the solution is found.
+                    <li>
+                        <p>
+                            <h5>History</h5>
+                            Images that solve to a star location can be saved in the history for later review as setup by the <b>Results cfg</b> button.
+                            To enable history images press the <b>"Replay Images"</b> button.
                         </p>
                     </li>
                     <li>
                         <p>
-                            You can display what the solver thinks are stars in the image.
+                            The <b>Replay images</b> button enables the replay controls and displays the names of the images
+                             it finds in the history on the log display.  It also ties to dislay the first image where a camera image would appear.<br>  Sometimes that fails but if you press the 
+                             refresh button.
                         </p>
-  
                     </li>
-                    <li> <p>  You can configure an observing session. </p>
-                        <ul class = "nightColor list">
-                            <li> <p> You can save either or both the input image or the resulting location for each solved imaged in the observing history.<br>
-                            You can figure what gets saved using the Observing session form. </p>  </li>
-                            <li>
-                                <p>
-                                    You can configure how much the solved image location must change before it saves a new position and image.
-                                </p>
-                            </li>
-                        </ul>
+                    <li>
+                        <h5>Demo</h5>
+                        <p>Demo enables replay images mode and then directs the playback mode to a few prerecorded sky images that you can try out to solve in<br>
+                             replay images mode. It is handy for to play with before you have actual images of your own.
+
+                        </p>
                     </li>
                 </ul>
-                
             </div>
-
             <div class="row">
                 <div class="col mx-2">
                     <label class="form-check-label nightColor">
@@ -453,12 +478,19 @@
 
         <!-- The Modal  for stars image-->
         <div id="starsModal" class="modal">
-
             <!-- Modal content -->
             <div class="modal-content">
                 <span id="starsClose" class="close">&times;</span>
                 <img src="/static/cap-objs.png" id="starsSrc"/>
 
+            </div>
+        </div>
+
+        <!-- The Modal for solved image-->
+        <div id="solvedImageModal" class="modal">
+            <div class="modal-content">
+                <span id="solutionClose" class="close">&times;</span>
+                <img src="/static/cap-ngc.png" id="solutionSrc"/>
             </div>
         </div>
 
@@ -517,10 +549,7 @@
         <div id="solveHistory" class="collapse" >
             <button type="button" class="btn nightColor" id="ClearLog" >Clear Log</button>
 
-            <input  type="checkbox" id="showSolutionCB" >
-            <label class="form-check-label">  Show Solution
-
-             </label>
+            <button  type="button" class = "btn nightColor" id="showSolution" >Show Solution</button>
              
              <button type="button" class="btn nightColor" id="ShowStars" >show found stars</button>
              <button type="button" class="btn nightColor" id="observingSession"> setup observing session</button>
@@ -602,6 +631,29 @@
             starsModal.style.display = "none";
             }
 
+
+
+            // Get the button that opens the modal image
+            var btn = document.getElementById("showSolution");
+
+            // Get the <span> element that closes the modal
+            var solutionspan = document.getElementById("solutionClose");
+
+            // When the user clicks on the button, open the modal
+            btn.onclick = function() {
+                var src = document.getElementById("solutionSrc");
+                var d = new Date();
+                var n = d.getTime();
+                var fn = "/static/cap-ngc.png";
+                var x = fn.concat( "?dummy=",n,"?");
+                src.src = x
+                solvedImageModal.style.display = "block";
+            }
+
+            // When the user clicks on <span> (x), close the modal
+            solutionspan.onclick = function() {
+                solvedImageModal.style.display = "none";
+            }
 
             // Get the button that opens the modal image
             var btn = document.getElementById("observingSession");
