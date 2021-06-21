@@ -17,6 +17,8 @@ import json
 from shutil import copyfile
 from enum import Enum, auto
 import imghdr
+
+
 class Mode(Enum):
     PAUSED = auto()
     ALIGN = auto()
@@ -31,7 +33,6 @@ searchRadius = 90
 solveLog = []
 ra = 0
 dec = 0
-lastRA = ''
 solveStatus = ''
 computedPPa = ''
 frameStack = []
@@ -48,7 +49,8 @@ root_path = os.getcwd()
 solve_path = os.path.join(root_path,'static')
 history_path = os.path.join(solve_path, 'history')
 demo_path = os.path.join(solve_path, 'demo')
-test_path = history_path
+test_path = '/home/pi/pyPlateSolve/data'
+
 print ('ff',solve_path)
 
 solveCurrent = False
@@ -59,10 +61,11 @@ obsList = []
 ndx = 0
 lastObs = ""
 
-"""
+""" 
 skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'Frame': '2000x1500','format': 'jpeg'},
-    'solver':{'maxTime': 20, 'solveSigma':9, 'solveDepth':20, 'UselastDelta':False, 'FieldWidthMode':'aPP',
-        'FieldWidthModeaPP': 'checked', 'FieldWidthModeField':"", 'FieldWidthModeOther':'', 'aPPValue': 27, 'fieldValue': 14, 'searchRadius': 10},
+    'solver':{'maxTime': 20, 'solveSigma':9, 'solveDepth':20, 'UselastDelta':False, 'FieldWidthMode':'aPP','plots':False,
+        'FieldWidthModeaPP': 'checked', 'FieldWidthModeField':"", 'FieldWidthModeOther':'', 'aPPValue': 27, 'fieldValue': 14, 'searchRadius': 10,
+        'solveVerbose':False},
     'observing':{'saveImages': False, 'showSolution': False, 'savePosition': True , 'obsDelta': .1}}
 """
 def saveConfig():
@@ -128,13 +131,13 @@ def solveThread():
 
             focusStd = f"{100 * imgarr.std()/avg:.2f}"
 
-
         except Exception as e:
             print (e)
 
 def solve(fn, parms = []):
-    global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, lastRA, solveStatus,\
+    global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, solveStatus,\
         triggerSolutionDisplay, skyStatusText, lastObs
+    startTime = datetime.now()
     solving = True
     solved = ''
     fieldwidthParm = ''
@@ -145,8 +148,11 @@ def solve(fn, parms = []):
     else: field = []
     parms = parms + field
     parms = parms + ['--cpulimit', str(skyConfig['solver']['maxTime'])]
-    if skyConfig['solver']['searchRadius']>0  and lastRA != '':
-        parms = parms + ['--ra', ra, '--dec', dec, '--radius', str(skyConfig['solver']['searchRadius'])]
+    if skyConfig['solver']['searchRadius']>0  and ra != 0:
+        print ("using last RA",ra)
+        parms = parms + ['--ra', str(ra), '--dec', str(dec), '--radius', str(skyConfig['solver']['searchRadius'])]
+    if not skyConfig['solver']['plots']:
+        parms = parms + ['-p']
     cmd = ["solve-field", fn,"--depth" ,str(skyConfig['solver']['solveDepth']), "--sigma", str(skyConfig['solver']['solveSigma']),
         '--overwrite'] + parms
 
@@ -155,17 +161,19 @@ def solve(fn, parms = []):
     solveLog.clear()
     ppa = ''
     starNames={}
+    duration = None
     radec = ''
     ra = 0
     dec = 0
+    solveLog.append("solving:\n")
     while not p.poll():
         stdoutdata = p.stdout.readline().decode(encoding='UTF-8')
         if stdoutdata:
-            solveLog.append(stdoutdata)
-            print ("stdout", str(stdoutdata))
+            if skyConfig['solver']['solveVerbose']:
+                solveLog.append(stdoutdata)
+            #print ("stdout", str(stdoutdata))
 
             if stdoutdata.startswith('Field center: (RA,Dec) = ('):
-
                 solved = stdoutdata
                 fields = solved.split()[-3:-1]
                 print ('f',fields)
@@ -173,12 +181,17 @@ def solve(fn, parms = []):
                 dec = fields[1][0:-1]
                 ra = float(fields[0][1:-1])
                 dec = float(fields[1][0:-1])
-
                 radec="%s %6.6lf %6.6lf \n"%(time.strftime('%H:%M:%S'),ra,dec)
-
-
+                file1 = open(os.path.join(solve_path,"radec.txt"),"w")#write mode 
+                file1.write(radec) 
+                file1.close() 
+                stopTime = datetime.now()
+                duration = stopTime - startTime
+                #print ('duration', duration)
 
             elif stdoutdata.startswith('Field size'):
+                print ("Field size")
+                solveLog.append(stdoutdata)
                 solveStatus +=(". " + stdoutdata.split(":")[1].rstrip())
             elif stdoutdata.find('pixel scale') > 0:
                 computedPPa = stdoutdata.split("scale ")[1].rstrip()
@@ -195,13 +208,37 @@ def solve(fn, parms = []):
     
     if not solved:
         skyStatusText = "Failed"
+        ra = 0
 
     else:
         # Write-Overwrites 
         file1 = open(os.path.join(solve_path,"radec.txt"),"w")#write mode 
         file1.write(radec) 
         file1.close() 
+        cmdPlot = ['/usr/bin/plot-constellations', '-v' ,'-w' ,'/home/pi/pyPlateSolve/skySolve/static/cap.wcs',\
+         '-B', '-C', '-N', '-o' , '/home/pi/pyPlateSolve/skySolve/static/cap-ngc.png']
+        p2 = subprocess.Popen(cmdPlot ,stdout=subprocess.PIPE)
+        ndx=0
+        stars = []
+        while not p2.poll():
+            if ndx > 1000:
+                break
+            ndx += 1
+            stdoutdata = p2.stdout.readline().decode(encoding='UTF-8')
+            if stdoutdata:
+                stars.append(stdoutdata)
+                #print (stdoutdata)
+                if 'The star' in stdoutdata:
+                    stdoutdata = stdoutdata.replace(')','')
+                    con = stdoutdata[-4:-1]
+                    if con not in starNames:
+                        starNames[con]=1
+        foundStars = ', '.join(stars).replace("\n","")
+        print ('222',foundStars)
+        foundStars = foundStars.replace("The star","")
+        solveLog.append(foundStars + "\n")
         constellations = ', '.join(starNames.keys())
+        print ("plot done", starNames)
         print (' config was',skyConfig['observing']['savePosition'])
         if skyConfig['observing']['savePosition']:
             obsfile = open(os.path.join(solve_path,"obs.log"),"a+")
@@ -235,10 +272,9 @@ def solve(fn, parms = []):
         lastObs = radec
         if skyConfig['observing']['showSolution']:
             triggerSolutionDisplay = True
-        skyStatusText = radec.rstrip() + " " + constellations
-        print ('skyConfig', triggerSolutionDisplay)
-        print ("from solve skystatusText is",skyStatusText)
-        
+        skyStatusText = foundStars + " "+str(duration) +' secs'
+
+
     solving = False
 
     return solved    
@@ -250,13 +286,13 @@ skyStatusText = 'Initilizing Camera'
 @app.route("/" , methods=['GET','POST' ])
 def index():
     global skyCam
-    shutterValues = ['.01', '.05', '.1','.15','.2','.5','.7','1','1.5', '2.', '3','4','5','10']
+    shutterValues = ['.01', '.05', '.1','.15','.2','.5','.7','.9','1', '2.', '3','4','5','10']
     skyFrameValues = ['400x300', '640x480', '800x600', '1024x768', '1280x960', '1920x1440', '2000x1000', '2000x1500']
     isoValues = ['100','200','400','800']
     formatValues=['jpeg','png']
     solveParams = { 'PPA': 27, 'FieldWidth': 14, 'Timeout': 34, 'Sigma': 9 , 'Depth':20, 'SearchRadius': 10}
     if not skyCam:
-        skyCam= skyCamera(shutter  = int(1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'] )
+        skyCam= skyCamera(shutter  = int(1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'] ,resolution = skyConfig['camera']['frame'])
     
     return render_template('template.html', shutterData = shutterValues, skyFrameData = skyFrameValues, skyFormatData = formatValues,
             skyIsoData = isoValues, solveP = skyConfig['solver'], obsParms = skyConfig['observing'], cameraParms=skyConfig['camera'])
@@ -406,12 +442,23 @@ def gen():
         if state is Mode.ALIGN or state is Mode.SOLVING:
 
             frame = skyCam.get_frame()
+            if (false ): #state is Mode.SOLVING):
+                if testNdx == len(testFiles):
+                    testNdx = 0
+                fn = testFiles[testNdx]
+                testNdx += 1
 
-            skyStatusText = "Camera running"
+                print ("image", testNdx, fn)
+
+
+                with open(fn, 'rb') as infile:
+                    frame = infile.read()
             frameStack.append(frame)
+            s =  " ".join([ str(i) for i in skyCam.status()])
 
-
-            skyStatusText = 'image ' + datetime.now().strftime("%H:%M:%S")
+            logText = 'image ' + datetime.now().strftime("%H:%M:%S ")+s 
+            solveLog.append(logText+"\n")
+            print (logText)
             #with open(imageName, "wb") as f:
                 #f.write(frame)
             yield (b'--frame\r\n'
@@ -472,6 +519,7 @@ def apply():
     skyConfig['solver']['searchRadius'] = float(req.get("searchRadius"))
     skyConfig['solver']['solveSigma'] = int(req.get("solveSigma"))
     skyConfig['solver']['solveDepth'] = int(req.get("solveDepth"))
+    skyConfig['solver']['solveVerbose'] = bool(req.get("solveVerbose"))
     saveConfig()
 
     #print (request.form.['submit_button'])
@@ -522,6 +570,8 @@ def nextImagex():
     global nextImage, testNdx
     nextImage = True
     testNdx += 1
+    if testNdx >= len(testFiles):
+        testNdx = 0
     print ('next image pressed')
     skyStatusText="next image is "+ str(testNdx)
     return Response(skyStatusText)
@@ -532,6 +582,7 @@ def retryImage():
     nextImage = True
     print ('retry image pressed')
     skyStatusText="retry image is "+ str(testNdx)
+    time.sleep(3)
     return Response(skyStatusText)
 
 @app.route('/prevImage', methods=['POST'])
@@ -539,6 +590,9 @@ def prevImage():
     global nextImage, testNdx
     if (testNdx > 0):
         testNdx -= 1
+    else:
+        testNdx = len(testFiles)-1
+
     print ('prev ndx', testNdx ,testFiles[testNdx])
     nextImage = True
     skyStatusText="next image is "+ str(testNdx)
@@ -635,9 +689,6 @@ def zipImages():
 
 @app.route('/video_feed')
 def video_feed():
-    #Video streaming route. Put this in the src attribute of an img tag.
-
-    #return Response(gen(FileCamera()),
     return Response(gen(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 

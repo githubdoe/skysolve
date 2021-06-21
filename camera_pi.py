@@ -81,6 +81,7 @@ class skyCamera():
     def __init__(self, shutter=1000000, ISO=800, resolution=(2000,1500), format = 'jpeg'):
         self.camera = picamera.PiCamera()
         self.camera.resolution = (2000,1500)
+        self.camera.framerate = Fraction(1,2)
         self.shutter=shutter
         self.ISO=ISO
         self.resolution=resolution
@@ -102,9 +103,12 @@ class skyCamera():
         self.runMode = True
 
     def setISO(self, iso):
-        self.iso = iso
+        self.ISO = iso
         self.setupGain()
-    
+
+    def status(self):
+        return [self.ISO, self.camera.shutter_speed, self.resolution]
+
     def setResolution(self,  size):
         self.resolution = size
         self.runMode = False
@@ -124,6 +128,7 @@ class skyCamera():
         self.runMode = True
     def setShutter(self, value):
         self.camera.shutter_speed = value
+        print ("new shutter speed", value)
 
     def setupGain(self):
         #make sure previous instance gain thread is not already running
@@ -143,7 +148,7 @@ class skyCamera():
         print ("cammer has stopped", self.resolution)
 
         self.camera.resolution = self.resolution
-        print ('camera framesize at init')
+        print ('camera framesize at init', self.resolution)
         self.camera.iso = self.ISO
         self.camera.exposure_mode = 'auto'
         self.camera.framerate = Fraction(1,6)

@@ -36,9 +36,11 @@ sks.consts = {
 };
 
 function setIniShutter( shutVal){
+    console.log("shutter value", shutVal)
     sks.consts.shutter().val(shutVal);
 }
 function setIniISO( ISOVal){
+    console.log("ISO val", ISOVal)
     sks.consts.ISO().val(ISOVal);
 }
 function setIniFrame( frameVal){
@@ -52,7 +54,7 @@ $(document).ready(function(){
 
     var checkBox = document.getElementById("autoStatusCB");
     if (checkBox.checked == true) {
-        setTimeout(updateStatusField, 5000);
+        setTimeout(updateStatusField, 1000);
     }
 
 

@@ -375,7 +375,7 @@
                 <div class="col mx-2">
                     <label class="form-check-label nightColor">
                       <input  type="checkbox" id="autoStatusCB" checked="checked"  class=" pl-5 form-check-input" 
-                        onclick="updateStatusField() ; checked">Update every 5 secs 
+                        onclick="updateStatusField() ; checked">Update every 1 second 
                     </label>
                 </div>
                 <div class="nightColor">Status:</div>
@@ -459,7 +459,7 @@
                     <label for="FieldWidthMOdeField">Field Width Degrees    :</label><input class="nightColor" name="fieldValue" type="number" value = "{{solveP['fieldValue']}}"><br>
                     <input type="radio" id="FieldWidthModeOther" name="FieldWidthMode" value="FieldWidthModeOther" {{ solveP['FieldWidthModeOther']}}>
                     <label for="other">Software Determined (takes longer to solve)</label>
-                </fieldset>   FieldWidthOther
+                </fieldset>   
                     <br>  
                     <label for="CPUtimeout">Max time for Solve</label>
                     <input type = "number" id="CPUtimeout" name="CPUTimeout" class="nightColor" value = "{{solveP['maxTime']}}"> Seconds<br>
@@ -469,10 +469,11 @@
                     <input type = "number" id="SolveSigma" name = "solveSigma" class="nightColor" value = "{{solveP['solveSigma']}}"> 
                     <label for = "searchRadius"> Search Radius in Deg from last solved location (blank for do not use)  :</label>
                     <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius" value = "{{solveP['searchRadius']}}" ><br>
-
+                    <label for="solveVerbose">Verbose</label>
+                    <input type="checkbox" id="solveVerbose", name="solveVerbose" {{ 'checked' if solveP['solveVerbose'] else ''}} ><br>
                     <input type="submit" class="btn nightColor" value="Submit">
                 </form>
-            </div>
+            </div> 
 
         </div>
 
@@ -578,12 +579,13 @@
         }
 
             $(document).ready(function(){
-                setIniShutter("{ cameraParms['shutter'] }}");
+
+                setIniShutter("{{ cameraParms['shutter'] }}");
                 testValue("{{ solveP['FieldWidthMode']}}");
 
                 setIniISO("{{cameraParms['ISO']}}");
 
-                setIniFrame("{{cameraParms['Frame']}}");
+                setIniFrame("{{cameraParms['frame'] }}");
 
                 setIniFormat("{{cameraParms['format']}}");
             });
@@ -736,7 +738,6 @@
         <!-- Update status and clear timeout if needed-->
         <script>
             function updateStatusField() {
-                console.log("updateStatusField called ")
                 $.ajax({
                     url: '/skyStatus',
                     type: 'post',
@@ -749,7 +750,7 @@
 
                         var checkBox = document.getElementById("autoStatusCB");
                         if (checkBox.checked == true) {
-                            setTimeout(updateStatusField, 5000);
+                            setTimeout(updateStatusField, 1000);
                         } else {
                             clearTimeout(updateStatusField);
                         }
