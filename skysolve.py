@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, Response, send_file
 import time
+
+from numpy.core import function_base
 from camera_pi import  skyCamera
 
 
@@ -24,6 +26,8 @@ class Mode(Enum):
     ALIGN = auto()
     SOLVING = auto()
     PLAYBACK = auto()
+    SOLVETHIS = auto()
+    AUTOPLAYBACK = auto()   #playback and sovlve history images without user clicking on each.
 
 app = 30
 solving = False
@@ -36,6 +40,7 @@ dec = 0
 solveStatus = ''
 computedPPa = ''
 frameStack = []
+frameStackLock = threading.Lock()
 
 focusStd = ''
 state = Mode.ALIGN
@@ -88,40 +93,61 @@ imageName = 'cap.'+skyConfig['camera']['format']
 skyCam = None
 
 def solveThread():
-    global skyStatusText, focusStd, solveCurrent,state
-
+    global skyStatusText, focusStd, solveCurrent,state, skyCam ,frameStack, frameStackLock, testNdx
+    print('solvethread')
     while True:
-
-        while len(frameStack) == 0:  
-            if solveCurrent:
-                solveCurrent = False
-                print ('solveing source')
-                solve(os.path.join(solve_path,imageName))
-                continue    
-            pass
-        #skyStatusText = datetime.now().strftime("%H:%M:%S")
-        #skyStatusText = FileCamera.current
-
-
-        #with open(imageName, "wb") as f:
-            #f.write(frame)
-        if len(frameStack) == 0:
-            print ('empty stack', len(frameStack))
+        if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
+        if state is Mode.SOLVETHIS:
+            print('thread solvethis')
+            if len(frameStack) == 0:
+                continue
+            frame = frameStack[-1][0]
+            frameStack.clear()
+            with open(os.path.join(solve_path,imageName), "wb") as f:
+                try:
+                    f.write(frame)
+                except Exception as e:
+                    print (e)
+                    solveLog.ap
+                solve(os.path.join(solve_path,imageName))
+                state = Mode.PLAYBACK
+                continue
+                    
+        else:
+            frame = skyCam.get_frame()
+
+
+        if (state is Mode.AUTOPLAYBACK):
+            if testNdx == len(testFiles):
+                testNdx = 0
+            fn = testFiles[testNdx]
+            testNdx += 1
+
+            print ("image", testNdx, fn)
+
+
+            with open(fn, 'rb') as infile:
+                frame = infile.read()
+
         with open(os.path.join(solve_path,imageName), "wb") as f:
             try:
-                fr = frameStack.pop(0)
-
-                f.write(fr)
-
+                f.write(frame)
             except Exception as e:
                 print (e)
                 solveLog.append(str(e) + '\n')
                 continue
 
-        if len(frameStack)> 0:
-            print ('stack  not empty', len(frameStack))
-            frameStack.clear()
+        frameStackLock.acquire()
+
+        frameStack.append((frame,datetime.now())) 
+        frameStackLock.release()
+
+        if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
+            solve(os.path.join(solve_path,imageName))
+            continue    
+        #else measaure contrast for focus bar
+
 
 
         try:
@@ -149,7 +175,6 @@ def solve(fn, parms = []):
     parms = parms + field
     parms = parms + ['--cpulimit', str(skyConfig['solver']['maxTime'])]
     if skyConfig['solver']['searchRadius']>0  and ra != 0:
-        print ("using last RA",ra)
         parms = parms + ['--ra', str(ra), '--dec', str(dec), '--radius', str(skyConfig['solver']['searchRadius'])]
     if not skyConfig['solver']['plots']:
         parms = parms + ['-p']
@@ -234,12 +259,10 @@ def solve(fn, parms = []):
                     if con not in starNames:
                         starNames[con]=1
         foundStars = ', '.join(stars).replace("\n","")
-        print ('222',foundStars)
         foundStars = foundStars.replace("The star","")
         solveLog.append(foundStars + "\n")
         constellations = ', '.join(starNames.keys())
-        print ("plot done", starNames)
-        print (' config was',skyConfig['observing']['savePosition'])
+
         if skyConfig['observing']['savePosition']:
             obsfile = open(os.path.join(solve_path,"obs.log"),"a+")
             obsfile.write(radec.rstrip() + " " + constellations + '\n')
@@ -251,7 +274,6 @@ def solve(fn, parms = []):
             if skyConfig['observing']['obsDelta'] > 0:
                 print ("checking delta")
                 if lastObs:
-                    print ("there was a last obs")
                     old = lastObs.split(" ")
                     ra1 = math.radians(float(old[1]))
                     dec1 = math.radians(float(old[2]))
@@ -259,7 +281,6 @@ def solve(fn, parms = []):
                     dec2 = math.radians(float(dec))
 
                     delta = math.degrees(math.acos( math.sin(dec1) * math.sin(dec2) + math.cos(dec1)* math.cos(dec2)*math.cos(ra1 - ra2)))
-                    print ('delta angle', delta)
                     if delta > skyConfig['observing']['obsDelta']:
                         saveimage = True
                 else:
@@ -292,6 +313,7 @@ def index():
     formatValues=['jpeg','png']
     solveParams = { 'PPA': 27, 'FieldWidth': 14, 'Timeout': 34, 'Sigma': 9 , 'Depth':20, 'SearchRadius': 10}
     if not skyCam:
+        print('creating cam')
         skyCam= skyCamera(shutter  = int(1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'] ,resolution = skyConfig['camera']['frame'])
     
     return render_template('template.html', shutterData = shutterValues, skyFrameData = skyFrameValues, skyFormatData = formatValues,
@@ -341,8 +363,15 @@ def Solving():
     global skyStatusText, state, skyCam
     if skyCam:
         skyCam.resume()
-    state = Mode.SOLVING
-    skyStatusText = 'Solving Mode'
+    if state is Mode.PLAYBACK:
+        state = Mode.AUTOPLAYBACK
+        skyStatusText = "Auto playback"
+    elif state is Mode.AUTOPLAYBACK:
+        state = Mode.PLAYBACK
+        skyStatusText = "Manual playback"
+    else:
+        state = Mode.SOLVING
+        skyStatusText = 'Solving Mode'
     return Response(skyStatusText)
 
 
@@ -426,41 +455,33 @@ def Focus():
     global focusStd
     return Response(focusStd)
 
-
 solveT = None
 def gen():
-    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay, testMode, state, solveCurrent
-    print ('gen called')
+    global skyStatusText, solveT, testNdx,nextImage, triggerSolutionDisplay, testMode, state, solveCurrent, frameStackLock
     #Video streaming generator function.
 
     if not solveT:  #start up solver if not already running.
         solveT = threading.Thread( target = solveThread)
         solveT.start()
-
+    lastImageTime = datetime.now()
     while True:
-        #print ("gen ",nextImage, state)
         if state is Mode.ALIGN or state is Mode.SOLVING:
+            while len(frameStack) == 0:
+                if state is Mode.PLAYBACK or state is Mode.SOLVETHIS:
+                    break
+            if state is Mode.PLAYBACK or state is Mode.SOLVETHIS:
+                continue
 
-            frame = skyCam.get_frame()
-            if (false ): #state is Mode.SOLVING):
-                if testNdx == len(testFiles):
-                    testNdx = 0
-                fn = testFiles[testNdx]
-                testNdx += 1
+            frameStackLock.acquire()
+            if frameStack[-1][1] == lastImageTime or len(frameStack) == 0:
+                frameStackLock.release()
+                continue
 
-                print ("image", testNdx, fn)
+            lastImageTime = frameStack[-1][1]
+            frame = frameStack[-1][0]
+            frameStack.clear()
+            frameStackLock.release()
 
-
-                with open(fn, 'rb') as infile:
-                    frame = infile.read()
-            frameStack.append(frame)
-            s =  " ".join([ str(i) for i in skyCam.status()])
-
-            logText = 'image ' + datetime.now().strftime("%H:%M:%S ")+s 
-            solveLog.append(logText+"\n")
-            print (logText)
-            #with open(imageName, "wb") as f:
-                #f.write(frame)
             yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
             if state is Mode.SOLVING:
@@ -468,26 +489,23 @@ def gen():
         else:
 
             if nextImage:
-                print ("gen next image")
                 nextImage = False
                 if testNdx == len(testFiles):
                     testNdx = 0
                 fn = testFiles[testNdx]
 
-                print ("image", testNdx, fn)
+                #print ("image", testNdx, fn)
                 skyStatusText = "%d %s"%(testNdx,fn)
 
                 with open(fn, 'rb') as infile:
                     frame = infile.read()
-                    frameStack.append(frame)
-
+                    frameStack.append((frame, datetime.now()))
                     solveLog.append('next image ' + fn + '\n')
                     yield (b'--frame\r\n'
                     b'Content-Type: image/png\r\n\r\n' + frame + b'\r\n')
 
 
             elif triggerSolutionDisplay and skyConfig['observing']['showSolution']:
-                print ("show solution")
                 triggerSolutionDisplay = False
                 fn = os.path.join(solve_path, 'cap-ngc.png')
 
@@ -506,7 +524,6 @@ def gen():
 
 @app.route('/applySolve2', methods=['POST'])
 def apply():
-    print ("submit")
     print (request.form.values)
     req = request.form
 
@@ -572,7 +589,7 @@ def nextImagex():
     testNdx += 1
     if testNdx >= len(testFiles):
         testNdx = 0
-    print ('next image pressed')
+
     skyStatusText="next image is "+ str(testNdx)
     return Response(skyStatusText)
 
@@ -580,7 +597,6 @@ def nextImagex():
 def retryImage():
     global nextImage, testNdx
     nextImage = True
-    print ('retry image pressed')
     skyStatusText="retry image is "+ str(testNdx)
     time.sleep(3)
     return Response(skyStatusText)
@@ -593,7 +609,6 @@ def prevImage():
     else:
         testNdx = len(testFiles)-1
 
-    print ('prev ndx', testNdx ,testFiles[testNdx])
     nextImage = True
     skyStatusText="next image is "+ str(testNdx)
     return Response(skyStatusText)
@@ -639,8 +654,9 @@ def prevObs():
 
 @app.route('/solveThis', methods=['POSt'])
 def solveThis():
-    global solveCurrent
+    global solveCurrent, state
     solveCurrent = True
+    state = Mode.SOLVETHIS
 
     skyStatusText="Solving"
     return Response(skyStatusText)
