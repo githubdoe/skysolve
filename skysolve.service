@@ -1,0 +1,12 @@
+[Unit]
+Description=sky solve 
+After=network-online.target
+
+[Service]
+Type=idle
+User=pi
+ExecStart=/home/pi/Desktop/startSkysolve.sh
+Restart=always
+
+[Install]
+WantedBy=network-online.target
