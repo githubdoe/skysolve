@@ -642,8 +642,13 @@ go()
 		echo "The WiFi password is: ${HSpass: 15}"
 		display_HS_IP
 	fi
-	echo "Press any key to continue"
-	read
+	if [ "$1" ]; then
+	echo completed.
+	else
+		echo -n "Press any key to continue"
+		read
+	fi
+
 	
 }
 
@@ -697,10 +702,30 @@ if [ $nftble = "Y" ]; then
 	echo "A nftables version will be available in the next update"
 	echo ""
 	echo "You can use the 'Autohotspot with NO Internet...' version of the script. Option 2 in the menus"
-	echo -n "Press a key to continue"
-	read
+	if [ "$1" ]; then
+	echo completed.
+	else
+		echo -n "Press a key to continue"
+		read
+	fi
+
 fi
 check_reqfiles
 check_installed
 check_wificountry
+
+if [ "$1" ] ; then 
+	case $1 in
+	1) clear ; go "AHN" ;; #Autohospot Internet
+	2) clear ; go "AHD" ;; #Autohotspot Direct
+	3) clear ; go "SHS" ;; #Static Hotspot
+	4) clear ; go "REM" ;; #Remove Autohotspot or Static Hotspot
+	5) clear ; go "SSI" ;; #Change/Add Wifi Network
+	6) clear ; go "FOR" ;; #Force Hotspot <> Force Network
+	7) clear ; go "HSS" ;; #Change Hotspot SSID and Password
+	8) clear ; exit ;;
+	esac
+else
+
 menu #show menu
+fi

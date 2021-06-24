@@ -5,7 +5,7 @@ After=network-online.target
 [Service]
 Type=idle
 User=pi
-ExecStart=/home/pi/Desktop/startSkysolve.sh
+ExecStart=/home/pi/skySolve/startSkysolve.sh
 Restart=always
 
 [Install]

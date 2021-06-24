@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #   Installs files needed for skySolve program  Script based in part on
-#	AstroRaspbianPi Raspberry Pi 3 or 4 Raspbian KStars/INDI Configuration Script
+#	AstroRaspbianPi Raspberry Pi Raspbian KStars/INDI Configuration Script
 #﻿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
 #	This script is free software; you can redistribute it and/or
 #	modify it under the terms of the GNU General Public
@@ -47,9 +47,9 @@ function checkForConnection
 		fi
 }
 
-display "Welcome to the AstroPi3 Raspberry Pi 3 or 4 Raspbian KStars/INDI Configuration Script."
+display "Welcome to the SKySolve Configuration Script."
 
-display "This will update, install and configure your Raspberry Pi 3 or 4 to work with INDI and KStars to be a hub for Astrophotography. Be sure to read the script first to see what it does and to customize it."
+display "This will update, install and configure your Raspberry Pi 4 to work with SkySolve. Be sure to read the script first to see what it does and to customize it."
 
 read -p "Are you ready to proceed (y/n)? " proceed
 
@@ -60,6 +60,7 @@ fi
 
 
 export USERHOME=$(sudo -u $SUDO_USER -H bash -c 'echo $HOME')
+
 
 # This changes the UserPrompt for the Setup Script (Necessary to make the messages display in the title bar)
 PS1='SkySolve Setup~$ '
@@ -275,7 +276,7 @@ fi
 fi
 
 
-# Installs the Astrometry.net package for supporting offline plate solves.  If you just want the online solver, comment this out with a #.
+# Installs the Astrometry.net package for supporting offline plate solves.  
 display "Installing Astrometry.net"
 sudo apt -y install astrometry.net
 
@@ -298,7 +299,7 @@ read -p "do you want to install astrometry index files? (do at least once)" answ
 if [ "$answer" == "y" ]
 then
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "Welcome to the AstroPi3 Astrometry Index Installer Script"
+echo "Welcome to the Astrometry Index Installer Script"
 echo "This script will ask you which Index files you want to download and then will install them to /usr/share/astrometry"
 echo "Note that you need to install at least the index files that cover 10% to 100% of your FOV."
 echo "Please make sure you know your FOV before Proceeeding."
@@ -376,6 +377,15 @@ fi
 
 sudo dpkg -i astrometry-data-*.deb
 sudo rm *.deb
+
+#setup auto run of encoder and skysolve at boot.
+if [ ! -f /etc/systemd/system/encodertoSkySafari.service ] ; then
+    sudo cp /home/pi/pyPlateSolve/skySolve/encodertoSkySafari.service /etc/systemd/system/encodertoSkySafari.service
+fi
+if [ ! -f /etc/systemd/system/skySolve.service ] ; then
+    sudo cp /home/pi/pyPlateSolve/skysolve.service /etc/systemd/system/skysolve.service
+fi
+
 
 echo "Your requested installations are complete."
 fi
