@@ -86,9 +86,5 @@ When you are ready, you can follow these steps:
 
 
 
-mate-preferences-desktop-display.svg (Hicolor icon theme, GPL)
-plip.png (Hicolor icon theme, GPL)
-preferences-system-network.svg (MATE icon theme, GPL)
-system-software-update.svg (Humanity icon theme, GPL)
-system-upgrade.svg (MATE icon theme, GPL)
+
 
