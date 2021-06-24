@@ -36,33 +36,24 @@ When you are ready, you can follow these steps:
 
 
 
-7.  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type the following commands into Terminal to accomplish this goal.
+6.  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type the following commands into Terminal to accomplish this goal.
 
 		sudo mkdir skysolve
         cd skysolve
         sudo wget https://github.com/githubdoe/skysolve/archive/main.tar.gz
         sudo tar -xzvf main.tar.gz --strip-components=1
 	
-
 	
-
+7.  Run the setup script 
+    sudo ./skysolveSetup
 	
-9.  Run one of the following scripts using sudo.
+    Here is a list of what the script does (If you want to disable or modify any of these, please edit before running the script):
 
-		sudo ./setupAstroPi3.sh
 
-		
-		sudo ./setupAstroRaspbianPi.sh
-	
-Here is a list of what the script does (If you want to disable or modify any of these, please edit before running the script):
-
-- (DISABLED) Can hold Firefox back to an older version for installing on Ubuntu-Mate 16.04 (since updates break it)
-
-- (DISABLED) Updates the Raspberry Pi Kernel if desired (Raspberry Pi script only)
 
 - Uninstalls unattended-upgrades since they can slow down imaging and cause issues with updates.
 
-- Updates/Upgrades the SBC
+- Updates/Upgrades the RPI
 
 - Sets the user account to auto-login
 
