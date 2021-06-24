@@ -174,13 +174,7 @@ then
 fi
 display "setup networking hotpot"
 # This will install the autohotspot files so that the pi can connect to local wifi or be a hotspot.
-if [ ! -f AutoHotspot-Setup.tar.gz ]
-then
-
-curl "https://www.raspberryconnect.com/images/hsinstaller/AutoHotspot-Setup.tar.gz" -o AutoHotspot-Setup.tar.gz
-tar -xzvf AutoHotspot-Setup.tar.gz
-fi
-./Autohotspot/autohotspot-setup.sh
+./Autohotspot/autohotspot-setup.sh 1
 
 display "Making Utilities Folder with script shortcuts for the Desktop"
 
@@ -381,9 +375,11 @@ sudo rm *.deb
 #setup auto run of encoder and skysolve at boot.
 if [ ! -f /etc/systemd/system/encodertoSkySafari.service ] ; then
     sudo cp /home/pi/pyPlateSolve/skySolve/encodertoSkySafari.service /etc/systemd/system/encodertoSkySafari.service
+    sudo systemctl enable encodertoSkySafari.service
 fi
 if [ ! -f /etc/systemd/system/skySolve.service ] ; then
     sudo cp /home/pi/pyPlateSolve/skysolve.service /etc/systemd/system/skysolve.service
+    sudo systemctl enable skysolve.service
 fi
 
 
