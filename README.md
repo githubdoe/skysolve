@@ -65,64 +65,27 @@ When you are ready, you can follow these steps:
 
 - Disables the CUPS modules for parallel printers since none are attached and it slows down boot (Raspberry Pi script only)
 
-- Installs Synaptic Package Manager (makes it easier to uninstall what you don't want)
 
-- Enables SSH which is disabled by default on Raspberry Pi. (Raspberry Pi script only, unless you enable it.)
 
-- Optionally gives the SBC a static IP address by editing /boot/cmdline.txt so that in the field you can connect via a direct Ethernet cable if desired
 
-- Optionally edits the /etc/network/interfaces file so that the static IP address does not interfere with DHCP
 
-- Installs RealVNC Server (Raspberry Pi Script) or x11VNC (64 bit script)
+
+
 
 - Makes a folder called utilties on the Desktop
 
 - Creates a shortcut/launcher for the UDev Script in utilities on the Desktop
 
-- Creates a shortcut/launcher for the Astrometry Index File Install Script in utilities on the Desktop
-
-- Turns off powersave for Wifi so hotspots/adhoc networks don't shut down in the observing field
 
 - Creates a hotspot Wifi profile for the observing field
 
-- Makes a shortcut/launcher in utilities on the desktop to start the hotspot
 
-- Makes a shortcut/launcher in utitlies to restart nm-applet for NetworkManager which crashes sometimes
+- Installs Astrometry.net and the Index Files
 
 - Sets up samba and caja filesharing so you can share any folder by right clicking
 
-- (DISABLED) Creates 2GB of Swap memory to increase the memory capacity of the SBC
 
-- Creates zRAM to get ~ 1.5x the current RAM capacity
 
-- Ensures Serial connections will not be disabled
-
-- Installs INDI and KStars
-
-- Installs the kdeglobals configuration file so that KStars can have breeze icons
-
-- Installs GSC
-
-- Installs Astrometry.net
-
-- Installs PHD2
-
-- Puts Shortcuts for Kstars and PHD2 on the Desktop
-
-- Installs INDI Web Manager App, indiweb, and python3-pip
-
-- Places a shortcut/launcher for INDI Web Manager App on the Desktop
-
-- I also recently added a night vision script to the utilities folder.  But it only seems to affect real displays, not VNC.
-
-Icons included in repo:
-The icons for INDI, KStars, and PHD2 are included in their respective packages and are the same
-no matter what operating system you are currently using.  The icons I used
-for my scripts in the utilities folder are available freely on Ubuntu-MATE systems, but are not
-all available on other operating systems.  To make them appear the same on different systems, I have
-included these in the icons folder.  These are listed below with their respective source and copyright info:
-
-irda.png (Hicolor icon theme, GPL)
 mate-preferences-desktop-display.svg (Hicolor icon theme, GPL)
 plip.png (Hicolor icon theme, GPL)
 preferences-system-network.svg (MATE icon theme, GPL)
