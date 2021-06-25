@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /home/pi/skySolve
-sudo python skysolve.py
+sudo python3 skysolve.py

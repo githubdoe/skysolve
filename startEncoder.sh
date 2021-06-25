@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /home/pi/skySolve
-sudo python encoder.py 
+sudo python3 encoder.py 
