@@ -371,14 +371,14 @@ fi
 
 sudo dpkg -i astrometry-data-*.deb
 sudo rm *.deb
-
+fi
 #setup auto run of encoder and skysolve at boot.
-if [ ! -f /etc/systemd/system/encodertoSkySafari.service ] ; then
+if [ ! -f /etc/systemd/system/encodertoSkySafari.service ]; then
     sudo cp /home/pi/skySolve/encodertoSkySafari.service /etc/systemd/system/encodertoSkySafari.service
     sudo systemctl enable encodertoSkySafari.service
 fi
-if [ ! -f /etc/systemd/system/skySolve.service ] ; then
-    sudo cp /home/pi/skysolve.service /etc/systemd/system/skysolve.service
+if [ ! -f /etc/systemd/system/skySolve.service ]; then
+    sudo cp /home/pi/skySolve/skysolve.service /etc/systemd/system/skysolve.service
     sudo systemctl enable skysolve.service
 fi
 
