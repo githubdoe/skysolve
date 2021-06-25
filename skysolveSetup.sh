@@ -377,7 +377,7 @@ if [ ! -f /etc/systemd/system/encodertoSkySafari.service ]; then
     echo "setup encoder service"
     sudo cp /home/pi/skySolve/encodertoSkySafari.service /etc/systemd/system/encodertoSkySafari.service
     sudo systemctl enable encodertoSkySafari.service
-fi
+
 if [ ! -f /etc/systemd/system/skySolve.service ]; then
     echo "setup skkySolve service"
     sudo cp /home/pi/skySolve/skysolve.service /etc/systemd/system/skysolve.service
