@@ -33,10 +33,18 @@ When you are ready, you can follow these steps:
 
 5. Connecto your computer to the PI. https://www.raspberrypi.org/documentation/remote-access/README.md
   I use VNC viewer from RealVNC on a windows PC.  So download RealVNC to your PC.  Follow the instructions for connecting to a VNC server like the RPI.
+  First we need to enable VNC on the PI.   We will do that from the command line on the RPI.  
+  1. On windows machine start a command promt.  Type ssh pi@<PI IP address>  Replace <PI IP address> with either the hostname you set for the pi or by its IP address.
+  2. Enter your password for the PI that you set in step 2.2.
+  3. Once logged into the RPI then type sudo raspi-config.
+  4. Select 3. Interface Options then P3 VNC and enable it.  Then select yes and then OK.  Now VNC should be enabled.
+  5. Optionally enable the Raspberrypi camera now.  From Interface Options select the enable camera option.  Then reboot.
+  Back on the windows PC start the VNC viewer and connect to the IP address of the Raspberry PI.
+  
 
 
 
-6.  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type the following commands into Terminal to accomplish this goal.
+6. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type the following commands into Terminal to accomplish this goal.
 
 		sudo mkdir skysolve
         cd skysolve
@@ -87,4 +95,12 @@ When you are ready, you can follow these steps:
 
 
 
+8.  After the script finishes type sudo reboot to complete the setup.
+9. Using the application.  When the RPI reboots it should be running the skysolve application.  To test it
+   1. On you device running Skysafari start skysafari and setup the Telescope control to use the IP address of the RPI and to use port 5005.
+   2. Try to connect to the Telescope.   If it connects then the RPI is running and will give a default position set by the setup.
 
+10.  Setup the PI camera and plate solving parameters.
+    1. On a pc or tablet on the same network as the pi using a network browser like Chrome connect to <RPI IP>:5000  where <RPI IP> is the ip address of the Raspberry pi.
+    This should bring up the skysolve web page.  Click on the help button on that page for info how to setup the camera and solve parameters.
+    

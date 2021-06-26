@@ -70,18 +70,18 @@ read -p "Do you want to update the PI operating system (Recommended) (y/n)? " pr
 if [ "$proceed" == "y" ]
 then
 
-#########################################################
-#############  Updates
+    #########################################################
+    #############  Updates
 
-# This would update the Raspberry Pi kernel.  For now it is disabled because there is debate about whether to do it or not.  To enable it, take away the # sign.
-#display "Updating Kernel"
-#sudo rpi-update 
+    # This would update the Raspberry Pi kernel.  For now it is disabled because there is debate about whether to do it or not.  To enable it, take away the # sign.
+    #display "Updating Kernel"
+    #sudo rpi-update 
 
-# Updates the Raspberry Pi to the latest packages.
-display "Updating installed packages"
-sudo apt update
-sudo apt -y upgrade
-sudo apt -y dist-upgrade
+    # Updates the Raspberry Pi to the latest packages.
+    display "Updating installed packages"
+    sudo apt update
+    sudo apt -y upgrade
+    sudo apt -y dist-upgrade
 fi
 
 #########################################################
@@ -291,92 +291,93 @@ sudo apt -y install astrometry.net
 
 read -p "do you want to install astrometry index files? (do at least once)" answer
 if [ "$answer" == "y" ]
-then
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "Welcome to the Astrometry Index Installer Script"
-echo "This script will ask you which Index files you want to download and then will install them to /usr/share/astrometry"
-echo "Note that you need to install at least the index files that cover 10% to 100% of your FOV."
-echo "Please make sure you know your FOV before Proceeeding."
-echo "For the usual lenses (up to 25mm) on the PI quality cam the field will be 10 degs or more"	
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "To download and install the correct files, you need to decide which packages you want."
-echo "Note that for large file sizes, the index files are in a big set."
-echo "If you type the word 'large', you will get index files 4208-4219 which covers 30 arcmin to 2000 arcmin."
-echo "For smaller fields, the file sizes become much bigger, so they are in separate packages."
-echo "You just need to type the file number to download and install that package"
-echo "You can select more than one packages by typing each number after the other separated by spaces or commas"
-echo "Here is a list of all the available index file sets and their FOV's in Arc minutes"
-echo "File  FOV"
-echo "4207  22 - 30"
-echo "4206  16 - 22"
-echo "4205  11 - 16"
-echo "4204  8 - 11"
-echo "4203  5.6 - 8.0"
-echo "4202  4.0 - 5.6"
-echo "4201  2.8 - 4.0"
-echo "4200  2.0 - 2.8"
+    then
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "Welcome to the Astrometry Index Installer Script"
+    echo "This script will ask you which Index files you want to download and then will install them to /usr/share/astrometry"
+    echo "Note that you need to install at least the index files that cover 10% to 100% of your FOV."
+    echo "Please make sure you know your FOV before Proceeeding."
+    echo "For the usual lenses (up to 25mm) on the PI quality cam the field will be 10 degs or more"	
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "To download and install the correct files, you need to decide which packages you want."
+    echo "Note that for large file sizes, the index files are in a big set."
+    echo "If you type the word 'large', you will get index files 4208-4219 which covers 30 arcmin to 2000 arcmin."
+    echo "For smaller fields, the file sizes become much bigger, so they are in separate packages."
+    echo "You just need to type the file number to download and install that package"
+    echo "You can select more than one packages by typing each number after the other separated by spaces or commas"
+    echo "Here is a list of all the available index file sets and their FOV's in Arc minutes"
+    echo "File  FOV"
+    echo "4207  22 - 30"
+    echo "4206  16 - 22"
+    echo "4205  11 - 16"
+    echo "4204  8 - 11"
+    echo "4203  5.6 - 8.0"
+    echo "4202  4.0 - 5.6"
+    echo "4201  2.8 - 4.0"
+    echo "4200  2.0 - 2.8"
 
-read -p "Which file set would you like to download? Remember, type either 'large' or the file number(s) above: (large recommended)" indexFile
+    read -p "Which file set would you like to download? Remember, type either 'large' or the file number(s) above: (large recommended)" indexFile
 
-if [[ $indexFile = *"large"* ]]
-then
-	wget http://data.astrometry.net/debian/astrometry-data-4208-4219_0.45_all.deb
-fi
+    if [[ $indexFile = *"large"* ]]
+    then
+        wget http://data.astrometry.net/debian/astrometry-data-4208-4219_0.45_all.deb
+    fi
 
-if [[ $indexFile = *"4207"* ]]
-then
-	wget http://data.astrometry.net/debian/astrometry-data-4207_0.45_all.deb
-fi
+    if [[ $indexFile = *"4207"* ]]
+    then
+        wget http://data.astrometry.net/debian/astrometry-data-4207_0.45_all.deb
+    fi
 
-if [[ $indexFile = *"4206"* ]]
-then
-	wget http://data.astrometry.net/debian/astrometry-data-4206_0.45_all.deb
-fi
+    if [[ $indexFile = *"4206"* ]]
+    then
+        wget http://data.astrometry.net/debian/astrometry-data-4206_0.45_all.deb
+    fi
 
-if [[ $indexFile = *"4205"* ]]
-then
-	wget http://data.astrometry.net/debian/astrometry-data-4205_0.45_all.deb
-fi
+    if [[ $indexFile = *"4205"* ]]
+    then
+        wget http://data.astrometry.net/debian/astrometry-data-4205_0.45_all.deb
+    fi
 
-if [[ $indexFile = *"4204"* ]]
-then
-	wget http://data.astrometry.net/debian/astrometry-data-4204_0.45_all.deb
-fi
+    if [[ $indexFile = *"4204"* ]]
+    then
+        wget http://data.astrometry.net/debian/astrometry-data-4204_0.45_all.deb
+    fi
 
-if [[ $indexFile = *"4203"* ]]
-then
-	wget http://data.astrometry.net/debian/astrometry-data-4203_0.45_all.deb
-fi
+    if [[ $indexFile = *"4203"* ]]
+    then
+        wget http://data.astrometry.net/debian/astrometry-data-4203_0.45_all.deb
+    fi
 
-if [[ $indexFile = *"4202"* ]]
-then
-	wget http://data.astrometry.net/debian/astrometry-data-4202_0.45_all.deb
-fi
+    if [[ $indexFile = *"4202"* ]]
+    then
+        wget http://data.astrometry.net/debian/astrometry-data-4202_0.45_all.deb
+    fi
 
-if [[ $indexFile = *"4201"* ]]
-then
-	wget http://data.astrometry.net/debian/astrometry-data-4201-1_0.45_all.deb
-	wget http://data.astrometry.net/debian/astrometry-data-4201-2_0.45_all.deb
-	wget http://data.astrometry.net/debian/astrometry-data-4201-3_0.45_all.deb
-	wget http://data.astrometry.net/debian/astrometry-data-4201-4_0.45_all.deb
-fi
+    if [[ $indexFile = *"4201"* ]]
+    then
+        wget http://data.astrometry.net/debian/astrometry-data-4201-1_0.45_all.deb
+        wget http://data.astrometry.net/debian/astrometry-data-4201-2_0.45_all.deb
+        wget http://data.astrometry.net/debian/astrometry-data-4201-3_0.45_all.deb
+        wget http://data.astrometry.net/debian/astrometry-data-4201-4_0.45_all.deb
+    fi
 
-if [[ $indexFile = *"4200"* ]]
-then
-	wget http://data.astrometry.net/debian/astrometry-data-4200-1_0.45_all.deb
-	wget http://data.astrometry.net/debian/astrometry-data-4200-2_0.45_all.deb
-	wget http://data.astrometry.net/debian/astrometry-data-4200-3_0.45_all.deb
-	wget http://data.astrometry.net/debian/astrometry-data-4200-4_0.45_all.deb
-fi
+    if [[ $indexFile = *"4200"* ]]
+    then
+        wget http://data.astrometry.net/debian/astrometry-data-4200-1_0.45_all.deb
+        wget http://data.astrometry.net/debian/astrometry-data-4200-2_0.45_all.deb
+        wget http://data.astrometry.net/debian/astrometry-data-4200-3_0.45_all.deb
+        wget http://data.astrometry.net/debian/astrometry-data-4200-4_0.45_all.deb
+    fi
 
-sudo dpkg -i astrometry-data-*.deb
-sudo rm *.deb
+    sudo dpkg -i astrometry-data-*.deb
+    sudo rm *.deb
 fi
 #setup auto run of encoder and skysolve at boot.
 if [ ! -f /etc/systemd/system/encodertoSkySafari.service ]; then
     echo "setup encoder service"
     sudo cp /home/pi/skySolve/encodertoSkySafari.service /etc/systemd/system/encodertoSkySafari.service
     sudo systemctl enable encodertoSkySafari.service
+fi
 
 if [ ! -f /etc/systemd/system/skySolve.service ]; then
     echo "setup skkySolve service"
