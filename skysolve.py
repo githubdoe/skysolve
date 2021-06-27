@@ -82,7 +82,7 @@ print ('cwd',os.getcwd())
 for i in range (130):
     solveLog.append("                       \n")
 
-with open('skyConfig.txt') as f:
+with open(os.path.join(root_path,'skyConfig.txt')) as f:
     skyConfig = json.load(f)
 
 
@@ -240,8 +240,8 @@ def solve(fn, parms = []):
         file1 = open(os.path.join(solve_path,"radec.txt"),"w")#write mode 
         file1.write(radec) 
         file1.close() 
-        cmdPlot = ['/usr/bin/plot-constellations', '-v' ,'-w' ,'/home/pi/pyPlateSolve/skySolve/static/cap.wcs',\
-         '-B', '-C', '-N', '-o' , '/home/pi/pyPlateSolve/skySolve/static/cap-ngc.png']
+        cmdPlot = ['/usr/bin/plot-constellations', '-v' ,'-w' ,os.path.join(solve_path,'cap.wcs'),\
+         '-B', '-C', '-N', '-o' , os.path.join(solve_path,'cap-ngc.png')]
         p2 = subprocess.Popen(cmdPlot ,stdout=subprocess.PIPE)
         ndx=0
         stars = []
