@@ -387,5 +387,4 @@ fi
 
 
 echo "Your requested installations are complete."
-fi
 display "Script Execution Complete.  Your Raspberry should now be ready to use for SkySolve.  You should restart your Pi."
