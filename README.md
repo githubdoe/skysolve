@@ -1,5 +1,5 @@
 # skysolve
-Use RaspberryPi and plate solving to take images of the night sky and identify the location of the image.
+Uses RaspberryPi and plate solving to take images of the night sky and identify the location of the image.
  It uses a Raspberry PI with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SKySafari.  It continually takes images and solves them about every 10 to 15 seconds so that Skysafari can always show where the scope is pointing.
 
 
