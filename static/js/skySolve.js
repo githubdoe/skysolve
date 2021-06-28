@@ -57,7 +57,11 @@ $(document).ready(function(){
         setTimeout(updateStatusField, 1000);
     }
 
-
+    var cb = document.getElementById('showStars')
+    var btn = document.getElementById('ShowStars')
+    if (cb.checked == false){
+        btn.disabled = true
+    }
     // event hookups/subscribes
     sks.consts.shutter().change(
         function() {
@@ -218,6 +222,7 @@ $(document).ready(function(){
     
     $('#testMode').click(
         function() {
+            
             if (!sks.consts.demoMode)
                 ajax_get_Status('/testMode');
             var x = document.getElementById("stepNext");
@@ -228,47 +233,65 @@ $(document).ready(function(){
                 showReplaybuttons(false);
             }
         })
+    $('#showStars').click(
 
-        $('#ClearLog').click(
-            function(){
-                var text = document.getElementById('solveStatusText');
-                text.innerHTML = "";
+            function() {
+                var cb = document.getElementById('showStars')
+                var btn = document.getElementById('ShowStars')
+
+                if (cb.checked == false) {
+                    btn.disabled = true
+
+                }
+                else {
+                    btn.disabled = false
+
+                }
             }
         )
-        $('#showSolutionCB').click(
-            function() {
+    $('#ClearLog').click(
+        function(){
+            console.log("check changed")
+            var btn = document.getElementById('ShowStars')
+            btn.disabled = true
+            var text = document.getElementById('solveStatusText');
+            text.innerHTML = "";
+        }
+    )
+    $('#showSolutionCB').click(
+        function() {
 
-                var checkBox = document.getElementById("showSolutionCB");
-                if (checkBox.checked == true) {
-                    sks.consts.showSolution = 1;
-                }
-                else {
-                    sks.consts.showSolution = 0;
-                }
-                let x = sks.consts.showSolution;
-
-                $.post("/showSolution/" + x, data = {
-                    suggest: x
-                }, function(result) {});
+            var checkBox = document.getElementById("showSolutionCB");
+            if (checkBox.checked == true) {
+                sks.consts.showSolution = 1;
             }
-        ) 
-        $('#saveImages').click(
-            function() {
-
-                var checkBox = document.getElementById("saveImages");
-                if (checkBox.checked == true) {
-                    sks.consts.showSolution = 1;
-                }
-                else {
-                    sks.consts.showSolution = 0;
-                }
-                let x = sks.consts.showSolution;
-
-                $.post("/saveImages/" + x, data = {
-                    suggest: x
-                }, function(result) {});
+            else {
+                sks.consts.showSolution = 0;
             }
-        ) 
+            let x = sks.consts.showSolution;
+
+            $.post("/showSolution/" + x, data = {
+                suggest: x
+            }, function(result) {});
+        }
+    ) 
+    $('#saveImages').click(
+        function() {
+
+            var checkBox = document.getElementById("saveImages");
+            if (checkBox.checked == true) {
+                sks.consts.showSolution = 1;
+            }
+            else {
+                sks.consts.showSolution = 0;
+            }
+            let x = sks.consts.showSolution;
+
+            $.post("/saveImages/" + x, data = {
+                suggest: x
+            }, function(result) {});
+        }
+    ) 
 
 
 });

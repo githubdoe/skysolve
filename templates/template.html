@@ -470,7 +470,11 @@
                     <label for = "searchRadius"> Search Radius in Deg from last solved location (blank for do not use)  :</label>
                     <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius" value = "{{solveP['searchRadius']}}" ><br>
                     <label for="solveVerbose">Verbose</label>
-                    <input type="checkbox" id="solveVerbose", name="solveVerbose" {{ 'checked' if solveP['solveVerbose'] else ''}} ><br>
+                    <input type="checkbox" style="margin:10px;"id="solveVerbose", name="solveVerbose" {{ 'checked' if solveP['solveVerbose'] else ''}} >
+                    <label for="showStars">Show found stars (slows the solve)</label>
+                    <input type="checkbox"style="margin:10px;" id="showStars", name="showStars" {{ 'checked' if solveP['showStars'] else ''}}                   
+                    
+                    ><br>
                     <input type="submit" class="btn nightColor" value="Submit">
                 </form>
             </div> 

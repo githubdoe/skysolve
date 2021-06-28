@@ -19,8 +19,9 @@ import json
 from shutil import copyfile
 from enum import Enum, auto
 import imghdr
+import getpass
 
-
+print ('user', getpass.getuser())
 class Mode(Enum):
     PAUSED = auto()
     ALIGN = auto()
@@ -55,6 +56,7 @@ solve_path = os.path.join(root_path,'static')
 history_path = os.path.join(solve_path, 'history')
 demo_path = os.path.join(solve_path, 'demo')
 test_path = '/home/pi/pyPlateSolve/data'
+history_path = test_path
 
 print ('ff',solve_path)
 
@@ -68,7 +70,7 @@ lastObs = ""
 
 """ 
 skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'Frame': '2000x1500','format': 'jpeg'},
-    'solver':{'maxTime': 20, 'solveSigma':9, 'solveDepth':20, 'UselastDelta':False, 'FieldWidthMode':'aPP','plots':False,
+    'solver':{'maxTime': 20, 'solveSigma':9, 'solveDepth':20, 'UselastDelta':False, 'FieldWidthMode':'aPP',
         'FieldWidthModeaPP': 'checked', 'FieldWidthModeField':"", 'FieldWidthModeOther':'', 'aPPValue': 27, 'fieldValue': 14, 'searchRadius': 10,
         'solveVerbose':False},
     'observing':{'saveImages': False, 'showSolution': False, 'savePosition': True , 'obsDelta': .1}}
@@ -99,7 +101,6 @@ def solveThread():
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
         if state is Mode.SOLVETHIS:
-            print('thread solvethis')
             if len(frameStack) == 0:
                 continue
             frame = frameStack[-1][0]
@@ -110,7 +111,9 @@ def solveThread():
                 except Exception as e:
                     print (e)
                     solveLog.ap
-                solve(os.path.join(solve_path,imageName))
+                if not solve(os.path.join(solve_path,imageName)):
+                    #try again but this time since the previous failed it will not use a starting guess possition
+                    solve(os.path.join(solve_path,imageName))   
                 state = Mode.PLAYBACK
                 continue
                     
@@ -176,7 +179,8 @@ def solve(fn, parms = []):
     parms = parms + ['--cpulimit', str(skyConfig['solver']['maxTime'])]
     if skyConfig['solver']['searchRadius']>0  and ra != 0:
         parms = parms + ['--ra', str(ra), '--dec', str(dec), '--radius', str(skyConfig['solver']['searchRadius'])]
-    if not skyConfig['solver']['plots']:
+    print('show stars', skyConfig['solver']['showStars'])
+    if not skyConfig['solver']['showStars']:
         parms = parms + ['-p']
     cmd = ["solve-field", fn,"--depth" ,str(skyConfig['solver']['solveDepth']), "--sigma", str(skyConfig['solver']['solveSigma']),
         '--overwrite'] + parms
@@ -537,6 +541,7 @@ def apply():
     skyConfig['solver']['solveSigma'] = int(req.get("solveSigma"))
     skyConfig['solver']['solveDepth'] = int(req.get("solveDepth"))
     skyConfig['solver']['solveVerbose'] = bool(req.get("solveVerbose"))
+    skyConfig['solver']['showStars'] = bool(req.get("showStars"))
     saveConfig()
 
     #print (request.form.['submit_button'])
