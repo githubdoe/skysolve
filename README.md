@@ -6,6 +6,8 @@ Uses RaspberryPi and plate solving to take images of the night sky and identify 
 There is a setup script meant to automate the many setup steps involved with configuring a Raspberry 4 running Raspbian,
 so that it can run the image capture and plate solving astro application I wrote called skysolve. 
 
+##Install
+
 When you are ready, you can follow these steps:
 
 
