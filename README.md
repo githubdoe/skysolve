@@ -12,7 +12,7 @@ When you are ready, you can follow these steps:
 1.  You will need to flash that raspbian img file to an SD card.  The easiest way to do this is to use the RaspberryPi imager
       from https://www.raspberrypi.org/software/   Download this software onto a computer that can write SD cards.  I use a Windows laptop.
 
-1. Set the advance menu options in Raspberry pi imager.
+2. Set the advance menu options in Raspberry pi imager.
       The Raspberry Pi Imager v1.6 has an advanced menu which is hidden away from general users just looking to write an operating system for the Pi. To activate the menu we need to press CTRL + SHIFT + X and we then gain access to advanced options that enable advanced users to customize the OS to meet their needs before they write the software to a micro SD card. 
 
      You need to use those advanced options to setup network parameters so that when you boot the pi it will show up on your network and you can talk to it with another computer instead of using an external display and keyboard.
@@ -25,13 +25,13 @@ When you are ready, you can follow these steps:
      * Setup local.  This is important because it is used by the WIFI to select the right frequencies.
      
 
-1.  Burn the image to the SD using the Raspberry Pi imager.
+3.  Burn the image to the SD using the Raspberry Pi imager.
 
   
-1.  Insert the SD Card into the PI after it boots in a minute or so you need to find it on your WIFI network. Your router should have assigned it an
+4.  Insert the SD Card into the PI after it boots in a minute or so you need to find it on your WIFI network. Your router should have assigned it an
      IP address.  Here are some ways of finding it.  https://www.raspberrypi.org/documentation/remote-access/ip-address.md
 
-1. Connecto your computer to the PI. https://www.raspberrypi.org/documentation/remote-access/README.md
+5. Connecto your computer to the PI. https://www.raspberrypi.org/documentation/remote-access/README.md
   I use VNC viewer from RealVNC on a windows PC.  So download RealVNC to your PC.  Follow the instructions for connecting to a VNC server like the RPI.
   First we need to enable VNC on the PI.   We will do that from the command line on the RPI.  
   	 On windows machine start a command promt.  Type ssh pi@<PI IP address>  Replace <PI IP address> with either the hostname you set for the pi or by its IP address.
@@ -44,7 +44,7 @@ When you are ready, you can follow these steps:
 
 
 
-1. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type the following commands into Terminal to accomplish this goal.
+6. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type the following commands into Terminal to accomplish this goal.
 
 	sudo mkdir skysolve
         cd skysolve
@@ -52,7 +52,7 @@ When you are ready, you can follow these steps:
         sudo tar -xzvf main.tar.gz --strip-components=1
 	
 	
-1.  Run the setup script 
+7.  Run the setup script 
     sudo ./skysolveSetup
 	
     Here is a list of what the script does (If you want to disable or modify any of these, please edit before running the script):
@@ -72,12 +72,6 @@ When you are ready, you can follow these steps:
 - Disables the screen lock and screen saver to prevent them from causing issues when connecting via VNC
 
 - Disables the CUPS modules for parallel printers since none are attached and it slows down boot (Raspberry Pi script only)
-
-
-
-
-
-
 
 
 - Makes a folder called utilties on the Desktop
