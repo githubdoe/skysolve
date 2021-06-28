@@ -47,16 +47,19 @@ When you are ready, you can follow these steps:
 
 
 6. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type the following commands into Terminal to accomplish this goal.
-```
+```bash
 sudo mkdir skysolve
 cd skysolve
 sudo wget https://github.com/githubdoe/skysolve/archive/main.tar.gz
 sudo tar -xzvf main.tar.gz --strip-components=1
-```
+``` 
 	
 	
 7.  Run the setup script 
-    sudo ./skysolveSetup
+	
+    ```
+	sudo ./skysolveSetup
+    ```
 	
     Here is a list of what the script does (If you want to disable or modify any of these, please edit before running the script):
 
