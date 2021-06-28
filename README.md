@@ -6,7 +6,7 @@ Uses RaspberryPi and plate solving to take images of the night sky and identify 
 There is a setup script meant to automate the many setup steps involved with configuring a Raspberry 4 running Raspbian,
 so that it can run the image capture and plate solving astro application I wrote called skysolve. 
 
-##Install
+## Install
 
 When you are ready, you can follow these steps:
 
@@ -49,7 +49,7 @@ When you are ready, you can follow these steps:
 6. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type the following commands into Terminal to accomplish this goal.
 
 	sudo mkdir skysolve
-        cd skysolve
+	cd skysolve
         sudo wget https://github.com/githubdoe/skysolve/archive/main.tar.gz
         sudo tar -xzvf main.tar.gz --strip-components=1
 	
@@ -88,15 +88,18 @@ When you are ready, you can follow these steps:
 
 - Sets up samba and caja filesharing so you can share any folder by right clicking
 
-
-
-
 8.  After the script finishes type sudo reboot to complete the setup.
-9. Using the application.  When the RPI reboots it should be running the skysolve application.  To test it
-   1. On you device running Skysafari start skysafari and setup the Telescope control to use the IP address of the RPI and to use port 5005.
-   2. Try to connect to the Telescope.   If it connects then the RPI is running and will give a default position set by the setup.
+## Testing the install
+When the RPI reboots it should be running the skysolve application. 
+### Testing skysolve
+	On any PC or tablet on the same network as the RPI start up an internet browser and enter the address of the RPI followed by :5000.
+	for example 192.168.1.170:5000 for an RPI at IP address of 192.168.1.170.
+### Testing SkySafari connection
+    * On your device running Skysafari start SkySafari and setup the Telescope control to use the IP address of the RPI and to use port 5005.
+    * Try to connect to the Telescope.   If it connects then the RPI is running and will give a default position set by the setup.
 
 10.  Setup the PI camera and plate solving parameters.
     1. On a pc or tablet on the same network as the pi using a network browser like Chrome connect to <RPI IP>:5000  where <RPI IP> is the ip address of the Raspberry pi.
     This should bring up the skysolve web page.  Click on the help button on that page for info how to setup the camera and solve parameters.
     
+## Usage
