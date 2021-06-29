@@ -1,14 +1,22 @@
 # skysolve
 Uses RaspberryPi and plate solving to take images of the night sky and identify the location of the image.
  It uses a Raspberry PI with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SKySafari.  It continually takes images and solves them about every 10 to 15 seconds so that Skysafari can always show where the scope is pointing.
+ 
+ Below is a screen shot of the application's browser interface showing an image of Ursa Major in the lower left.  THe status field displays the names of stars it found in the image.
+ 
+![screen](images/solve1.jpg)
+
+This nex image shows a diagram of the constelation found in the image.
+
+![screen2](images/solve2.jpg)
 
 
 There is a setup script meant to automate the many setup steps involved with configuring a Raspberry 4 running Raspbian,
-so that it can run the image capture and plate solving astro application I wrote called skysolve. 
+so that it can run this image capture and plate solving astro application I wrote called skysolve. 
 
 ## Install
 
-When you are ready, you can follow these steps:
+When you are ready, you can follow these steps to install in on the Raspberry pi:
 
 
 1.  You will need to flash that raspbian img file to an SD card.  The easiest way to do this is to use the RaspberryPi imager
