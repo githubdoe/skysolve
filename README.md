@@ -1,8 +1,8 @@
 # skysolve
 Uses RaspberryPi and plate solving to take images of the night sky and identify the location of the image.
- It uses a Raspberry PI with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SKySafari.  It continually takes images and solves them about every 10 to 15 seconds so that Skysafari can always show where the scope is pointing.
+ It uses a Raspberry PI with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SkySafari.  It continually takes images and solves them about every 10 to 15 seconds so that Skysafari can always show where the scope is pointing.
  
- Below is a screen shot of the application's browser interface showing an image of Ursa Major in the lower left.  THe status field displays the names of stars it found in the image.
+Below is a screen shot of the application's browser interface showing an image of Ursa Major in the lower left.  THe status field displays the names of stars it found in the image.
  
 ![screen](images/solve1.jpg)
 
@@ -10,22 +10,36 @@ This nex image shows a diagram of the constelation found in the image.
 
 ![screen2](images/solve2.jpg)
 
+### WIFI Connection options
+
+The RPI and the skysolve application can talk to both another computer as a web server and to a computer running SkySafari.  Both need to be on the same WIFI network as the RPI.  When connected the user can control the skysolve application using it's web page accessed by another computer's web browser.
+
+There are two options for the network.   It can be your local WIFI network or the RPI can be the Hot Spot for it's own network that the other computers can connect to,  This is handy for when the Telescope is out of range of your local WIFI.  To begin with the setup process will be done with the RPI connected to your local WIFI.
+
+After setup if the RPI is booted out of range from the WIFI it knows then it will create it's own network that other computers can log into.  This will usually be the case when out on the observing field.  There is also an option to force the RPI to be it's own network (Hot Spot, Access point) even when already connected to the local WIFI.
+
+
 
 There is a setup script meant to automate the many setup steps involved with configuring a Raspberry 4 running Raspbian,
 so that it can run this image capture and plate solving astro application I wrote called skysolve. 
 
+## First Usage
+
+After a correct install you can use a Web browser to connect to the skysolve app.  The first thing you will want to do is align the camera to the telescope view.  The application starts in align mode where camera will start taking images and posting them on the web screen. It will not try to solve the image in this mode so that it can loop through taking pictures faster.  You can change camera perameters to adjust exposure and size of image file.   I find that an exposuer of .9 seconds, ISO 800, and a frame size of 800 x 600 are good staring points.  
+
 ## Install
 
-When you are ready, you can follow these steps to install in on the Raspberry pi:
+When you are ready, you can follow these steps to install it on the Raspberry pi:
 
 
-1.  You will need to flash that raspbian img file to an SD card.  The easiest way to do this is to use the RaspberryPi imager
+1.  First you need to get the standard Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
       from [Raspberry Pi org](https://www.raspberrypi.org/software/)
       
       Download this software onto a computer that can write SD cards.  I use a Windows laptop.
 
 2. Set the advance menu options in Raspberry pi imager.
-      The Raspberry Pi Imager v1.6 has an advanced menu which is hidden away from general users just looking to write an operating system for the Pi. To activate the menu we need to press CTRL + SHIFT + X and we then gain access to advanced options that enable advanced users to customize the OS to meet their needs before they write the software to a micro SD card. 
+
+The Raspberry Pi Imager v1.6 has an advanced menu which is hidden away from general users just looking to write an operating system for the Pi. To activate the menu we need to press CTRL + SHIFT + X and we then gain access to advanced options that enable advanced users to customize the OS to meet their needs before they write the software to a micro SD card. 
 
      You need to use those advanced options to setup network parameters so that when you boot the pi it will show up on your network and you can talk to it with another computer instead of using an external display and keyboard.
 
