@@ -12,11 +12,11 @@ This nex image shows a diagram of the constelation found in the image.
 
 
 There is a setup script meant to automate the many setup steps involved with configuring a Raspberry 4 running Raspbian,
-so that it can run the image capture and plate solving astro application I wrote called skysolve. 
+so that it can run this image capture and plate solving astro application I wrote called skysolve. 
 
 ## Install
 
-When you are ready, you can follow these steps:
+When you are ready, you can follow these steps to install in on the Raspberry pi:
 
 
 1.  You will need to flash that raspbian img file to an SD card.  The easiest way to do this is to use the RaspberryPi imager
