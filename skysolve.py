@@ -68,6 +68,8 @@ obsList = []
 ndx = 0
 lastObs = ""
 
+cameraNotPresent = True
+
 """ 
 skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'Frame': '2000x1500','format': 'jpeg'},
     'solver':{'maxTime': 20, 'solveSigma':9, 'solveDepth':20, 'UselastDelta':False, 'FieldWidthMode':'aPP',
@@ -112,12 +114,15 @@ def solveThread():
                     print (e)
                     solveLog.ap
                 if not solve(os.path.join(solve_path,imageName)):
+                    skyStatusText =  'Failed. Retrying with no position hint.' 
                     #try again but this time since the previous failed it will not use a starting guess possition
                     solve(os.path.join(solve_path,imageName))   
                 state = Mode.PLAYBACK
                 continue
                     
         else:
+            if cameraNotPresent:
+                continue
             frame = skyCam.get_frame()
 
 
@@ -310,7 +315,7 @@ skyStatusText = 'Initilizing Camera'
 
 @app.route("/" , methods=['GET','POST' ])
 def index():
-    global skyCam
+    global skyCam, cameraNotPresent, skyStatusText
     shutterValues = ['.01', '.05', '.1','.15','.2','.5','.7','.9','1', '2.', '3','4','5','10']
     skyFrameValues = ['400x300', '640x480', '800x600', '1024x768', '1280x960', '1920x1440', '2000x1000', '2000x1500']
     isoValues = ['100','200','400','800']
@@ -318,8 +323,14 @@ def index():
     solveParams = { 'PPA': 27, 'FieldWidth': 14, 'Timeout': 34, 'Sigma': 9 , 'Depth':20, 'SearchRadius': 10}
     if not skyCam:
         print('creating cam')
-        skyCam= skyCamera(shutter  = int(1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'] ,resolution = skyConfig['camera']['frame'])
-    
+        try:
+            skyCam= skyCamera(shutter  = int(1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'] ,resolution = skyConfig['camera']['frame'])
+            cameraNotPresent = False
+        except Exception as e:
+            print(e)
+            cameraNotPresent = True
+            skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
+        print('camera was found', cameraNotPresent)
     return render_template('template.html', shutterData = shutterValues, skyFrameData = skyFrameValues, skyFormatData = formatValues,
             skyIsoData = isoValues, solveP = skyConfig['solver'], obsParms = skyConfig['observing'], cameraParms=skyConfig['camera'])
 
