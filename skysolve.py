@@ -56,9 +56,8 @@ solve_path = os.path.join(root_path,'static')
 history_path = os.path.join(solve_path, 'history')
 demo_path = os.path.join(solve_path, 'demo')
 test_path = '/home/pi/pyPlateSolve/data'
-history_path = test_path
 
-print ('ff',solve_path)
+
 
 solveCurrent = False
 triggerSolutionDisplay = False
@@ -98,7 +97,7 @@ skyCam = None
 
 def solveThread():
     global skyStatusText, focusStd, solveCurrent,state, skyCam ,frameStack, frameStackLock, testNdx
-    print('solvethread')
+    #print('solvethread')
     while True:
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
@@ -132,7 +131,7 @@ def solveThread():
             fn = testFiles[testNdx]
             testNdx += 1
 
-            print ("image", testNdx, fn)
+            #print ("image", testNdx, fn)
 
 
             with open(fn, 'rb') as infile:
@@ -184,13 +183,13 @@ def solve(fn, parms = []):
     parms = parms + ['--cpulimit', str(skyConfig['solver']['maxTime'])]
     if skyConfig['solver']['searchRadius']>0  and ra != 0:
         parms = parms + ['--ra', str(ra), '--dec', str(dec), '--radius', str(skyConfig['solver']['searchRadius'])]
-    print('show stars', skyConfig['solver']['showStars'])
+    #print('show stars', skyConfig['solver']['showStars'])
     if not skyConfig['solver']['showStars']:
         parms = parms + ['-p']
     cmd = ["solve-field", fn,"--depth" ,str(skyConfig['solver']['solveDepth']), "--sigma", str(skyConfig['solver']['solveSigma']),
         '--overwrite'] + parms
 
-    print ("solving ",cmd)
+    #print ("solving ",cmd)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     solveLog.clear()
     ppa = ''
@@ -210,7 +209,7 @@ def solve(fn, parms = []):
             if stdoutdata.startswith('Field center: (RA,Dec) = ('):
                 solved = stdoutdata
                 fields = solved.split()[-3:-1]
-                print ('f',fields)
+                #print ('f',fields)
                 ra = fields[0][1:-1]
                 dec = fields[1][0:-1]
                 ra = float(fields[0][1:-1])
@@ -224,7 +223,7 @@ def solve(fn, parms = []):
                 #print ('duration', duration)
 
             elif stdoutdata.startswith('Field size'):
-                print ("Field size")
+                #print ("Field size")
                 solveLog.append(stdoutdata)
                 solveStatus +=(". " + stdoutdata.split(":")[1].rstrip())
             elif stdoutdata.find('pixel scale') > 0:
@@ -281,12 +280,12 @@ def solve(fn, parms = []):
             obsfile = open(os.path.join(solve_path,"obs.log"),"a+")
             obsfile.write(radec.rstrip() + " " + constellations + '\n')
             obsfile.close()
-            print ("wrote obs log")
+            #print ("wrote obs log")
 
         if skyConfig['observing']['saveImages']:
             saveimage = False
             if skyConfig['observing']['obsDelta'] > 0:
-                print ("checking delta")
+                #print ("checking delta")
                 if lastObs:
                     old = lastObs.split(" ")
                     ra1 = math.radians(float(old[1]))
@@ -509,9 +508,12 @@ def gen():
         else:
 
             if nextImage:
+                while len(testFiles) == 0:
+                    pass
                 nextImage = False
                 if testNdx == len(testFiles):
                     testNdx = 0
+                #print('test', len(testFiles))
                 fn = testFiles[testNdx]
 
                 #print ("image", testNdx, fn)
@@ -611,14 +613,16 @@ def nextImagex():
     if testNdx >= len(testFiles):
         testNdx = 0
 
-    skyStatusText="next image is "+ str(testNdx)
+    skyStatusText = "%d %s"%(testNdx,testFiles[testNdx])
     return Response(skyStatusText)
 
 @app.route('/retryImage', methods=['POST'])
 def retryImage():
     global nextImage, testNdx
     nextImage = True
-    skyStatusText="retry image is "+ str(testNdx)
+    while len(testFiles) == 0:
+        print("testndxxxx",testNdx, len(testFiles))
+    skyStatusText = "%d %s"%(testNdx,testFiles[testNdx])
     time.sleep(3)
     return Response(skyStatusText)
 
@@ -631,7 +635,7 @@ def prevImage():
         testNdx = len(testFiles)-1
 
     nextImage = True
-    skyStatusText="next image is "+ str(testNdx)
+    skyStatusText = "%d %s"%(testNdx,testFiles[testNdx])
     return Response(skyStatusText)
 
 @app.route('/Observe', methods=['POST'])

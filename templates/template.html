@@ -249,7 +249,7 @@
                     <button type="button" class="btn nightColor"  style="margin:10px;" id = "testMode" >Replay images</button>
                     <button type="button" class="btn nightColor" style="display: none;" id="stepPrev">Previous Image</button>
                     <button type="button" class="btn nightColor" style="display: none;" id="stepNext">Next Image</button>
-                    <button type="button" class="btn nightColor" style="display: none;" id="retryNext">Refresh image</button>
+
                     <button type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig">camera params</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory">results cfg</button>
@@ -271,18 +271,19 @@
             </div>
             <div id="helpScreen" class="collapse">
                 <ul class= "nightColor list-unstyled">
+                    <li><p>The buttons along the top sets the mode.</p></li>
                     <li> <p>Starts in <b>Align</b> mode which is used to setup camera parameters and manually center view with center of scope.</p></li>
-                    <li><p><b>Pause</b> mode stops camera from taking images. Align or Solve mode start enable the camera to take images.</p></li>
+                    <li><p><b>Pause</b> mode stops camera from taking images. Whereas Align or Solve mode starts the loop and enables the camera to take images.</p></li>
                     <li><p><b>Solve</b> mode will try to solve each image taken and will loop as fast as the shutter and solving allow. <br>
                            The solution will be stored in a file that the encoder.py program will see.  (Encoder.py will be run automatically and will update
                            SkySafari when contacted by it.</p></li>
                     <li><p><b>Replay Images</b> will stop the camera and allow you to view and solve images from your observing history (see history help)<br>
                             </p></li>
-                    <li><p> <b>Refresh Image</b> will update the current history image.  Sometimes the current image is not updated on the display.</p></li>
+                    
                     <li>
                         <p>
                             The current image is displayed below the status display.<br>
-                            The status display updates every 5 seconds or at the end of various commands.<br>
+                            The status display updates every  second or at the end of various commands.<br>
                             The log is displayed below the image.   The log will display data from the solve operation as well as from other commands.
                         </p>
                     </li>
@@ -358,8 +359,7 @@
                     <li>
                         <p>
                             The <b>Replay images</b> button enables the replay controls and displays the names of the images
-                             it finds in the history on the log display.  It also ties to dislay the first image where a camera image would appear.<br>  Sometimes that fails but if you press the 
-                             refresh button.
+                             it finds in the history on the log display.  It also ties to dislay the first image where a camera image would appear.<br> 
                         </p>
                     </li>
                     <li>

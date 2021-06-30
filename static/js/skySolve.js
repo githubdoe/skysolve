@@ -159,17 +159,17 @@ $(document).ready(function(){
         var x = document.getElementById("stepNext");
         var y = document.getElementById("stepPrev");
         var z = document.getElementById("solveThis");
-        var zz = document.getElementById("retryNext");
+
         if (show) {
             x.style.display = "inline";
             y.style.display = "inline";
             z.style.display = "inline";
-            zz.style.display = "inline";
+
         }  else {
             x.style.display = "none";
             y.style.display = "none";
             z.style.display = "none";
-            zz.style.display = "none"; 
+
         }              
     }
 
@@ -233,7 +233,7 @@ $(document).ready(function(){
             
             if (!sks.consts.demoMode)
                 ajax_get_Status('/testMode');
-                setTimeout( refreshImage,300);
+                setTimeout( refreshImage,1000);
             var x = document.getElementById("stepNext");
             if (x.style.display === "none") {
                 showReplaybuttons(true);
