@@ -271,6 +271,11 @@ def solve(fn, parms = []):
         foundStars = foundStars.replace("The star","")
         solveLog.append(foundStars + "\n")
         constellations = ', '.join(starNames.keys())
+        # copy the index over the ngc file so stars will display with the index triangle
+        if  skyConfig['solver']['showStars']:
+            os.remove(os.path.join(solve_path, 'cap-objs.png'))
+            copyfile(os.path.join(solve_path, 'cap-indx.png'), os.path.join(solve_path, 'cap-objs.png'))
+
 
         if skyConfig['observing']['savePosition']:
             obsfile = open(os.path.join(solve_path,"obs.log"),"a+")
