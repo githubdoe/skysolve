@@ -35,6 +35,10 @@ sks.consts = {
     showSolution: 0
 };
 
+function refreshImage(){
+    $.post("/retryImage")
+}
+
 function setIniShutter( shutVal){
     console.log("shutter value", shutVal)
     sks.consts.shutter().val(shutVal);
@@ -119,6 +123,7 @@ $(document).ready(function(){
     $('#stepNext').click(
         function() {
             ajax_get_Status('/nextImage')
+            setTimeout( refreshImage,300);
         })
 
     $('#retryNext').click(
@@ -187,6 +192,7 @@ $(document).ready(function(){
     $('#stepPrev').click(
         function() {
             ajax_get_Obs('/prevImage')
+            setTimeout( refreshImage,300);
         })
 
     $('#clearObsLog').click(
@@ -211,11 +217,13 @@ $(document).ready(function(){
             if (sks.consts.demoMode) {
                 showReplaybuttons(false);
                 sks.consts.demoMode = false;
+
             }
             else {
                 ajax_get_Status('/demoMode');
                 showReplaybuttons(true);
                 sks.consts.demoMode=true;
+                setTimeout( refreshImage,399);
             }
         }
     )
@@ -225,6 +233,7 @@ $(document).ready(function(){
             
             if (!sks.consts.demoMode)
                 ajax_get_Status('/testMode');
+                setTimeout( refreshImage,300);
             var x = document.getElementById("stepNext");
             if (x.style.display === "none") {
                 showReplaybuttons(true);
