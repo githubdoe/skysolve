@@ -157,6 +157,9 @@
             transition: .4s;
         }
         
+        input::selection {
+            background-color: #8b1717;
+        }
         input:checked+.sliderT {
             background-color: #f0a9a9;
         }
@@ -318,7 +321,7 @@
 
                 </ul>
             </div>
- 
+
             <div id="solutionHelp" class="collapse">
 
                 <h5 class = "nightColor">Results Config</h5>
@@ -445,34 +448,89 @@
 
             <!-- Modal content -->
             <div class="modal-content">
+
                 <span id="solveParamsClose" class="close">&times;</span>
                 <h2>Plate Solver Parameters</h2>
                 <p>These default values are good for the RPI High Quality Camera with 25mm  lens"<br>
                     For more info about the solver see <a href=" http://astrometry.net/doc/readme.html"> astrometry.net/doc/readme.html</a> 
                     Under solving heading.</p>
 
-                    <form action="/applySolve2" method="POST">
-                        <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Image Field Size </legend>
-                    <input type="radio" id="FieldWidthModeaPP" name="FieldWidthMode" value="FieldWidthModeaPP" {{ solveP['FieldWidthModeaPP']}}>
-                    <label for="FieldWidthModeaPP">Arc Seconds per Pixel  :</label><input width = "100" class="nightColor" type="number" name="aPPValue" value="{{solveP['aPPValue']}}"> For 16mm lens try 40<br>
-                    <input type="radio"  id="FieldWidthModeField" name="FieldWidthMode" value="FieldWidthModeField"  {{ solveP['FieldWidthModeField']}}>
-                    <label for="FieldWidthMOdeField">Field Width Degrees    :</label><input class="nightColor" name="fieldValue" type="number" value = "{{solveP['fieldValue']}}"><br>
-                    <input type="radio" id="FieldWidthModeOther" name="FieldWidthMode" value="FieldWidthModeOther" {{ solveP['FieldWidthModeOther']}}>
-                    <label for="other">Software Determined (takes longer to solve)</label>
-                </fieldset>   
+                <form id="solverParamsForm" action="/applySolve2" method="POST">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <Label for="profile">Profile</Label>
+                            <select class=" form-control-sm nightColor" name="currentProfile" id="solveProfile">
+                                {% for key, val in profiles.items() %}
+                              <option class="bg_dark text-warning" value={{ key}} </option>>{{ key }}</option> 
+                               {% endfor %}
+            
+                            </select> 
+
+                        </div>
+
+                        <div class="col-sm-5">
+                            <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#addNewProfileNamePane">New Profile</button>
+                            <div id="addNewProfileNamePane" class="collapse">
+                                <label for="newProfilename">New Profile Name:</label>
+                                <textarea id="newProfilename" class = "nightColor" name="newname" rows="1" cols="50">
+                                  </textarea>
+                   
+
+                                <button type="button" class="btn btn-secondary" data-toggle="collapse" data-target="#addNewProfileNamePane">Close</button>
+                                <button type="button" id="addToProfiles" class="btn btn-primary">Add to Profiles</button>
+                              </div>
+                        </div>
+
+                        <div class="col-sm-2">
+                            <button type="button" id="deleteProfile" class="btn  nightColor">Delete</button>
+                        </div>
+                    </div>
+                    
+                    <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" > 
+                             <legend>Image Field Size </legend>
+
+                        <input type="radio" id="FieldWidthModeaPP" name="FieldWidthMode" value="FieldWidthModeaPP" >
+                        <label for="FieldWidthaPPLow">Arc Seconds per Pixel low  :</label>
+                        <input  id="FieldWidthaPPLow"  class="nightColor"
+                            type="number" step=".1" name="aPPLowValue" > 
+                        
+                        <label for="FieldWidthaPPHi">Arc Seconds per Pixel hi  :</label>
+                        <input id="FieldWidthaPPHi" width = "100" class="nightColor" type="number" step=".1" name="aPPHiValue"
+                            > low value For 16mm lens try 40<br>
+                        
+                        <input type="radio"  id="FieldWidthModeField" name="FieldWidthMode" value="FieldWidthModeField"  >
+                        <label for="fieldLoValue">Field Width Deg  low</label>
+                        <input type="number" class="nightColor" name="fieldLoValue" id="fieldLoValue" 
+                            step=".1">
+
+                        <label for="fieldHiValue" style="margin-left:10px;">High </label>
+                        <input class="nightColor" id="fieldHiValue" name="fieldHiValue" type="number" step=".1" ><br>
+                        
+                        <input type="radio" id="FieldWidthModeOther" name="FieldWidthMode" value="FieldWidthModeOther" }>
+                        <label for="other">Software Determined (takes longer to solve)</label>
+                        </fieldset>   
                     <br>  
-                    <label for="CPUtimeout">Max time for Solve</label>
-                    <input type = "number" id="CPUtimeout" name="CPUTimeout" class="nightColor" value = "{{solveP['maxTime']}}"> Seconds<br>
+                    <div class="form-group row">
+                        <div class="col-sm-4">
+                            <label for="CPUtimeout">Max time for Solve</label>
+                            <input type = "number" id="CPUtimeout"  name="CPUTimeout" class=" from-control nightColor"> Secs<br>
+                        </div>
+                        <div class="col-sm-8">
+                            <label for="additionalParms">  Additional command line parameters</label>
+                            <input type="text"  style="margin-left:5px;" size="50" id="additionalParms" name="additionalParms"class="nightColor"
+                             value="abcdkeiw  wert">
+                        </div>
+                    </div>
                     <label for="solveDepth">Depth</label>
-                    <input type = "number" id="SolveDpeth" name = "solveDepth" class="nightColor" value = "{{solveP['solveDepth']}}"> <br>
-                    <label for="SolveSigma">Sigma</label>
-                    <input type = "number" id="SolveSigma" name = "solveSigma" class="nightColor" value = "{{solveP['solveSigma']}}"> 
+                    <input type = "number" id="SolveDepth" name = "solveDepth" class="nightColor" > How many of the brightest stars
+                    <label for="SolveSigma" style="margin-left:20px;">Sigma </label>
+                    <input type = "number" width="6" id="SolveSigma" name = "solveSigma" class="nightColor"  Lower numbers show more stars<br>
                     <label for = "searchRadius"> Search Radius in Deg from last solved location (blank for do not use)  :</label>
-                    <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius" value = "{{solveP['searchRadius']}}" ><br>
+                    <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius"  ><br>
                     <label for="solveVerbose">Verbose</label>
-                    <input type="checkbox" style="margin:10px;"id="solveVerbose", name="solveVerbose" {{ 'checked' if solveP['solveVerbose'] else ''}} >
+                    <input type="checkbox" style="margin:10px;"id="solveVerbose", name="solveVerbose"  >
                     <label for="showStars">Show found stars (slows the solve)</label>
-                    <input type="checkbox"style="margin:10px;" id="showStars", name="showStars" {{ 'checked' if solveP['showStars'] else ''}}                   
+                    <input type="checkbox"style="margin:10px;" id="showStars", name="showStars"}}                   
                     
                     ><br>
                     <input type="submit" class="btn nightColor" value="Submit">
@@ -575,17 +633,39 @@
         <div style="overflow-y: scroll;  height: 300px; color:rgb(247, 130, 130); background:rgb(26, 2, 9);"  id="solveStatusText">
               initialiing camera Waiting for first Image </div>
 
+  
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          ...
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
         <!-- SCRIPTS  -------------------------------------------->
 
         <script>
-        function testValue(value) {
-            console.log('value',value)
-        }
-
             $(document).ready(function(){
+                const x= '{"result":true, "count":42}';
+                var v = "{{ profiles|safe }}"
+                v = v.replace(/False/g,"false")
+                v = v.replace(/True/g,"true")
 
-                setIniShutter("{{ cameraParms['shutter'] }}");
-                testValue("{{ solveP['FieldWidthMode']}}");
+
+                setProfiles(v.replace(/'/g,"\""));
+                console.log("solveP", "{{ solveP }}")
+                setSolverParams( "{{ solveP }}");
+                $('#solveProfile').val("{{ solveP }}")
 
                 setIniISO("{{cameraParms['ISO']}}");
 
