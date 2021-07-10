@@ -27,6 +27,12 @@ so that it can run this image capture and plate solving astro application I wrot
 
 After a correct install you can use a Web browser to connect to the skysolve app.  The first thing you will want to do is align the camera to the telescope view.  The application starts in align mode where camera will start taking images and posting them on the web screen. It will not try to solve the image in this mode so that it can loop through taking pictures faster.  You can change camera perameters to adjust exposure and size of image file.   I find that an exposuer of .9 seconds, ISO 800, and a frame size of 800 x 600 are good staring points.  
 
+### Demo Mode
+
+To get a feel how the program works without using it on a telescope you can use the demo mode where it will use several included sky images that can be solved.  Press the Demo button and it will load those images into a list where you can select each one to be solved every time you press the "Solve This" button.  It will also send the solved position to SkySafari if it is connected.  To see the solution press the "results cfg" button then the "show solution" button.  To see what stars it found press the "show stars" button.
+If the "show stars button is dimmed out" you can enable it by pressing the "Solver Params" button and the checking the "show found stars" check box.
+
+
 ## Install
 
 When you are ready, you can follow these steps to install it on the Raspberry pi:
