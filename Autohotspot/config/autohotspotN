@@ -104,8 +104,24 @@ FindSSID()
 #Check to see what SSID's and MAC addresses are in range
 ssidChk=('NoSSid')
 i=0; j=0
+# Set the pin for input
+gpio mode 7 in
+
+# Set the variable through command substitution
+b=$(gpio read 7)
+
+# Echo the value to the console
+echo "switch position is " "$b"
+if [ "$b" == "0" ] 
+   then
+       echo " switch was set to field."
+       return #force hot spot to be created if switch is set to field position.
+   else
+       echo "switch was set to home"
+fi
 until [ $i -eq 1 ] #wait for wifi if busy, usb wifi is slower.
 do
+
         ssidreply=$((iw dev "$wifidev" scan ap-force | egrep "^BSS|SSID:") 2>&1) >/dev/null 2>&1 
         #echo "SSid's in range: " $ssidreply
 	printf '%s\n' "${ssidreply[@]}"

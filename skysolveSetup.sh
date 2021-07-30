@@ -82,6 +82,10 @@ then
     sudo apt update
     sudo apt -y upgrade
     sudo apt -y dist-upgrade
+
+    #update GPIO module
+    wget https://project-downloads.drogon.net/wiringpi-latest.deb
+    sudo dpkg -i wiringpi-latest.deb
 fi
 
 #########################################################
@@ -372,6 +376,8 @@ if [ "$answer" == "y" ]
     sudo dpkg -i astrometry-data-*.deb
     sudo rm *.deb
 fi
+
+
 #setup auto run of encoder and skysolve at boot.
 
     echo "setup encoder service"
