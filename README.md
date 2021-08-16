@@ -18,6 +18,12 @@ There are two options for the network.   It can be your local WIFI network or th
 
 After setup if the RPI is booted out of range from the WIFI it knows then it will create it's own network that other computers can log into.  This will usually be the case when out on the observing field.  There is also an option to force the RPI to be it's own network (Hot Spot, Access point) even when already connected to the local WIFI.
 
+## Field/Home Switch
+	This is optional.   The software on startup will sense the state of this switch.   If in the Field position is will create a WIfII hot spot even if within range of a known WIFI router.   In the Home position it will nuot create the hot spot if it can see the known router but will if it does not see it.
+	
+	The switch should be connected to the ground GPIO pin and and to GPIO pin 7.  Pin 7 is the 4th pin on the left row of pins when looking at the pi with the USB at the bottom.
+	
+	If the switch is not attached the default is the home position where it will look for a known WIIFII.
 
 
 There is a setup script meant to automate the many setup steps involved with configuring a Raspberry 4 running Raspbian,
@@ -135,5 +141,4 @@ When the RPI reboots it should be running the skysolve application.
 10.  Setup the PI camera and plate solving parameters.
     1. On a pc or tablet on the same network as the pi using a network browser like Chrome connect to <RPI IP>:5000  where <RPI IP> is the ip address of the Raspberry pi.
     This should bring up the skysolve web page.  Click on the help button on that page for info how to setup the camera and solve parameters.
-    
-## Usage
+
