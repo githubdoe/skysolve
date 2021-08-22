@@ -107,9 +107,9 @@ sudo tar -xzvf main.tar.gz --strip-components=1
 
 - Sets the user account to auto-login
 
-- Sets the HDMI to force-hotplug so that it doesn't turn off HDMI when it doesn't immediately detect a display (Raspberry Pi scripts only--Helps to solve issues)
+- Sets the HDMI to force-hotplug so that it doesn't turn off HDMI when it doesn't immediately detect a display (Helps to solve issues)
 
-- Sets the HDMI group and HDMI mode for a certain display resolution (Raspberry Pi scripts only--Please see the comments in the scripts for details and the file /boot/config.txt on the SD card for options.)
+- Sets the HDMI group and HDMI mode for a certain display resolution (Please see the comments in the scripts for details and the file /boot/config.txt on the SD card for options.)
 
 - Disables the screen lock and screen saver to prevent them from causing issues when connecting via VNC
 
