@@ -1,6 +1,6 @@
 # skysolve
 Uses RaspberryPi and plate solving to take images of the night sky and identify the location of the image.
- It uses a Raspberry PI with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SkySafari.  It continually takes images and solves them about every 10 to 15 seconds so that Skysafari can always show where the scope is pointing.
+ It uses a Raspberry PI 4 with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SkySafari.  It continually takes images and solves them about every 10 to 15 seconds so that Skysafari can always show where the scope is pointing.
  
 Below is a screen shot of the application's browser interface showing an image of Ursa Major in the lower left.  THe status field displays the names of stars it found in the image.
  
@@ -18,6 +18,12 @@ There are two options for the network.   It can be your local WIFI network or th
 
 After setup if the RPI is booted out of range from the WIFI it knows then it will create it's own network that other computers can log into.  This will usually be the case when out on the observing field.  There is also an option to force the RPI to be it's own network (Hot Spot, Access point) even when already connected to the local WIFI.
 
+## Field/Home Switch
+	This is optional.   The software on startup will sense the state of this switch.   If in the Field position is will create a WIfII hot spot even if within range of a known WIFI router.   In the Home position it will nuot create the hot spot if it can see the known router but will if it does not see it.
+	
+	The switch should be connected to the ground GPIO pin and and to GPIO pin 7.  Pin 7 is the 4th pin on the left row of pins when looking at the pi with the USB at the bottom.
+	
+	If the switch is not attached the default is the home position where it will look for a known WIIFII.
 
 
 There is a setup script meant to automate the many setup steps involved with configuring a Raspberry 4 running Raspbian,
@@ -101,9 +107,9 @@ sudo tar -xzvf main.tar.gz --strip-components=1
 
 - Sets the user account to auto-login
 
-- Sets the HDMI to force-hotplug so that it doesn't turn off HDMI when it doesn't immediately detect a display (Raspberry Pi scripts only--Helps to solve issues)
+- Sets the HDMI to force-hotplug so that it doesn't turn off HDMI when it doesn't immediately detect a display (Helps to solve issues)
 
-- Sets the HDMI group and HDMI mode for a certain display resolution (Raspberry Pi scripts only--Please see the comments in the scripts for details and the file /boot/config.txt on the SD card for options.)
+- Sets the HDMI group and HDMI mode for a certain display resolution (Please see the comments in the scripts for details and the file /boot/config.txt on the SD card for options.)
 
 - Disables the screen lock and screen saver to prevent them from causing issues when connecting via VNC
 
@@ -135,5 +141,4 @@ When the RPI reboots it should be running the skysolve application.
 10.  Setup the PI camera and plate solving parameters.
     1. On a pc or tablet on the same network as the pi using a network browser like Chrome connect to <RPI IP>:5000  where <RPI IP> is the ip address of the Raspberry pi.
     This should bring up the skysolve web page.  Click on the help button on that page for info how to setup the camera and solve parameters.
-    
-## Usage
+
