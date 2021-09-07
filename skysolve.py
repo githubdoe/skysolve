@@ -1,6 +1,7 @@
 from zipfile import ZipFile
 from flask import Flask, render_template, request, Response, send_file
 import time
+from flask.wrappers import Request
 
 from numpy.core import function_base
 from camera_pi import skyCamera
@@ -514,10 +515,19 @@ def clearObsLog():
         pass  # this will write an empty file erasing the previous contents
     return Response("observing log cleared")
 
-
+setTimeDate = True
 @app.route('/skyStatus', methods=['post'])
+
 def skyStatus():
-    global skyStatusText
+    global skyStatusText,setTimeDate
+
+    if setTimeDate:
+        setTimeDate = False
+        
+        print ('time was', request.form['time'])
+        t = float(request.form['time'])/1000
+        print ("ttt", t, time.time())
+        time.clock_settime(time.CLOCK_REALTIME, t)
     return Response(skyStatusText)
 
 

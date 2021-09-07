@@ -822,8 +822,10 @@
         <!-- Update status and clear timeout if needed-->
         <script>
             function updateStatusField() {
+                var time = new Date()
                 $.ajax({
                     url: '/skyStatus',
+                    data: {'time': Date.now().toString()},
                     type: 'post',
                     success: function(data) {
                             // Perform operation on return value
