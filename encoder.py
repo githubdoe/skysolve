@@ -124,12 +124,12 @@ while True:
             print ("recx:",rbuf,":",hex(ord(rbuf[0])))
             if rbuf[1:4] == 'GR#':
                 print ('gr#')
-                clientsocket.send('00:22:00#')
+                clientsocket.send(b'00:22:00#')
             elif rbuf[1:4] == 'RM#':
                 print ('rm#')
-                clientsocket.send('00:22:00#')
+                clientsocket.send(b'00:22:00#')
             elif rbuf[1:4] == 'GD#':
-                clientsocket.send('00:22:00#')
+                clientsocket.send(b'00:22:00#')
 
        elif rbuf[0] == 'v':
             print ("recx:",rbuf,":",hex(ord(rbuf[0])))

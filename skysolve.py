@@ -23,7 +23,8 @@ from enum import Enum, auto
 import imghdr
 import getpass
 import copy
-
+import sys
+print("argssss",sys.argv, len(sys.argv))
 print('user', getpass.getuser())
 
 
@@ -57,13 +58,14 @@ testNdx = 0
 testFiles = []
 nextImage = False
 root_path = os.getcwd()
+if len(sys.argv) == 2:
+    root_path = sys.argv[1]
 
 
 solve_path = os.path.join(root_path, 'static')
 history_path = os.path.join(solve_path, 'history')
 demo_path = os.path.join(solve_path, 'demo')
 test_path = '/home/pi/pyPlateSolve/data'
-
 solveThisImage = ''
 
 solveCurrent = False
@@ -219,6 +221,8 @@ def solve(fn, parms=[]):
     #print('show stars', profile['showStars'])
     if not profile['showStars']:
         parms = parms + ['-p']
+    parms = parms + ["--uniformize", "0","--no-remove-lines","--new-fits","none", "--corr", "none", "--pnm", "none", "--rdls", 
+                "none"]
     cmd = ["solve-field", fn, "--depth", str(profile['solveDepth']), "--sigma", str(profile['solveSigma']),
            '--overwrite'] + parms
 

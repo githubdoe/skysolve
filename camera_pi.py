@@ -81,7 +81,7 @@ class skyCamera():
     def __init__(self, shutter=1000000, ISO=800, resolution=(2000,1500), format = 'jpeg'):
         self.camera = picamera.PiCamera()
         self.camera.resolution = (2000,1500)
-        self.camera.framerate = Fraction(1,2)
+        self.camera.framerate = Fraction(1,6)
         self.shutter=shutter
         self.ISO=ISO
         self.resolution=resolution
