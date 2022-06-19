@@ -89,6 +89,7 @@
         }
         
         .img-magnifier-container {
+            filter: brightness(300%);
             position: relative;
         }
         
@@ -237,7 +238,7 @@
         button:hover {
             background-color:#8b1717
         }
-        
+  
     </style>
 
     <body >
@@ -350,6 +351,35 @@
                     </dd>
                 
             </div>
+            <div- id="solverHelp" class="collapse">
+            <ul class="nightColor list-unstyled">
+                <li>
+                    <p>
+                        <h5>Params</h5>
+                        <p>The solver uses several params to help it understand the image.</p>  
+                        <ul>Field Width.  Which can be 1 of three options.
+                            <ol>
+                                <li>arc seconds per pixel. It depends on the lens and sample size which is controled by image width.
+                                    <ul>
+                                        <li>27 arcsec/pix for 50mm lens</li>
+                                        <li>25mm lens
+                                            <ul>
+                                                <li>50 arcsec/pix for image width 1024x768</li>
+                                                <li>40 arcsec.oux for image witdth of 1280 x 960</li>                                       
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>filed width in degees. Depends on lens.</li>
+                                <li>Unknown let the software figure it out<br> Takes more time to solve. 
+                                    <p>Can be used to determine the exact values by looking at the log from a solved image.</p></li>
+                            </ol>
+                        </ul>
+                    </p>
+                </li>
+            </ul>
+
+            </div->
             <div id="demoHelp" class="collapse">
                 <ul class="nightColor list-unstyled">
                     <li>
@@ -369,7 +399,7 @@
                         <h5>Demo</h5>
                         <p>Demo enables replay images mode and then directs the playback mode to a few prerecorded sky images that you can try out to solve in<br>
                              replay images mode. It is handy for to play with before you have actual images of your own.
-
+                             <p>For the needed solving parameters see solving config profile list for profiles with the same name as the file.</p>
                         </p>
                     </li>
                 </ul>
@@ -436,6 +466,8 @@
                 <div class="btn-group-horizontal  nightColor ">                 zoom image
                     <button type="button" class="btn btn-primary btn-sm" onclick="increaseMagnification()">+</button>
                     <button type="button" class="btn btn-primary btn-sm" onclick="decreaseMagnification()">-</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="brighten()">Bright</button> 
+                    <button type="button" class="btn btn-primary btn-sm" onclick="darken()">dark</button> 
                 </div>
 
             </div>
@@ -626,7 +658,7 @@
         </div>
         
         <div class="img-magnifier-container" style="overflow: auto;">
-            <img src="{{ url_for('video_feed') }}" id="skyImage" style="width:35%">
+            <img src="{{ url_for('video_feed') }}" id="skyImage" style="width:35%;">
 
         </div>
         <br>Log:
@@ -887,16 +919,27 @@
 
         <script>
             var skyimageMag = .25;
+            var skyBright = 100;
 
 
             function increaseMagnification() {
                 skyimageMag = skyimageMag * 1.5;
                 var zoom = skyimageMag
                 var sky = document.getElementById("skyImage");
+
                 sky.style.width = (100 * zoom) + "%";
                 sky.style.height = (100 * zoom) + "%";
-                console.log(" mag", zoom, sky.style.width)
 
+            }
+            function brighten() {
+                var sky = document.getElementById("skyImage");
+                skyBright = skyBright * 2;
+                sky.style.filter = "brightness("+(skyBright)+"%)";
+            }
+            function darken() {
+                var sky = document.getElementById("skyImage");
+                skyBright = skyBright / 2;
+                sky.style.filter = "brightness("+(skyBright)+"%)";
             }
 
             function decreaseMagnification() {

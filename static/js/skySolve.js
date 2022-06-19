@@ -403,6 +403,11 @@ $(document).ready(function(){
                 showReplaybuttons(false);
             }
         })
+    $('#idAlign').click (
+        function(){
+            showReplaybuttons(false);
+        
+    })
     $('#showStars').click(
 
             function() {

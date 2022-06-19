@@ -422,9 +422,7 @@ def Align():
     global skyStatusText, skyCam, state
     if skyCam:
         skyCam.resume()
-    if state is Mode.PLAYBACK:
-        skyStatusText = 'you must [press replay images first to Cancel playback].'
-    else:
+
         state = Mode.ALIGN
         skyStatusText = 'Align Mode'
     return Response(skyStatusText)
@@ -682,7 +680,7 @@ def demoMode():
 def toggletestMode():
     global testMode, testFiles, testNdx, nextImage, frameStack,  solveLog, state, solveThisImage
 
-    if not state is state.PLAYBACK:
+    if not state is not Mode.PLAYBACK:
         skyStatusText = 'PLAYBACK mode'
         state = Mode.PLAYBACK
         testFiles = [history_path + '/' + fn for fn in os.listdir(
