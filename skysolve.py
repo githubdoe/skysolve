@@ -64,6 +64,8 @@ if len(sys.argv) == 2:
 
 solve_path = os.path.join(root_path, 'static')
 history_path = os.path.join(solve_path, 'history')
+if not os.path.exists(history_path) :
+    os.mkdir(history_path)
 demo_path = os.path.join(solve_path, 'demo')
 test_path = '/home/pi/pyPlateSolve/data'
 solveThisImage = ''
@@ -339,7 +341,7 @@ def solve(fn, parms=[]):
                         saveimage = True
                 else:
                     saveimage = True
-            if saveimage:
+            if state is mode.solving and saveimage:
                 fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.") + \
                     skyConfig['camera']['format']
                 copyfile(os.path.join(solve_path, imageName),
