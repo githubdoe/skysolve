@@ -318,7 +318,7 @@ def solve(fn, parms=[]):
             copyfile(os.path.join(solve_path, 'cap-indx.png'),
                      os.path.join(solve_path, 'cap-objs.png'))
 
-        if skyConfig['observing']['savePosition']:
+        if skyConfig['observing']['savePosition'] and state is Mode.SOLVING:
             obsfile = open(os.path.join(solve_path, "obs.log"), "a+")
             obsfile.write(radec.rstrip() + " " + constellations + '\n')
             obsfile.close()
@@ -341,7 +341,7 @@ def solve(fn, parms=[]):
                         saveimage = True
                 else:
                     saveimage = True
-            if state is mode.solving and saveimage:
+            if state is Mode.SOLVING and saveimage:
                 fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.") + \
                     skyConfig['camera']['format']
                 copyfile(os.path.join(solve_path, imageName),
@@ -543,9 +543,9 @@ def Focus():
 
 solveT = None
 
-
+framecnt = 0
 def gen():
-    global skyStatusText, solveT, testNdx, nextImage, triggerSolutionDisplay, testMode, state, solveCurrent, frameStackLock
+    global skyStatusText, solveT, testNdx, nextImage, triggerSolutionDisplay, testMode, state, solveCurrent, frameStackLock, framecnt
     # Video streaming generator function.
 
     if not solveT:  # start up solver if not already running.
@@ -569,7 +569,9 @@ def gen():
             frame = frameStack[-1][0]
             frameStack.clear()
             frameStackLock.release()
-
+            if state is Mode.ALIGN:
+                framecnt = framecnt + 1
+                skyStatusText = "frame %d" % (framecnt)
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
             if state is Mode.SOLVING:
@@ -682,7 +684,7 @@ def demoMode():
 def toggletestMode():
     global testMode, testFiles, testNdx, nextImage, frameStack,  solveLog, state, solveThisImage
 
-    if not state is not Mode.PLAYBACK:
+    if state is not Mode.PLAYBACK:
         skyStatusText = 'PLAYBACK mode'
         state = Mode.PLAYBACK
         testFiles = [history_path + '/' + fn for fn in os.listdir(
@@ -723,8 +725,9 @@ def nextImagex():
 def retryImage():
     global nextImage, testNdx
     nextImage = True
-    while len(testFiles) == 0:
-        print("testndxxxx", testNdx, len(testFiles))
+    if len(testFiles) == 0:
+        skyStatusText = "no files"
+        return Response(skyStatusText)
     skyStatusText = "%d %s" % (testNdx, testFiles[testNdx])
     time.sleep(3)
     return Response(skyStatusText)
@@ -834,11 +837,18 @@ def clearImages():
 def zipImages():
     global solve_path
     print("download zip file")
+    skyStatusText = "zipping images"
+    solveLog.append("zipping images into history.zip\n")
     zipFilesInDir(os.path.join(solve_path, 'history'),
                   os.path.join(solve_path, 'history', 'history.zip'))
+ 
+    skyStatusText = "history.zip file is being sent."
+    solveLog.append("History.zip file is being sent\n")
+
     return send_file(os.path.join(solve_path, 'history', 'history.zip'),
                      attachment_filename='history.zip',
                      mimetype='application/zip')
+
 
 
 @app.route('/video_feed')
