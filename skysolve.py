@@ -13,7 +13,7 @@ import configparser
 from datetime import datetime
 import threading
 import numpy
-from PIL import Image
+from PIL import Image, ImageEnhance
 import subprocess
 import os
 import math
@@ -24,9 +24,13 @@ import imghdr
 import getpass
 import copy
 import sys
+from tetra3 import Tetra3
+
 print("argssss",sys.argv, len(sys.argv))
 print('user', getpass.getuser())
 
+# Create instance and load default_database (built with max_fov=12 and the rest as default)
+t3 = Tetra3('default_database')
 
 class Mode(Enum):
     PAUSED = auto()
@@ -129,13 +133,17 @@ def solveThread():
         if state is Mode.SOLVETHIS:
             if len(frameStack) == 0:
                 continue
-            print('solving SolveThis', len(frameStack))
+            #print('solving SolveThis', len(frameStack))
             copyfile(solveThisImage, os.path.join(solve_path,imageName))
-
+            skyStatusText = 'solving'
+            s = tetraSolve(os.path.join(solve_path,imageName))
+            skyStatusText = str(s)
+            """
             if not solve(os.path.join(solve_path, imageName)) and skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['searchRadius'] > 0:
                 skyStatusText = 'Failed. Retrying with no position hint.'
                 # try again but this time since the previous failed it will not use a starting guess possition
                 solve(os.path.join(solve_path, imageName))
+            """
             state = Mode.PLAYBACK
             continue
 
@@ -169,7 +177,8 @@ def solveThread():
         frameStackLock.release()
 
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
-            solve(os.path.join(solve_path, imageName))
+            s = tetraSolve(os.path.join(solve_path, imageName))
+            skyStatusText = str(s)
             continue
         # else measaure contrast for focus bar
 
@@ -356,6 +365,21 @@ def solve(fn, parms=[]):
 
     return solved
 
+def tetraSolve(imageName):
+    global skyStatusText, solveLog
+    solveLog.append("solving " + imageName + '\n')
+    img = Image.open(os.path.join(solve_path, imageName))
+    solved = t3.solve_from_image(img,fov_estimate=14)
+    print(str(solved))
+    if solved['RA'] == None:
+        return solved
+    radec = "%s %6.6lf %6.6lf \n" % (time.strftime('%H:%M:%S'), solved['RA'], solved['Dec'])
+    solveLog.append(str(solved) + '\n')
+    file1 = open(os.path.join(solve_path, "radec.txt"), "w")  # write mode
+    file1.write(radec)
+    file1.close()
+    skyStatusText = str(solved['RA'])
+    return solved
 
 app = Flask(__name__)
 
