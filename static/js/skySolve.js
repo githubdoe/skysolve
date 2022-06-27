@@ -29,6 +29,17 @@ sks.consts = {
         var x = $('#saveObs');
         return x;
     },
+
+    solverTetra3: function() {
+        var x = $('#solverTetra3');
+        return x;
+    },
+
+    solverAstromet: function() {
+        var x = $('#solverAstromet');
+        return x;
+    },
+
     fieldWidthModeaPP: function() {
         var x = $('#FieldWidthModeaPP');
         return x;
@@ -43,10 +54,6 @@ sks.consts = {
         var x = $('#FieldWidthaPPHi');
         return x;
     }, 
-    FieldWidthModeField: function() {
-        var x = $('#FieldWidthModeField');
-        return x;
-    },
 
     fieldLoValue: function() {
         var x = $('#fieldLoValue');
@@ -104,8 +111,9 @@ function refreshImage(){
 }
 function setSolverParams(  cur){
     sks.consts.currentProfile = cur;
-    console.log('cur profile',cur)
-    console.log("const.profiles",cur, JSON.stringify(sks.consts.profiles[cur]));
+    //console.log('cur profile',cur)
+    //console.log('profiles', sks.consts.profiles)
+    //console.log("const.profiles",cur, JSON.stringify(sks.consts.profiles[cur]));
     sks.consts.showStars()[0].checked =sks.consts.profiles[cur]["showStars"];
     sks.consts.SolveDepth().val(sks.consts.profiles[cur]['solveDepth'])
     sks.consts.SolveSigma().val(sks.consts.profiles[cur]['solveSigma'])
@@ -118,8 +126,11 @@ function setSolverParams(  cur){
     sks.consts.fieldHiValue().val(sks.consts.profiles[cur]['fieldHiValue'])
     sks.consts.fieldLoValue().val(sks.consts.profiles[cur]['fieldHiValue'])
     var mode = sks.consts.profiles[sks.consts.currentProfile]['FieldWidthMode']
+    var type = sks.consts.profiles[sks.consts.currentProfile]['solver_type'];
     var yyy = $('#' + mode)
     yyy.prop('checked', true);
+    var stype = $('#' + type);
+    stype.prop('checked', true);
 }
 
 function setProfiles(profiles){
@@ -264,6 +275,25 @@ $(document).ready(function(){
 
         }
     )
+    $('#solverTetra3').click(
+        function(){
+            var tetra = $('#solverAstromet').val()
+            
+            $('#solveProfile').val('Tetra3');
+
+            var ele = document.getElementById('astrometryForm');
+            ele.style.display = "none";
+            setSolverParams('Tetra3');
+        }
+    )
+
+    $('#solverAstromet').click(
+        function(){
+            var ele = document.getElementById('astrometryForm');
+            ele.style.display = "inline";
+ 
+        }
+    )
     $('#deleteProfile').click(
         function(){
             var sel = $('#solveProfile').val()
@@ -304,7 +334,32 @@ $(document).ready(function(){
         function() {
             ajax_get_Status('/Solve')
         })
-
+    $('#idSaveCurrent').click (
+        function(){
+            ajax_get_Status('/saveCurrent')
+        }
+    )
+    $('#skyImage').click(
+        function(){
+            
+            if ( sks.consts.currentProfile === 'Tetra3')
+                return
+            var src = document.getElementById("solu");
+            var d = new Date();
+            var n = d.getTime();
+            var fn = "/static/cap-ngc.png";
+            var x = fn.concat( "?dummy=",n,"?");
+            src.src = x
+            src.style.display = "inline";
+        }
+    )
+    $('#solu').click(
+        function(){
+            var x = document.getElementById("solu");
+            x.style.display = "none";
+            
+        }
+    )
     function ajax_get_Obs(cmdroute) {
         $.ajax({
             url: cmdroute,
@@ -316,6 +371,9 @@ $(document).ready(function(){
             }
         });
     }
+
+ 
+
     function showReplaybuttons(show){
         var x = document.getElementById("stepNext");
         var y = document.getElementById("stepPrev");
@@ -333,6 +391,7 @@ $(document).ready(function(){
 
         }              
     }
+
 
     $('#startObs').click(
         function() {
@@ -405,8 +464,26 @@ $(document).ready(function(){
         })
     $('#idAlign').click (
         function(){
+            sks.consts.demoMode=false;
             showReplaybuttons(false);
         
+    })
+    $("#showMore").click(
+        function(){
+        console.log("show more");
+        var results = document.getElementById("resultsCfg");
+        var demo = document.getElementById("demoMode");
+        var test = document.getElementById("testMode"); 
+        if(results.style.display == "inline"){
+            results.style.display = "none";
+            demo.style.display = "none";
+            test.style.display = "none";
+        } 
+        else {
+            results.style.display = "inline";
+            demo.style.display = "inline";
+            test.style.display = "inline";
+        }
     })
     $('#showStars').click(
 
@@ -433,6 +510,7 @@ $(document).ready(function(){
             text.innerHTML = "";
         }
     )
+/*
     $('#showSolutionCB').click(
         function() {
 
@@ -450,6 +528,7 @@ $(document).ready(function(){
             }, function(result) {});
         }
     ) 
+    */
     $('#saveImages').click(
         function() {
 

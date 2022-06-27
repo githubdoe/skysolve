@@ -81,6 +81,16 @@
             color:#f74a4a;
             background-color:#1f0303;
         }
+        .fishes{
+            position: relative;
+            top: 100;
+            left: 100;
+        }
+        .fish {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+        }
     </style>
 
     <style>
@@ -253,14 +263,27 @@
                     <button type="button" class="btn nightColor"  style="margin:10px;" id = "testMode" >Replay images</button>
                     <button type="button" class="btn nightColor" style="display: none;" id="stepPrev">Previous Image</button>
                     <button type="button" class="btn nightColor" style="display: none;" id="stepNext">Next Image</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#historyNdx" style="display: inline;" id="historyIndex">#</button>
 
                     <button type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
-                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig">camera params</button>
-                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory">results cfg</button>
-                    <button type="button" class="btn nightColor" style="margin:10px;" id="demoMode">Demo</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig" id="cameraParms">camera params</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory" id="resultsCfg">resultsConfig</button>
+                    <button type="button" class="btn nightColor" style="margin:10px;" id="demoMode" >Demo</button>
+                
                     <!-- Trigger/Open The solver params -->
                     <button id="openSolverConfig" class="btn nightColor">Solver Params</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#helpButtons">help</button>
+                    <buton type=""button" class = "btn nightColor" id="showMore">...</buton>
+
+                </div>
+            </div>
+            <div class = "row">
+                <div class = "collapse " id="historyNdx">
+                    <form action="/historyNdx" class="btn  nightColor" method="POST">
+                        <label for="image number"class="btn nightColor">Image number:</label>
+                        <input type="number" class="btn nightColor"  style="background-color: rgb(70, 48, 48);" id="hNdx" name="hNdx" step="1">
+                        <input class="btn nightColor"type="submit" value="Select" style="background-color: rgb(70, 48, 48);">
+                      </form> 
 
                 </div>
             </div>
@@ -468,11 +491,11 @@
                     <button type="button" class="btn btn-primary btn-sm" onclick="decreaseMagnification()">-</button>
                     <button type="button" class="btn btn-primary btn-sm" onclick="brighten()">Bright</button> 
                     <button type="button" class="btn btn-primary btn-sm" onclick="darken()">dark</button> 
+                    <button type="button" class="btn btn-primary btn-sm" onclick="saveCurrent()">save current Image</button> 
                 </div>
 
             </div>
         </div>
-
 
 
         <!-- The Modal  for config params-->
@@ -483,89 +506,99 @@
 
                 <span id="solveParamsClose" class="close">&times;</span>
                 <h2>Plate Solver Parameters</h2>
-                <p>These default values are good for the RPI High Quality Camera with 25mm  lens"<br>
-                    For more info about the solver see <a href=" http://astrometry.net/doc/readme.html"> astrometry.net/doc/readme.html</a> 
-                    Under solving heading.</p>
+
+
 
                 <form id="solverParamsForm" action="/applySolve2" method="POST">
-                    <div class="row">
-                        <div class="col-sm-4">
-                            <Label for="profile">Profile</Label>
-                            <select class=" form-control-sm nightColor" name="currentProfile" id="solveProfile">
-                                {% for key, val in profiles.items() %}
-                              <option class="bg_dark text-warning" value={{ key}} </option>>{{ key }}</option> 
-                               {% endfor %}
-            
-                            </select> 
-
-                        </div>
-
-                        <div class="col-sm-5">
-                            <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#addNewProfileNamePane">New Profile</button>
-                            <div id="addNewProfileNamePane" class="collapse">
-                                <label for="newProfilename">New Profile Name:</label>
-                                <textarea id="newProfilename" class = "nightColor" name="newname" rows="1" cols="50">
-                                  </textarea>
-                   
-
-                                <button type="button" class="btn btn-secondary" data-toggle="collapse" data-target="#addNewProfileNamePane">Close</button>
-                                <button type="button" id="addToProfiles" class="btn btn-primary">Add to Profiles</button>
-                              </div>
-                        </div>
-
-                        <div class="col-sm-2">
-                            <button type="button" id="deleteProfile" class="btn  nightColor">Delete</button>
-                        </div>
-                    </div>
-                    
-                    <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" > 
-                             <legend>Image Field Size </legend>
-
-                        <input type="radio" id="FieldWidthModeaPP" name="FieldWidthMode" value="FieldWidthModeaPP" >
-                        <label for="FieldWidthaPPLow">Arc Seconds per Pixel low  :</label>
-                        <input  id="FieldWidthaPPLow"  class="nightColor"
-                            type="number" step=".1" name="aPPLowValue" > 
-                        
-                        <label for="FieldWidthaPPHi">Arc Seconds per Pixel hi  :</label>
-                        <input id="FieldWidthaPPHi" width = "100" class="nightColor" type="number" step=".1" name="aPPHiValue"
-                            > low value For 16mm lens try 40<br>
-                        
-                        <input type="radio"  id="FieldWidthModeField" name="FieldWidthMode" value="FieldWidthModeField"  >
-                        <label for="fieldLoValue">Field Width Deg  low</label>
-                        <input type="number" class="nightColor" name="fieldLoValue" id="fieldLoValue" 
-                            step=".1">
-
-                        <label for="fieldHiValue" style="margin-left:10px;">High </label>
-                        <input class="nightColor" id="fieldHiValue" name="fieldHiValue" type="number" step=".1" ><br>
-                        
-                        <input type="radio" id="FieldWidthModeOther" name="FieldWidthMode" value="FieldWidthModeOther" }>
-                        <label for="other">Software Determined (takes longer to solve)</label>
-                        </fieldset>   
-                    <br>  
-                    <div class="form-group row">
-                        <div class="col-sm-4">
-                            <label for="CPUtimeout">Max time for Solve</label>
-                            <input type = "number" id="CPUtimeout"  name="CPUTimeout" class=" from-control nightColor"> Secs<br>
-                        </div>
-                        <div class="col-sm-8">
-                            <label for="additionalParms">  Additional command line parameters</label>
-                            <input type="text"  style="margin-left:5px;" size="50" id="additionalParms" name="additionalParms"class="nightColor"
-                             value="abcdkeiw  wert">
-                        </div>
-                    </div>
-                    <label for="solveDepth">Depth</label>
-                    <input type = "number" id="SolveDepth" name = "solveDepth" class="nightColor" > How many of the brightest stars
-                    <label for="SolveSigma" style="margin-left:20px;">Sigma </label>
-                    <input type = "number" width="6" id="SolveSigma" name = "solveSigma" class="nightColor"  Lower numbers show more stars<br>
-                    <label for = "searchRadius"> Search Radius in Deg from last solved location (blank for do not use)  :</label>
-                    <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius"  ><br>
-                    <label for="solveVerbose">Verbose</label>
-                    <input type="checkbox" style="margin:10px;"id="solveVerbose", name="solveVerbose"  >
-                    <label for="showStars">Show found stars (slows the solve)</label>
-                    <input type="checkbox"style="margin:10px;" id="showStars", name="showStars"}}                   
-                    
+                    <input type="radio" id="solverTetra3" name="solver_type" value="solverTetra3">
+                    <label for="solverTetra3">Tetra3</label>
+                    <input type="radio" id="solverAstromet" name="solver_type" value="solverAstromet"  data-toggle="collapse" data-target="#astrometryForm">
+                    <label for="solverAstromet">Astrometry</label>
                     ><br>
-                    <input type="submit" class="btn nightColor" value="Submit">
+                    <input type="submit" class="btn btn-primary"  value="Apply">
+
+                    <div id="astrometryForm" class="collapse">
+                        <p>These default values are good for the RPI High Quality Camera with 25mm  lens"<br>
+                            For more info about the solver see <a href=" http://astrometry.net/doc/readme.html"> astrometry.net/doc/readme.html</a> 
+                            Under solving heading.</p>
+                   <div class="row">
+                            <div class="col-sm-4">
+                                <Label for="profile">Profile</Label>
+                                <select class=" form-control-sm nightColor" name="currentProfile" id="solveProfile">
+                                    {% for key, val in profiles.items() %}
+                                <option class="bg_dark text-warning" value={{ key}} </option>>{{ key }}</option> 
+                                {% endfor %}
+                
+                                </select> 
+
+                            </div>
+
+                            <div class="col-sm-5">
+                                <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#addNewProfileNamePane">New Profile</button>
+                                <div id="addNewProfileNamePane" class="collapse">
+                                    <label for="newProfilename">New Profile Name:</label>
+                                    <textarea id="newProfilename" class = "nightColor" name="newname" rows="1" cols="50">
+                                    </textarea>
+                    
+
+                                    <button type="button" class="btn btn-secondary" data-toggle="collapse" data-target="#addNewProfileNamePane">Close</button>
+                                    <button type="button" id="addToProfiles" class="btn btn-primary">Add to Profiles</button>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-2">
+                                <button type="button" id="deleteProfile" class="btn  nightColor">Delete</button>
+                            </div>
+                        </div> 
+                        
+                        <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" > 
+                                <legend>Image Field Size </legend>
+
+                            <input type="radio" id="FieldWidthModeaPP" name="FieldWidthMode" value="FieldWidthModeaPP" >
+                            <label for="FieldWidthaPPLow">Arc Seconds per Pixel low  :</label>
+                            <input  id="FieldWidthaPPLow"  class="nightColor"
+                                type="number" step=".1" name="aPPLowValue" > 
+                            
+                            <label for="FieldWidthaPPHi">Arc Seconds per Pixel hi  :</label>
+                            <input id="FieldWidthaPPHi" width = "100" class="nightColor" type="number" step=".1" name="aPPHiValue"
+                                > low value For 16mm lens try 40<br>
+                            
+                            <input type="radio"  id="FieldWidthModeField" name="FieldWidthMode" value="FieldWidthModeField"  >
+                            <label for="fieldLoValue">Field Width Deg  low</label>
+                            <input type="number" class="nightColor" name="fieldLoValue" id="fieldLoValue" 
+                                step=".1">
+
+                            <label for="fieldHiValue" style="margin-left:10px;">High </label>
+                            <input class="nightColor" id="fieldHiValue" name="fieldHiValue" type="number" step=".1" ><br>
+                            
+                            <input type="radio" id="FieldWidthModeOther" name="FieldWidthMode" value="FieldWidthModeOther" }>
+                            <label for="other">Software Determined (takes longer to solve)</label>
+                            </fieldset>   
+                        <br>  
+                        <div class="form-group row">
+                            <div class="col-sm-4">
+                                <label for="CPUtimeout">Max time for Solve</label>
+                                <input type = "number" id="CPUtimeout"  name="CPUTimeout" class=" from-control nightColor"> Secs<br>
+                            </div>
+                            <div class="col-sm-8">
+                                <label for="additionalParms">  Additional command line parameters</label>
+                                <input type="text"  style="margin-left:5px;" size="50" id="additionalParms" name="additionalParms"class="nightColor"
+                                value="abcdkeiw  wert">
+                            </div>
+                        </div>
+                        <label for="solveDepth">Depth</label>
+                        <input type = "number" id="SolveDepth" name = "solveDepth" class="nightColor" > How many of the brightest stars
+                        <label for="SolveSigma" style="margin-left:20px;">Sigma </label>
+                        <input type = "number" width="6" id="SolveSigma" name = "solveSigma" class="nightColor"  Lower numbers show more stars<br>
+                        <label for = "searchRadius"> Search Radius in Deg from last solved location (blank for do not use)  :</label>
+                        <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius"  ><br>
+                        <label for="solveVerbose">Verbose</label>
+                        <input type="checkbox" style="margin:10px;"id="solveVerbose", name="solveVerbose"  >
+                        <label for="showStars">Show found stars (slows the solve)</label>
+                        <input type="checkbox"style="margin:10px;" id="showStars", name="showStars"   >                
+                </div> 
+
+
                 </form>
             </div> 
 
@@ -657,13 +690,14 @@
             <div id="myBar"></div>
         </div>
         
-        <div class="img-magnifier-container" style="overflow: auto;">
-            <img src="{{ url_for('video_feed') }}" id="skyImage" style="width:35%;">
-
-        </div>
-        <br>Log:
-        <div style="overflow-y: scroll;  height: 300px; color:rgb(247, 130, 130); background:rgb(26, 2, 9);"  id="solveStatusText">
-              initialiing camera Waiting for first Image </div>
+        <div ,class = "img-magnifier-container " style="position: relative; left: 100; top: 100;">
+            <img src="{{ url_for('video_feed') }}" id="skyImage" class="fishes" style="filter: brightness(600%);">
+            <img src="/static/cap-ngc.png" id="solu"  class="fish" style = "display : none;">
+            </div>
+        <p><div style="color:rgb(160, 0, 0); background:rgb(2, 0, 0);" >Log:</div>
+            
+        <div style="overflow-y: scroll;  height: 300px; color:rgb(155, 0, 0); background:rgb(2, 0, 9);"  id="solveStatusText">
+              initialiing camera Waiting for first Image </div></p>
 
   
   <!-- Modal -->
@@ -697,7 +731,9 @@
                 setProfiles(v.replace(/'/g,"\""));
                 console.log("solveP", "{{ solveP }}")
                 setSolverParams( "{{ solveP }}");
-                $('#solveProfile').val("{{ solveP }}")
+                $('#solveProfile').val("{{ solveP }}");
+
+                setIniShutter("{{cameraParms['shutter']}}");
 
                 setIniISO("{{cameraParms['ISO']}}");
 
@@ -736,6 +772,7 @@
             // When the user clicks on the button, open the modal
             btn.onclick = function() {
                 var src = document.getElementById("starsSrc");
+
                 var d = new Date();
                 var n = d.getTime();
                 var fn = "/static/cap-objs.png";
@@ -760,12 +797,12 @@
             // When the user clicks on the button, open the modal
             btn.onclick = function() {
                 var src = document.getElementById("solutionSrc");
-                var d = new Date();
+                 var d = new Date();
                 var n = d.getTime();
                 var fn = "/static/cap-ngc.png";
                 var x = fn.concat( "?dummy=",n,"?");
                 src.src = x
-                solvedImageModal.style.display = "block";
+                 solvedImageModal.style.display = "block";
             }
 
             // When the user clicks on <span> (x), close the modal
@@ -809,7 +846,13 @@
             xhr.open('GET', '/solveLog');
             xhr.send();
             var position = 0;
-        
+
+            var newimg = document.getElementById('skyImage');
+            newimg.addEventListener("fetch", function(event) {
+                console.log("something changed.");
+
+            });
+
             function handleNewData() {
                 // the response text include the entire response so far
                 // split the messages, then take the messages that haven't been handled yet
@@ -926,9 +969,12 @@
                 skyimageMag = skyimageMag * 1.5;
                 var zoom = skyimageMag
                 var sky = document.getElementById("skyImage");
+                var solve = document.getElementById('solu');
 
                 sky.style.width = (100 * zoom) + "%";
                 sky.style.height = (100 * zoom) + "%";
+                solve.style.width = (100 * zoom) + "%";
+                solve.style.width = (100 * zoom) + "%";
 
             }
             function brighten() {
@@ -941,6 +987,9 @@
                 skyBright = skyBright / 2;
                 sky.style.filter = "brightness("+(skyBright)+"%)";
             }
+            function saveCurrent() {
+
+            }
 
             function decreaseMagnification() {
                 skyimageMag = skyimageMag / 1.5;
@@ -949,9 +998,12 @@
                 }
                 var zoom = skyimageMag
                 var sky = document.getElementById("skyImage");
+                var solve = document.getElementById('solu');
                 sky.style.width = (100 * zoom) + "%";
                 sky.style.height = (100 * zoom) + "%";
-                console.log(" mag", zoom, sky.style.width)
+                solve.style.width = (100 * zoom) + "%";
+                solve.style.width = (100 * zoom) + "%";
+    
             }
         </script>
         <script src= '../static/js/skySolve.js'></script>

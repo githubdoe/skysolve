@@ -30,8 +30,9 @@ print("argssss",sys.argv, len(sys.argv))
 print('user', getpass.getuser())
 
 # Create instance and load default_database (built with max_fov=12 and the rest as default)
-t3 = Tetra3('default_database')
-
+t3 = None
+if t3 == None:
+    t3 = Tetra3('default_database')
 class Mode(Enum):
     PAUSED = auto()
     ALIGN = auto()
@@ -105,18 +106,17 @@ skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'frame': '800x600','format': 'j
 
 
 def saveConfig():
-    with open('skyConfig.txt', 'w') as f:
+    with open('skyConfig.json', 'w') as f:
         json.dump(skyConfig, f)
 
 
 #saveConfig()
 print('cwd', os.getcwd())
-for i in range(130):
-    solveLog.append("                       \n")
 
-with open(os.path.join(root_path, 'skyConfig.txt')) as f:
+
+with open(os.path.join(root_path, 'skyConfig.json')) as f:
     skyConfig = json.load(f)
-
+print (skyConfig['solverProfiles']['25FL'])
 
 imageName = 'cap.'+skyConfig['camera']['format']
 
@@ -136,14 +136,24 @@ def solveThread():
             #print('solving SolveThis', len(frameStack))
             copyfile(solveThisImage, os.path.join(solve_path,imageName))
             skyStatusText = 'solving'
-            s = tetraSolve(os.path.join(solve_path,imageName))
-            skyStatusText = str(s)
-            """
-            if not solve(os.path.join(solve_path, imageName)) and skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['searchRadius'] > 0:
-                skyStatusText = 'Failed. Retrying with no position hint.'
-                # try again but this time since the previous failed it will not use a starting guess possition
-                solve(os.path.join(solve_path, imageName))
-            """
+            if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
+                s = tetraSolve(os.path.join(solve_path,imageName))
+                if s['RA'] != None:
+                    ra = s['RA']
+                    dec = s['Dec']
+                    fov = s['FOV']
+                    dur = (s['T_solve']+s['T_extract'])/1000
+                    result = "RA:%6.3lf    Dec:%6.3lf    FOV:%6.3lf %6.3lf      secs" % (ra/15, dec,  fov, dur)
+                    skyStatusText = result
+                else:
+                    skyStatusText = str(s)
+            else:
+            
+                if not solve(os.path.join(solve_path, imageName)) and skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['searchRadius'] > 0:
+                    skyStatusText = 'Failed. Retrying with no position hint.'
+                    # try again but this time since the previous failed it will not use a starting guess possition
+                    solve(os.path.join(solve_path, imageName))
+            
             state = Mode.PLAYBACK
             continue
 
@@ -177,8 +187,20 @@ def solveThread():
         frameStackLock.release()
 
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
-            s = tetraSolve(os.path.join(solve_path, imageName))
-            skyStatusText = str(s)
+            if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
+                s = tetraSolve(os.path.join(solve_path, imageName))
+                print(str(s))
+                if s['RA'] != None:
+                    ra = s['RA']
+                    dec = s['Dec']
+                    fov = s['FOV']
+                    dur = (s['T_solve']+s['T_extract'])/1000
+                    result = "RA:%6.3lf    Dec:%6.3lf     FOV:%6.3lf     %6.3lf secs" % (ra/15, dec,  fov, dur)
+                    skyStatusText = result
+                else:
+                    skyStatusText = str(s)
+            else:
+                solve(os.path.join(solve_path, imageName))
             continue
         # else measaure contrast for focus bar
 
@@ -366,9 +388,11 @@ def solve(fn, parms=[]):
     return solved
 
 def tetraSolve(imageName):
-    global skyStatusText, solveLog
+    global skyStatusText, solveLog, t3
+
     solveLog.append("solving " + imageName + '\n')
     img = Image.open(os.path.join(solve_path, imageName))
+    print('solving', imageName)
     solved = t3.solve_from_image(img,fov_estimate=14)
     print(str(solved))
     if solved['RA'] == None:
@@ -454,6 +478,18 @@ def Align():
     return Response(skyStatusText)
 
 
+@app.route('/saveCurrent', methods=['POST'])
+def saveCurrent():
+    global skyStatusText,imageName
+
+    fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.") + \
+        skyConfig['camera']['format']
+    copyfile(os.path.join(solve_path, imageName),
+                os.path.join(solve_path, 'history', fn))
+ 
+    skyStatusText = 'saved'
+    return Response(skyStatusText)
+    
 @app.route('/Solve', methods=['POST'])
 def Solving():
     global skyStatusText, state, skyCam
@@ -477,7 +513,7 @@ def setISO(value):
     solveLog.append("ISO changing will take 10 seconds to stabilize gain.\n")
     skyStatusText = "changing to ISO " + value
     isoglobal = value
-    skyCam.setISO(value)
+    skyCam.setISO(int(value))
 
     skyConfig['camera']['ISO'] = value
     saveConfig()
@@ -644,7 +680,7 @@ def deleteProfile(value):
     
     return json.dumps(skyConfig['solverProfiles'])
 
-@app.route('/applySolve2', methods=['POST'])
+@app.route('/applySolve2', methods=['GET','POST'])
 def apply():
     print("submitted values", request.form.values)
     
@@ -711,6 +747,7 @@ def toggletestMode():
     if state is not Mode.PLAYBACK:
         skyStatusText = 'PLAYBACK mode'
         state = Mode.PLAYBACK
+        saveLog = "Gathering Files.\n"
         testFiles = [history_path + '/' + fn for fn in os.listdir(
             history_path) if any(fn.endswith(ext) for ext in ['jpg', 'jpeg', 'png'])]
         testFiles.sort(key=os.path.getmtime)
@@ -756,6 +793,21 @@ def retryImage():
     time.sleep(3)
     return Response(skyStatusText)
 
+
+@app.route('/historyNdx', methods=['POST'])
+def historyNdx():
+    global nextImage, testNdx ,solveThisImage
+    print("submitted values", request.form.values)
+    req = request.form
+    testNdx = int(req.get("hNdx"))
+    if (testNdx > 0):
+        testNdx -= 1
+    else:
+        testNdx = len(testFiles)-1
+
+    nextImage = True
+    solveThisImage = testFiles[testNdx]
+    return Response(status=205)
 
 @app.route('/prevImage', methods=['POST'])
 def prevImage():
