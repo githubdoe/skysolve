@@ -87,7 +87,7 @@ cameraNotPresent = True
 
 """
 skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'frame': '800x600','format': 'jpeg'},
-    'solver':{'currentProfile': 'default'},
+    'solver':{'currentProfile': 'default', 'startupSolving': False},
     'observing':{'saveImages': False, 'showSolution': False, 'savePosition': True , 'obsDelta': .1},
     'solverProfiles' :{\
   
@@ -122,6 +122,20 @@ imageName = 'cap.'+skyConfig['camera']['format']
 
 #print (skyConfig)
 skyCam = None
+
+ 
+if not skyCam:
+    print('creating cam')
+    try:
+        skyCam = skyCamera(shutter=int(
+            1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'], resolution=skyConfig['camera']['frame'])
+        cameraNotPresent = False
+        if skyConfig['solver']['startupSolveing']:
+            state = Mode.SOLVING
+    except Exception as e:
+        print(e)
+        cameraNotPresent = True
+        skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
 
 
 def solveThread():
@@ -214,6 +228,11 @@ def solveThread():
         except Exception as e:
             print(e)
 
+solveT = None
+print("config",skyConfig['solver'])
+if skyConfig['solver']['startupSolveing']:
+    solveT = threading.Thread(target=solveThread)
+    solveT.start()
 
 def solve(fn, parms=[]):
     global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, solveStatus,\
@@ -223,7 +242,7 @@ def solve(fn, parms=[]):
     solved = ''
     profile = skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]
     fieldwidthParm = ''
-    print('fieldwidthMode', profile['FieldWidthMode'])
+    #print('fieldwidthMode', profile['FieldWidthMode'])
     if profile['FieldWidthMode'] == 'FieldWidthModeaPP':
         low = profile['aPPLoValue']
         high = profile['aPPHiValue']
@@ -235,7 +254,7 @@ def solve(fn, parms=[]):
     elif profile['FieldWidthMode'] == 'FieldWidthModeField':
         low = profile['fieldLoValue']
         high = profile['fieldHiValue'].replace(' ', '')
-        print("highval", high)
+        #print("highval", high)
         if high == '':
             field = ['--scale-units', 'degwidth', '--scale-low', low]
         else:
@@ -275,7 +294,7 @@ def solve(fn, parms=[]):
         if stdoutdata:
             if profile['solveVerbose']:
                 solveLog.append(stdoutdata)
-            print("stdout", str(stdoutdata))
+            #print("stdout", str(stdoutdata))
 
             if stdoutdata.startswith('Field center: (RA,Dec) = ('):
                 solved = stdoutdata
@@ -421,21 +440,13 @@ def index():
     formatValues = ['jpeg', 'png']
     solveParams = {'PPA': 27, 'FieldWidth': 14, 'Timeout': 34,
                    'Sigma': 9, 'Depth': 20, 'SearchRadius': 10}
-    if not skyCam:
-        print('creating cam')
-        try:
-            skyCam = skyCamera(shutter=int(
-                1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'], resolution=skyConfig['camera']['frame'])
-            cameraNotPresent = False
-        except Exception as e:
-            print(e)
-            cameraNotPresent = True
-            skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
+    if cameraNotPresent:
+        skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
         print('camera was found', cameraNotPresent)
         print('current profile', skyConfig['solver'])
 
     return render_template('template.html', shutterData=shutterValues, skyFrameData=skyFrameValues, skyFormatData=formatValues,
-                           skyIsoData=isoValues, profiles=skyConfig['solverProfiles'], solveP=skyConfig['solver']['currentProfile'], obsParms=skyConfig['observing'], cameraParms=skyConfig['camera'])
+                           skyIsoData=isoValues, profiles=skyConfig['solverProfiles'], startup = skyConfig['solver']['startupSolveing'],solveP=skyConfig['solver']['currentProfile'], obsParms=skyConfig['observing'], cameraParms=skyConfig['camera'])
 
 #
 
@@ -601,7 +612,7 @@ def Focus():
     return Response(focusStd)
 
 
-solveT = None
+
 
 framecnt = 0
 def gen():
@@ -739,30 +750,33 @@ def demoMode():
 
     return Response(skyStatusText)
 
+def findHistoryFiles():
+    global saveLog, skyStatusText, testFiles, testNdx, frameStack, solveThisImage
+    testFiles = [history_path + '/' + fn for fn in os.listdir(
+    history_path) if any(fn.endswith(ext) for ext in ['jpg', 'jpeg', 'png'])]
+    testFiles.sort(key=os.path.getmtime)
+    testNdx = 0
+    nextImage = True
+    print("test files len", len(testFiles))
+    frameStack.clear()
+    solveLog = [x + '\n' for x in testFiles]
+    solveThisImage = testFiles[0]
+    if len(testFiles) == 0:
+        skyStatusText ="no image files in hisotry"
+    else:
+        skyStatusText = 'PLAYBACK mode ' + \
+            str(len(testFiles)) + " images found."
+
+    print(skyStatusText)
 
 @app.route('/testMode', methods=['POST'])
 def toggletestMode():
-    global testMode, testFiles, testNdx, nextImage, frameStack,  solveLog, state, solveThisImage
-
+    global testMode, testFiles, testNdx, nextImage, frameStack,  solveLog, state, solveThisImage, skyStatusText
     if state is not Mode.PLAYBACK:
-        skyStatusText = 'PLAYBACK mode'
         state = Mode.PLAYBACK
-        saveLog = "Gathering Files.\n"
-        testFiles = [history_path + '/' + fn for fn in os.listdir(
-            history_path) if any(fn.endswith(ext) for ext in ['jpg', 'jpeg', 'png'])]
-        testFiles.sort(key=os.path.getmtime)
-        testNdx = 0
-        nextImage = True
-        print("test files len", len(testFiles))
-        frameStack.clear()
-        solveLog = [x + '\n' for x in testFiles]
-        solveThisImage = testFiles[0]
-        if len(testFiles) == 0:
-            skyStatusText("no image files in hisotry")
-        else:
-            skyStatusText = 'PLAYBACK mode ' + \
-                str(len(testFiles)) + " images found."
-
+        skyStatusText="Gathering History files"
+        th = threading.Thread(target= findHistoryFiles())
+        th.start()
     else:
         state = Mode.ALIGN
         skyStatusText = 'ALIGN Mode'
@@ -792,7 +806,16 @@ def retryImage():
     skyStatusText = "%d %s" % (testNdx, testFiles[testNdx])
     time.sleep(3)
     return Response(skyStatusText)
+    
+@app.route('/startup/<value>',methods=['POST'])
+def startup(value):
+    if value == 'true':
+        skyConfig['solver']['startupSolveing'] = True
+    else:
+        skyConfig['solver']['startupSolveing'] = False
+    saveConfig()
 
+    return Response(status=204)
 
 @app.route('/historyNdx', methods=['POST'])
 def historyNdx():
@@ -936,4 +959,4 @@ def video_feed():
 if __name__ == '__main__':
     print("working dir", os.getcwd())
 
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True, use_reloader=False)

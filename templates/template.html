@@ -513,7 +513,10 @@
                     <input type="radio" id="solverTetra3" name="solver_type" value="solverTetra3">
                     <label for="solverTetra3">Tetra3</label>
                     <input type="radio" id="solverAstromet" name="solver_type" value="solverAstromet"  data-toggle="collapse" data-target="#astrometryForm">
-                    <label for="solverAstromet">Astrometry</label>
+                    <label for="solverAstromet">Astrometry</label> 
+                    <br>
+
+                    <input type="checkbox"  id="solveatStartup" {{ 'checked' if startup else ''}}>Start solver at startup
                     ><br>
                     <input type="submit" class="btn btn-primary"  value="Apply">
 

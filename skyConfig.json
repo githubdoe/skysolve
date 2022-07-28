@@ -6,7 +6,8 @@
         "format": "jpeg"
     },
     "solver": {
-        "currentProfile": "25FL"
+        "currentProfile": "25FL",
+        "startupSolveing": false
     },
     "observing": {
         "saveImages": true,
