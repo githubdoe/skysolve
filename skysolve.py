@@ -132,6 +132,8 @@ if not skyCam:
         cameraNotPresent = False
         if skyConfig['solver']['startupSolveing']:
             state = Mode.SOLVING
+        startFrame = skyCam.get_frame()
+        print("camera started and frame received")
     except Exception as e:
         print(e)
         cameraNotPresent = True
@@ -175,7 +177,7 @@ def solveThread():
             if cameraNotPresent:
                 continue
             frame = skyCam.get_frame()
-
+  
         if (state is Mode.AUTOPLAYBACK):
             if testNdx == len(testFiles):
                 testNdx = 0
@@ -229,7 +231,7 @@ def solveThread():
             print(e)
 
 solveT = None
-print("config",skyConfig['solver'])
+#print("config",skyConfig['solver'])
 if skyConfig['solver']['startupSolveing']:
     solveT = threading.Thread(target=solveThread)
     solveT.start()

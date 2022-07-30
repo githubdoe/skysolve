@@ -126,8 +126,10 @@ class skyCamera():
         while not self.cameraStopped:
             time.sleep(.2)
         self.runMode = True
+
     def setShutter(self, value):
         self.camera.shutter_speed = value
+        self.shutter = value
         print ("new shutter speed", value)
 
     def setupGain(self):
@@ -141,11 +143,10 @@ class skyCamera():
         if self.camera:
             self.runMode = False
   
-        print ("setup called")
+        print ("cam setup called")
         selfrunMode = False
         while not self.cameraStopped:
             pass
-        print ("cammer has stopped", self.resolution)
 
         self.camera.resolution = self.resolution
         print ('camera framesize at init', self.resolution)
