@@ -1,3 +1,4 @@
+from pickle import NONE
 from zipfile import ZipFile
 from flask import Flask, render_template, request, Response, send_file
 import time
@@ -53,7 +54,7 @@ ra = 0
 dec = 0
 solveStatus = ''
 computedPPa = ''
-frameStack = []
+frameStack = []     #holds images and the time it was taken
 frameStackLock = threading.Lock()
 
 focusStd = ''
@@ -131,18 +132,22 @@ if not skyCam:
             1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'], resolution=skyConfig['camera']['frame'])
         cameraNotPresent = False
         if skyConfig['solver']['startupSolveing']:
+            print("startup in solving")
             state = Mode.SOLVING
         startFrame = skyCam.get_frame()
-        print("camera started and frame received")
+        if startFrame == None:
+            print("camera did not seem to start")
+        print("camera started and frame received", cameraNotPresent)
     except Exception as e:
         print(e)
         cameraNotPresent = True
         skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
+framecnt = 0
 
-
+#this is responsible for getting images from the camera even in align mode
 def solveThread():
     global skyStatusText, focusStd, solveCurrent, state, skyCam, frameStack, frameStackLock, testNdx
-    # print('solvethread')
+    print('solvethread')
     while True:
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
@@ -177,6 +182,8 @@ def solveThread():
             if cameraNotPresent:
                 continue
             frame = skyCam.get_frame()
+            if frame == NONE:
+                continue
   
         if (state is Mode.AUTOPLAYBACK):
             if testNdx == len(testFiles):
@@ -198,9 +205,10 @@ def solveThread():
                 continue
 
         frameStackLock.acquire()
-
+        print("solve thread acquired frameSackLock")
         frameStack.append((frame, datetime.now()))
         frameStackLock.release()
+        print("solve thread released framsStack lock")
 
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
             if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
@@ -280,7 +288,7 @@ def solve(fn, parms=[]):
     cmd = ["solve-field", fn, "--depth", str(profile['solveDepth']), "--sigma", str(profile['solveSigma']),
            '--overwrite'] + parms
 
-    print("\n\nsolving ", cmd)
+    #print("\n\nsolving ", cmd)
     solveLog.append(' '.join(cmd) + '\n')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     solveLog.clear()
@@ -389,17 +397,19 @@ def solve(fn, parms=[]):
 
                     delta = math.degrees(math.acos(math.sin(
                         dec1) * math.sin(dec2) + math.cos(dec1) * math.cos(dec2)*math.cos(ra1 - ra2)))
+                    print("image delta", delta)
                     if delta > skyConfig['observing']['obsDelta']:
                         saveimage = True
                 else:
                     saveimage = True
             if state is Mode.SOLVING and saveimage:
+                lastObs = radec
                 fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.") + \
                     skyConfig['camera']['format']
                 copyfile(os.path.join(solve_path, imageName),
                          os.path.join(solve_path, 'history', fn))
 
-        lastObs = radec
+ 
         if skyConfig['observing']['showSolution']:
             triggerSolutionDisplay = True
         skyStatusText = foundStars + " "+str(duration) + ' secs'
@@ -616,28 +626,39 @@ def Focus():
 
 
 
-framecnt = 0
+
+tmr = 0
 def gen():
-    global skyStatusText, solveT, testNdx, nextImage, triggerSolutionDisplay, testMode, state, solveCurrent, frameStackLock, framecnt
+    global skyStatusText, solveT, testNdx, nextImage, triggerSolutionDisplay, testMode, state, solveCurrent, frameStackLock, framecnt, tmr
     # Video streaming generator function.
 
     if not solveT:  # start up solver if not already running.
         solveT = threading.Thread(target=solveThread)
         solveT.start()
     lastImageTime = datetime.now()
+    print("gen started")
     while True:
+        tmr += 1
         if state is Mode.ALIGN or state is Mode.SOLVING:
+            if tmr%200 == 0:
+                print ("gen",tmr)
+            first = True
             while len(frameStack) == 0:
+                if first:
+                    print("no frame")
+                    first = False
                 if state is Mode.PLAYBACK or state is Mode.SOLVETHIS:
                     break
+            print("frame not zero")
             if state is Mode.PLAYBACK or state is Mode.SOLVETHIS:
                 continue
-
+            print("getting lock")
             frameStackLock.acquire()
+            print("got lock")
             if frameStack[-1][1] == lastImageTime or len(frameStack) == 0:
                 frameStackLock.release()
                 continue
-
+            print("released lock")
             lastImageTime = frameStack[-1][1]
             frame = frameStack[-1][0]
             frameStack.clear()
@@ -650,7 +671,6 @@ def gen():
             if state is Mode.SOLVING:
                 solveCurrent = True
         else:
-
             if nextImage:
                 while len(testFiles) == 0:
                     pass
@@ -695,8 +715,8 @@ def deleteProfile(value):
 
 @app.route('/applySolve2', methods=['GET','POST'])
 def apply():
-    print("submitted values", request.form.values)
-    
+    print("submitted values2", request.form.values)
+
     req = request.form
     cur = req.get("currentProfile")
     if cur not in skyConfig['solverProfiles']:
@@ -704,10 +724,13 @@ def apply():
         newProfile['name'] = cur
         skyConfig['solverProfiles'][cur] = newProfile
 
+    print("starup", req.get("startupType"))
     skyConfig['solver']['currentProfile'] = cur
+ 
+    skyConfig['solver']['startupSolveing'] = bool(req.get('startupType'))
     profile = skyConfig['solverProfiles'][cur]
 
-    print('\n\nProfile', profile)
+    #print('\n\nProfile', profile)
     mode = profile['FieldWidthMode'] = req.get("FieldWidthMode")
     profile['FieldWidthMode'] = mode
 
@@ -723,7 +746,7 @@ def apply():
     profile['showStars'] = bool(req.get("showStars"))
     profile['maxTime'] = float(req.get('CPUTimeout'))
     profile['additionalParms'] = req.get('additionalParms')
-    print("curprofile", profile)
+    #print("curprofile", profile)
     saveConfig()
     print('\n\n\nskyconfig', skyConfig['solverProfiles'][cur])
 
@@ -762,12 +785,13 @@ def findHistoryFiles():
     print("test files len", len(testFiles))
     frameStack.clear()
     solveLog = [x + '\n' for x in testFiles]
-    solveThisImage = testFiles[0]
+
     if len(testFiles) == 0:
         skyStatusText ="no image files in hisotry"
     else:
         skyStatusText = 'PLAYBACK mode ' + \
             str(len(testFiles)) + " images found."
+        solveThisImage = testFiles[0]
 
     print(skyStatusText)
 
@@ -811,10 +835,12 @@ def retryImage():
     
 @app.route('/startup/<value>',methods=['POST'])
 def startup(value):
+    print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", value)
     if value == 'true':
         skyConfig['solver']['startupSolveing'] = True
     else:
         skyConfig['solver']['startupSolveing'] = False
+    print("setting startup", value, skyConfig['solver'])
     saveConfig()
 
     return Response(status=204)
@@ -822,7 +848,7 @@ def startup(value):
 @app.route('/historyNdx', methods=['POST'])
 def historyNdx():
     global nextImage, testNdx ,solveThisImage
-    print("submitted values", request.form.values)
+    print("submitted values1", request.form.values)
     req = request.form
     testNdx = int(req.get("hNdx"))
     if (testNdx > 0):

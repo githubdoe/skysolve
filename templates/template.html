@@ -515,8 +515,8 @@
                     <input type="radio" id="solverAstromet" name="solver_type" value="solverAstromet"  data-toggle="collapse" data-target="#astrometryForm">
                     <label for="solverAstromet">Astrometry</label> 
                     <br>
-
-                    <input type="checkbox"  id="solveatStartup" {{ 'checked' if startup else ''}}>Start solver at startup
+                    <label for="solveatStartup"> Start Solver at startup </label>
+                    <input type="checkbox"  style="margin:10px;" id="solveatStartup" name="startupType" {{ 'checked' if startup else ''}}>
                     ><br>
                     <input type="submit" class="btn btn-primary"  value="Apply">
 

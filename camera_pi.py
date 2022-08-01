@@ -19,7 +19,7 @@ class imageEvent(object):
     def __init__(self):
         self.events = {}
 
-    def wait(self):
+    def wait(self, tt = 60.):
         """Invoked from each client's thread to wait for the next frame."""
         ident = get_ident()
         if ident not in self.events:
@@ -27,7 +27,7 @@ class imageEvent(object):
             # add an entry for it in the self.events dict
             # each entry has two elements, a threading.Event() and a timestamp
             self.events[ident] = [threading.Event(), time.time()]
-        return self.events[ident][0].wait()
+        return self.events[ident][0].wait(timeout = tt)
 
     def set(self):
         """Invoked by the camera thread when a new frame is available."""
@@ -163,7 +163,9 @@ class skyCamera():
     def get_frame(self):
         """Return the current camera frame."""
         # wait for a signal from the camera thread
-        self.event.wait()
+        if not self.event.wait(tt=20.):
+            print("camera image timput")
+            return None
         self.event.clear()
         return self.frame
 
