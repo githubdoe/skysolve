@@ -317,10 +317,18 @@ $(document).ready(function(){
             setTimeout( refreshImage,300);
         })
 
+    $('#stepPrev').click(
+        function() {
+            ajax_get_Status('/prevImage')
+            setTimeout( refreshImage,300);
+        })
+
     $('#retryNext').click(
         function() {
             ajax_get_Status('/retryImage')
         })
+
+
 
     $('#idPause').click (
         function() {
@@ -409,11 +417,7 @@ $(document).ready(function(){
             ajax_get_Obs('/prevObs')
         })
 
-    $('#stepPrev').click(
-        function() {
-            ajax_get_Obs('/prevImage')
-            setTimeout( refreshImage,300);
-        })
+
 
     $('#clearObsLog').click(
         function() {
