@@ -106,9 +106,7 @@ sks.consts = {
     currentProfile: ''
 };
 
-function refreshImage(){
-    $.post("/retryImage")
-}
+
 function setSolverParams(  cur){
     sks.consts.currentProfile = cur;
     //console.log('cur profile',cur)
@@ -314,20 +312,14 @@ $(document).ready(function(){
     $('#stepNext').click(
         function() {
             ajax_get_Status('/nextImage')
-            setTimeout( refreshImage,300);
+ 
         })
 
     $('#stepPrev').click(
         function() {
             ajax_get_Status('/prevImage')
-            setTimeout( refreshImage,300);
-        })
 
-    $('#retryNext').click(
-        function() {
-            ajax_get_Status('/retryImage')
         })
-
 
 
     $('#idPause').click (
@@ -447,7 +439,7 @@ $(document).ready(function(){
                 ajax_get_Status('/demoMode');
                 showReplaybuttons(true);
                 sks.consts.demoMode=true;
-                setTimeout( refreshImage,399);
+ 
             }
         }
     )
@@ -457,7 +449,7 @@ $(document).ready(function(){
             
             if (!sks.consts.demoMode)
                 ajax_get_Status('/testMode');
-                setTimeout( refreshImage,1000);
+
             var x = document.getElementById("stepNext");
             if (x.style.display === "none") {
                 showReplaybuttons(true);

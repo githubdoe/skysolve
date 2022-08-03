@@ -143,6 +143,10 @@ if not skyCam:
         cameraNotPresent = True
         skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
 framecnt = 0
+def delayedStatus(delay,status):
+    global skyStatusText
+    time.sleep(delay)
+    skyStatusText = status
 
 #this is responsible for getting images from the camera even in align mode
 def solveThread():
@@ -192,6 +196,7 @@ def solveThread():
             if testNdx == len(testFiles):
                 testNdx = 0
             fn = testFiles[testNdx]
+            delayedStatus(2, "%d %s"%(testNdx, fn))
             testNdx += 1
 
             #print ("image", testNdx, fn)
@@ -658,7 +663,7 @@ def gen():
         frameStack.clear()
         frameStackLock.release()
   
-        if state is Mode.ALIGN or state is Mode.AUTOPLAYBACK:
+        if state is Mode.ALIGN:
             framecnt = framecnt + 1
             skyStatusText = "frame %d" % (framecnt)
 
@@ -736,10 +741,7 @@ def demoMode():
     solveLog = [x + '\n' for x in testFiles]
 
     return Response(skyStatusText)
-def delayedStatus(delay,status):
-    global skyStatusText
-    time.sleep(delay)
-    skyStatusText = status
+
 
 def setupImageFromFile():
     global solveThisImage, frameStackLock, frameStack,skyStatusText, nextImage
@@ -819,18 +821,7 @@ def prevImagex():
     setupImageFromFile()
     return Response(skyStatusText)
   
- 
 
-@app.route('/retryImage', methods=['POST'])
-def retryImage():
-    global nextImage, testNdx
-    nextImage = True
-    if len(testFiles) == 0:
-        skyStatusText = "no files"
-        return Response(skyStatusText)
-    skyStatusText = "%d %s" % (testNdx, testFiles[testNdx])
-    time.sleep(3)
-    return Response(skyStatusText)
     
 @app.route('/startup/<value>',methods=['POST'])
 def startup(value):
