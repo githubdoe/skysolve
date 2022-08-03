@@ -310,7 +310,8 @@ def solve(fn, parms=[]):
             if profile['solveVerbose']:
                 solveLog.append(stdoutdata)
             #print("stdout", str(stdoutdata))
-
+            if 'simplexy: found' in stdoutdata:
+                skyStatusText = stdoutdata
             if stdoutdata.startswith('Field center: (RA,Dec) = ('):
                 solved = stdoutdata
                 fields = solved.split()[-3:-1]
@@ -368,6 +369,7 @@ def solve(fn, parms=[]):
             if stdoutdata:
                 stars.append(stdoutdata)
                 #print (stdoutdata)
+
                 if 'The star' in stdoutdata:
                     stdoutdata = stdoutdata.replace(')', '')
                     con = stdoutdata[-4:-1]
