@@ -861,7 +861,7 @@ def historyNdx():
 @app.route('/Observe', methods=['POST'])
 def setObserveParams():
     skyConfig['observing']['saveImages'] = request.form.get("saveImages")
-    skyConfig['observing']['obsDelta']= request.form.get('deltaDiff')
+    skyConfig['observing']['obsDelta']= float(request.form.get('deltaDiff'))
     skyConfig['observing']['savePosition']= bool(request.form.get('SaveOBS'))
 
     saveConfig()
