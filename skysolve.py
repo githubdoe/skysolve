@@ -1,5 +1,6 @@
 from pickle import NONE
 from zipfile import ZipFile
+from attr import get_run_validators
 from flask import Flask, render_template, request, Response, send_file
 import time
 from flask.wrappers import Request
@@ -208,10 +209,10 @@ def solveThread():
                 continue
 
         frameStackLock.acquire()
-        print("solve thread acquired frameSackLock")
+   
         frameStack.append((os.path.join(solve_path, imageName), datetime.now()))  #save to stack so gen can send it to the client browser
         frameStackLock.release()
-        print("solve thread released framsStack lock")
+    
 
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
             if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
@@ -859,7 +860,12 @@ def historyNdx():
 
 @app.route('/Observe', methods=['POST'])
 def setObserveParams():
-    print(request.form.values, request.form.getlist('saveImages'))
+    skyConfig['observing']['saveImages'] = request.form.get("saveImages")
+    skyConfig['observing']['obsDelta']= request.form.get('deltaDiff')
+    skyConfig['observing']['savePosition']= bool(request.form.get('SaveOBS'))
+
+    saveConfig()
+  
     skyStatusText = "observing session parameters received."
     return Response(status=205)
 
