@@ -124,24 +124,27 @@ imageName = 'cap.'+skyConfig['camera']['format']
 #print (skyConfig)
 skyCam = None
 
- 
-if not skyCam:
-    print('creating cam')
-    try:
-        skyCam = skyCamera(shutter=int(
-            1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'], resolution=skyConfig['camera']['frame'])
-        cameraNotPresent = False
-        if skyConfig['solver']['startupSolveing']:
-            print("startup in solving")
-            state = Mode.SOLVING
-        startFrame = skyCam.get_frame()
-        if startFrame == None:
-            print("camera did not seem to start")
-        print("camera started and frame received", cameraNotPresent)
-    except Exception as e:
-        print(e)
-        cameraNotPresent = True
-        skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
+def setupCamera():
+    global skyCam, cameraNotPresent
+    if not skyCam:
+        print('creating cam')
+        try:
+            skyCam = skyCamera(shutter=int(
+                1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'], resolution=skyConfig['camera']['frame'])
+            cameraNotPresent = False
+            if skyConfig['solver']['startupSolveing']:
+                print("startup in solving")
+                state = Mode.SOLVING
+            startFrame = skyCam.get_frame()
+            if startFrame == None:
+                print("camera did not seem to start")
+            print("camera started and frame received", cameraNotPresent)
+        except Exception as e:
+            print(e)
+            cameraNotPresent = True
+            skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
+setupCamera()
+
 framecnt = 0
 def delayedStatus(delay,status):
     global skyStatusText
@@ -187,7 +190,10 @@ def solveThread():
         else:   #live solving loop path
             if cameraNotPresent:
                 continue
-            frame = skyCam.get_frame()
+            try:
+                frame = skyCam.get_frame()
+            except Exception as e:
+                continue
             if frame == NONE:
                 continue
   
@@ -779,7 +785,7 @@ def findHistoryFiles():
 
     print(skyStatusText)
     #change status to display the first file name after 3 seconds
-    th = threading.Thread(target= delayedStatus(3, solveThisImage))
+    th = threading.Thread(target= delayedStatus,args = (3, solveThisImage))
     th.start()
 def reboot3():
     time.sleep(3)
@@ -787,11 +793,27 @@ def reboot3():
 
 @app.route('/reboot', methods=['POST'])
 def reboot():
-    global skyStatusText
-    th = threading.Thread(tarket = reboot3())
+    global skyStatusText, state
+    state = Mode.PAUSED
+    th = threading.Thread(tarket = reboot3)
     th.start()
-    skyStatusText = "reboot in 3 seconds goodbye"
+    skyStatusText = "reboot in 3 seconds goodbye. You will need to reload this page after about 3 minutes"
     return Response(skyStatusText)
+
+def restartThread():
+    time.sleep(5)
+    os.system('./restartsky.sh')
+
+@app.route('/restartc', methods=['POST'])
+def restartc():
+    global skyStatusText, skyCam, state
+
+    state = Mode.PAUSED
+    th = threading.Thread(target = restartThread)
+    th.start()
+    skyStatusText = 'restarting. You will need to Reload this page in about 30 seconds'
+    return Response(skyStatusText)
+
 
 @app.route('/testMode', methods=['POST'])
 def toggletestMode():
@@ -799,7 +821,7 @@ def toggletestMode():
     if state is not Mode.PLAYBACK:
         state = Mode.PLAYBACK
         skyStatusText="Gathering History files"
-        th = threading.Thread(target= findHistoryFiles())
+        th = threading.Thread(target= findHistoryFiles)
         th.start()
     else:
         state = Mode.ALIGN

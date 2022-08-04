@@ -327,6 +327,11 @@ $(document).ready(function(){
         }
     )
     
+    $('#restartc').click(
+        function(){
+            ajax_get_Status('/restartc')
+        }
+    )
     $('#idPause').click (
         function() {
             ajax_get_Status('/pause')
