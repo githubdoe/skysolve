@@ -321,7 +321,12 @@ $(document).ready(function(){
 
         })
 
-
+    $('#reboot').click(
+        function(){
+            ajax_get_Status('/reboot')
+        }
+    )
+    
     $('#idPause').click (
         function() {
             ajax_get_Status('/pause')

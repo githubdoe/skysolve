@@ -781,6 +781,17 @@ def findHistoryFiles():
     #change status to display the first file name after 3 seconds
     th = threading.Thread(target= delayedStatus(3, solveThisImage))
     th.start()
+def reboot3():
+    time.sleep(3)
+    os.system('sudo reboot')
+
+@app.route('/reboot', methods=['POST'])
+def reboot():
+    global skyStatusText
+    th = threading.Thread(tarket = reboot3())
+    th.start()
+    skyStatusText = "reboot in 3 seconds goodbye"
+    return Response(skyStatusText)
 
 @app.route('/testMode', methods=['POST'])
 def toggletestMode():
