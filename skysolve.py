@@ -125,7 +125,7 @@ imageName = 'cap.'+skyConfig['camera']['format']
 skyCam = None
 
 def setupCamera():
-    global skyCam, cameraNotPresent
+    global skyCam, cameraNotPresent, state
     if not skyCam:
         print('creating cam')
         try:
@@ -154,7 +154,7 @@ def delayedStatus(delay,status):
 #this is responsible for getting images from the camera even in align mode
 def solveThread():
     global skyStatusText, focusStd, solveCurrent, state, skyCam, frameStack, frameStackLock, testNdx
-    print('solvethread')
+    print('solvethread', state)
     while True:
  
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
@@ -257,6 +257,7 @@ def solveThread():
 solveT = None
 #print("config",skyConfig['solver'])
 if skyConfig['solver']['startupSolveing']:
+    print("should startup solver now")
     solveT = threading.Thread(target=solveThread)
     solveT.start()
 
