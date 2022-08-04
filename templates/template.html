@@ -281,7 +281,7 @@
                 <div class = "collapse " id="historyNdx">
                     <form action="/historyNdx" class="btn  nightColor" method="POST">
                         <label for="image number"class="btn nightColor">Image number:</label>
-                        <input type="number" class="btn nightColor"  style="background-color: rgb(70, 48, 48);" id="hNdx" name="hNdx" step="1">
+                        <input type="number" class="btn bg-danger"  style="background-color: rgb(70, 48, 48);" id="hNdx" name="hNdx" step="1">
                         <input class="btn nightColor"type="submit" value="Select" style="background-color: rgb(70, 48, 48);">
                       </form> 
 
@@ -417,8 +417,12 @@
                     <li>
                         <p>
                             The <b>Replay images</b> button enables the replay controls and displays the names of the images
-                             it finds in the history on the log display.  It also ties to dislay the first image where a camera image would appear.<br> 
+                             it finds in the history on the log display.  It dislays the first image where a camera image would appear.<br> 
                         </p>
+                        <p>You can press the <b>"Solve This one"</b> button to solve the current image.  </p>
+                        <p>You press the <b>>"Solve"</b> button to solve this image and then automatically go to the next image and solve it. Repeating getting an image from the 
+                            history file and solving each one till the end of the list is found.  Usefull for playing back all the images in sequence to show up on the 
+                            skysafari screen.</p>
                     </li>
                     <li>
                         <h5>Demo</h5>

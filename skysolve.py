@@ -12,7 +12,7 @@ from camera_pi import skyCamera
 from fractions import Fraction
 import pprint
 import configparser
-from datetime import datetime
+from datetime import datetime, timedelta
 import threading
 import numpy
 from PIL import Image, ImageEnhance
@@ -766,6 +766,7 @@ def setupImageFromFile():
 def findHistoryFiles():
     global saveLog, skyStatusText, testFiles, testNdx, frameStack, solveThisImage, nextImage
     print("finding files")
+    x = datetime.now() + timedelta(seconds=2)
     testFiles = [history_path + '/' + fn for fn in os.listdir(
     history_path) if any(fn.endswith(ext) for ext in ['jpg', 'jpeg', 'png'])]
     testFiles.sort(key=os.path.getmtime)
@@ -774,18 +775,22 @@ def findHistoryFiles():
     print("test files len", len(testFiles))
     frameStack.clear()
     solveLog = [x + '\n' for x in testFiles]
-
+    while datetime.now() < x:
+        time.sleep(1)
+    print("gather done")
     if len(testFiles) == 0:
         skyStatusText ="no image files in hisotry"
     else:
         skyStatusText = 'PLAYBACK mode ' + \
             str(len(testFiles)) + " images found."
         solveThisImage = testFiles[0]
+        print(skyStatusText)
+        time.sleep(3)   #sleep to let status update number of images found
         setupImageFromFile()
 
     print(skyStatusText)
     #change status to display the first file name after 3 seconds
-    th = threading.Thread(target= delayedStatus,args = (3, solveThisImage))
+    th = threading.Thread(target= delayedStatus,args = (5, solveThisImage))
     th.start()
 def reboot3():
     time.sleep(3)
@@ -820,6 +825,7 @@ def toggletestMode():
     global testMode, testFiles, testNdx, nextImage, frameStack,  solveLog, state, solveThisImage, skyStatusText
     if state is not Mode.PLAYBACK:
         state = Mode.PLAYBACK
+        print('will find files')
         skyStatusText="Gathering History files"
         th = threading.Thread(target= findHistoryFiles)
         th.start()
