@@ -151,12 +151,40 @@ def delayedStatus(delay,status):
     time.sleep(delay)
     skyStatusText = status
 
+lastsolveTime = datetime.now()
+justStarted = True
+def solveWatchDog():
+    global lastsolveTime, state, skyStatusText, justStarted, framecnt
+    while (True):
+        lastcnt = framecnt
+        while(state is mode.ALIGN):
+            time.sleep(30)
+            if lastcnt == framecnt:
+                skyStatusText = "camera seens to have stopped.  Restarting"
+                os.system('./restartsky.sh')
+                break
+        if not justStarted and state is mode.SOLVEING:
+            delta = datetime.now ()- lastsolveTime
+            print("time is ", delta.total_seconds() )
+            if delta.total_seconds() > 60:
+                print("need to restart")
+                state = Mode.PAUSED 
+                skyStatusText = "solve may be hung.  Restarting"
+                os.system('./restartsky.sh')
+                print("os system was called")
+                break
+        else:
+            justStarted = False
+            lastsolveTime = datetime.now()
+        time.sleep(20)
+
+
 #this is responsible for getting images from the camera even in align mode
 def solveThread():
     global skyStatusText, focusStd, solveCurrent, state, skyCam, frameStack, frameStackLock, testNdx
     print('solvethread', state)
     while True:
- 
+        lastsolveTime = datetime.now()
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
         # solve this one selected image then switch state to playback
@@ -260,6 +288,8 @@ if skyConfig['solver']['startupSolveing']:
     print("should startup solver now")
     solveT = threading.Thread(target=solveThread)
     solveT.start()
+solveWatchDogTh = threading.Thread(target = solveWatchDog)
+solveWatchDogTh.start()
 
 def solve(fn, parms=[]):
     global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, solveStatus,\
@@ -323,7 +353,8 @@ def solve(fn, parms=[]):
                 solveLog.append(stdoutdata)
             #print("stdout", str(stdoutdata))
             if 'simplexy: found' in stdoutdata:
-                skyStatusText = stdoutdata
+                delayedStatus(2, stdoutdata)
+   
             if stdoutdata.startswith('Field center: (RA,Dec) = ('):
                 solved = stdoutdata
                 fields = solved.split()[-3:-1]
