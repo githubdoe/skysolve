@@ -157,13 +157,13 @@ def solveWatchDog():
     global lastsolveTime, state, skyStatusText, justStarted, framecnt
     while (True):
         lastcnt = framecnt
-        while(state is mode.ALIGN):
+        while(state is Mode.ALIGN):
             time.sleep(30)
             if lastcnt == framecnt:
                 skyStatusText = "camera seens to have stopped.  Restarting"
                 os.system('./restartsky.sh')
                 break
-        if not justStarted and state is mode.SOLVEING:
+        if not justStarted and state is Mode.SOLVEING:
             delta = datetime.now ()- lastsolveTime
             print("time is ", delta.total_seconds() )
             if delta.total_seconds() > 60:
