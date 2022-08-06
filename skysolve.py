@@ -5,24 +5,21 @@ from flask import Flask, render_template, request, Response, send_file
 import time
 from flask.wrappers import Request
 
-from numpy.core import function_base
+
 from camera_pi import skyCamera
 
-
-from fractions import Fraction
-import pprint
-import configparser
 from datetime import datetime, timedelta
 import threading
 import numpy
-from PIL import Image, ImageEnhance
+
+from PIL import Image, ImageDraw,ImageFont
 import subprocess
 import os
 import math
 import json
 from shutil import copyfile
 from enum import Enum, auto
-import imghdr
+import io
 import getpass
 import copy
 import sys
@@ -153,20 +150,22 @@ def delayedStatus(delay,status):
 
 lastsolveTime = datetime.now()
 justStarted = True
+camera_Died = False
 def solveWatchDog():
-    global lastsolveTime, state, skyStatusText, justStarted, framecnt
+    global lastsolveTime, state, skyStatusText, justStarted, framecnt, camera_Died
     while (True):
         lastcnt = framecnt
         while(state is Mode.ALIGN):
-            time.sleep(30)
-            if lastcnt == framecnt:
+            time.sleep(45)
+            if lastcnt == framecnt or camera_Died:
+                state = Mode.PAUSED
                 skyStatusText = "camera seens to have stopped.  Restarting"
                 os.system('./restartsky.sh')
                 break
-        if not justStarted and state is Mode.SOLVEING:
+        if not justStarted and state is Mode.SOLVING:
             delta = datetime.now ()- lastsolveTime
             print("time is ", delta.total_seconds() )
-            if delta.total_seconds() > 60:
+            if delta.total_seconds() > 60 or camera_Died:
                 print("need to restart")
                 state = Mode.PAUSED 
                 skyStatusText = "solve may be hung.  Restarting"
@@ -179,14 +178,44 @@ def solveWatchDog():
         time.sleep(20)
 
 
+
 #this is responsible for getting images from the camera even in align mode
 def solveThread():
-    global skyStatusText, focusStd, solveCurrent, state, skyCam, frameStack, frameStackLock, testNdx
+    global skyStatusText, focusStd, solveCurrent, state, skyCam, frameStack, frameStackLock, testNdx, camera_Died
+
+    #save the image to be solved in the file system and on the stack for the gen() routine to give to the client browser
+    def saveImage(frame):
+        global frameStack, frameStackLock
+          
+        with open(os.path.join(solve_path, imageName), "wb") as f:
+            try:
+                f.write(frame)
+                frameStackLock.acquire()
+                frameStack.append((os.path.join(solve_path, imageName), datetime.now()))  #save to stack so gen can send it to the client browser
+                frameStackLock.release()
+                return True
+            except Exception as e:
+                print(e)
+                solveLog.append(str(e) + '\n')
+                return False
+
+    def makeDeadImage( text):
+        img = Image.new('RGB', (600, 200), color = (0, 0, 0))
+        d = ImageDraw.Draw(img)
+        myFont = ImageFont.truetype('FreeMono.ttf', 40)
+        d.text((10,10), text, fill=(100,0,0), font = myFont)
+        arr = io.BytesIO()
+        img.save(arr, format='JPEG')
+        return arr.getvalue()
+ 
+
     print('solvethread', state)
+    lastpictureTime = datetime.now()
     while True:
         lastsolveTime = datetime.now()
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
+ 
         # solve this one selected image then switch state to playback
         if state is Mode.SOLVETHIS:
 
@@ -221,10 +250,22 @@ def solveThread():
             try:
                 frame = skyCam.get_frame()
             except Exception as e:
+                delta = datetime.now() - lastpictureTime
+                if delta.total_seconds() > 30:
+                    saveImage(makeDeadImage("no camera. Restarting"))
+                    print("camera not found")
+                    camera_Died = True
+                    continue
                 continue
             if frame == NONE:
+                delta = datetime.now() - lastpictureTime
+                if delta.total_seconds() > 30:
+                    saveImage(makeDeadImage("camera died. Restarting"))
+                    print("camera died\nRestarting")
+                    camera_Died = True
                 continue
-  
+
+            lastpictureTime = datetime.now()
         #if solving history one after the other in auto playback
         if (state is Mode.AUTOPLAYBACK):
             if testNdx == len(testFiles):
@@ -238,19 +279,9 @@ def solveThread():
             with open(fn, 'rb') as infile:
                 frame = infile.read()
             
-        #save the image to be solved in the file system and on the stack for the gen() routine to give to the client browser
-        with open(os.path.join(solve_path, imageName), "wb") as f:
-            try:
-                f.write(frame)
-            except Exception as e:
-                print(e)
-                solveLog.append(str(e) + '\n')
-                continue
-
-        frameStackLock.acquire()
-   
-        frameStack.append((os.path.join(solve_path, imageName), datetime.now()))  #save to stack so gen can send it to the client browser
-        frameStackLock.release()
+  
+        saveImage(frame)
+  
     
 
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
