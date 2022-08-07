@@ -1,6 +1,7 @@
 #pi camera to be used with web based GUI plate solver
 import io
 import time
+from tkinter import EXCEPTION
 import picamera
 from fractions import Fraction
 import threading
@@ -195,20 +196,23 @@ class skyCamera():
                 pass
             if self.abortMode:
                 break
-            print ("camera started")
-            for _ in self.camera.capture_continuous(stream, self.format,
-                                                    use_video_port=False):
+            print ("picamera started", flush=True)
+            try:
+                for _ in self.camera.capture_continuous(stream, self.format,
+                                                        use_video_port=False):
 
+                    # return current frame
+                    stream.seek(0)
+                    yield stream.read()
+                    if not self.runMode:
+                        self.cameraStopped = True
+                        print ("camera stopped")
+                        break
+                    self.cameraStopped = False
 
-                # return current frame
-                stream.seek(0)
-                yield stream.read()
-                if not self.runMode:
-                    self.cameraStopped = True
-                    print ("camera stopped")
-                    break
-                self.cameraStopped = False
-
-                # reset stream for next frame
-                stream.seek(0)
-                stream.truncate()
+                    # reset stream for next frame
+                    stream.seek(0)
+                    stream.truncate()
+            except EXCEPTION as e:
+                self.cameraStopped = True
+                self.runMode = False

@@ -122,7 +122,7 @@ imageName = 'cap.'+skyConfig['camera']['format']
 skyCam = None
 
 def setupCamera():
-    global skyCam, cameraNotPresent, state
+    global skyCam, cameraNotPresent, state, skyStatusText
     if not skyCam:
         print('creating cam')
         try:
@@ -135,7 +135,7 @@ def setupCamera():
             startFrame = skyCam.get_frame()
             if startFrame == None:
                 print("camera did not seem to start")
-            print("camera started and frame received", cameraNotPresent)
+            print("camera started and frame received", cameraNotPresent, flush=True)
         except Exception as e:
             print(e)
             cameraNotPresent = True
@@ -154,28 +154,13 @@ camera_Died = False
 def solveWatchDog():
     global lastsolveTime, state, skyStatusText, justStarted, framecnt, camera_Died
     while (True):
-        lastcnt = framecnt
-        while(state is Mode.ALIGN):
-            time.sleep(45)
-            if lastcnt == framecnt or camera_Died:
-                state = Mode.PAUSED
-                skyStatusText = "camera seens to have stopped.  Restarting"
-                os.system('./restartsky.sh')
-                break
-        if not justStarted and state is Mode.SOLVING:
-            delta = datetime.now ()- lastsolveTime
-            print("time is ", delta.total_seconds() )
-            if delta.total_seconds() > 60 or camera_Died:
-                print("need to restart")
-                state = Mode.PAUSED 
-                skyStatusText = "solve may be hung.  Restarting"
-                os.system('./restartsky.sh')
-                print("os system was called")
-                break
-        else:
-            justStarted = False
-            lastsolveTime = datetime.now()
-        time.sleep(20)
+        time.sleep(45)
+        if camera_Died:
+            state = Mode.PAUSED
+            skyStatusText = "camera seens to have stopped.  Restarting"
+            os.system('./restartsky.sh')
+            time.sleep(10)
+            break
 
 
 
@@ -207,8 +192,7 @@ def solveThread():
         arr = io.BytesIO()
         img.save(arr, format='JPEG')
         return arr.getvalue()
- 
-
+    cameraTry = 0
     print('solvethread', state)
     lastpictureTime = datetime.now()
     while True:
@@ -245,27 +229,30 @@ def solveThread():
             continue
 
         else:   #live solving loop path
+            #print("getting image in solve", flush=True)
             if cameraNotPresent:
                 continue
             try:
                 frame = skyCam.get_frame()
             except Exception as e:
-                delta = datetime.now() - lastpictureTime
-                if delta.total_seconds() > 30:
+                cameraTry += 1
+
+                if cameraTry > 10:
                     saveImage(makeDeadImage("no camera. Restarting"))
-                    print("camera not found")
+                    print("camera failed", flush=True)
                     camera_Died = True
                     continue
                 continue
             if frame == NONE:
-                delta = datetime.now() - lastpictureTime
-                if delta.total_seconds() > 30:
+                cameraTry += 1
+                if cameraTry > 10:
                     saveImage(makeDeadImage("camera died. Restarting"))
-                    print("camera died\nRestarting")
+                    print("camera died\nRestarting", flush=True)
                     camera_Died = True
                 continue
-
+  
             lastpictureTime = datetime.now()
+        cameraTry = 0
         #if solving history one after the other in auto playback
         if (state is Mode.AUTOPLAYBACK):
             if testNdx == len(testFiles):
