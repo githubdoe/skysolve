@@ -497,7 +497,7 @@
                     <button type="button" class="btn btn-primary btn-sm" onclick="decreaseMagnification()">-</button>
                     <button type="button" class="btn btn-primary btn-sm" onclick="brighten()">Bright</button> 
                     <button type="button" class="btn btn-primary btn-sm" onclick="darken()">dark</button> 
-                    <button type="button" class="btn btn-primary btn-sm" onclick="saveCurrent()">save current Image</button> 
+                    <button type="button" class="btn btn-primary btn-sm" id="idSaveCurrent">save current Image</button> 
                 </div>
 
             </div>
@@ -996,9 +996,7 @@
                 skyBright = skyBright / 2;
                 sky.style.filter = "brightness("+(skyBright)+"%)";
             }
-            function saveCurrent() {
-
-            }
+ 
 
             function decreaseMagnification() {
                 skyimageMag = skyimageMag / 1.5;

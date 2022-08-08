@@ -242,7 +242,7 @@ def solveThread():
                     camera_Died = True
                     continue
                 continue
-            print("frame was None ", frame is None, flush=True)
+ 
             if frame is None:
                 cameraTry += 1
                 if cameraTry > 10:
@@ -574,7 +574,7 @@ def Align():
 @app.route('/saveCurrent', methods=['POST'])
 def saveCurrent():
     global skyStatusText,imageName
-
+    print("save current image" ,flush = True)
     fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.") + \
         skyConfig['camera']['format']
     copyfile(os.path.join(solve_path, imageName),
@@ -807,7 +807,6 @@ def setupImageFromFile():
     frameStackLock.acquire()
     frameStack.clear()
    
-    print("append setupImage")
     frameStack.append(( solveThisImage, datetime.now()))
     frameStackLock.release()
 
