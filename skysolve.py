@@ -306,8 +306,8 @@ if skyConfig['solver']['startupSolveing']:
     print("should startup solver now")
     solveT = threading.Thread(target=solveThread)
     solveT.start()
-solveWatchDogTh = threading.Thread(target = solveWatchDog)
-solveWatchDogTh.start()
+#solveWatchDogTh = threading.Thread(target = solveWatchDog)
+#solveWatchDogTh.start()
 
 def solve(fn, parms=[]):
     global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, solveStatus,\
