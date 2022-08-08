@@ -1,4 +1,3 @@
-from pickle import NONE
 from zipfile import ZipFile
 from attr import get_run_validators
 from flask import Flask, render_template, request, Response, send_file
@@ -133,7 +132,7 @@ def setupCamera():
                 print("startup in solving")
                 state = Mode.SOLVING
             startFrame = skyCam.get_frame()
-            if startFrame == None:
+            if startFrame is None:
                 print("camera did not seem to start")
             print("camera started and frame received", cameraNotPresent, flush=True)
         except Exception as e:
@@ -243,7 +242,8 @@ def solveThread():
                     camera_Died = True
                     continue
                 continue
-            if frame == NONE:
+            print("frame was None ", frame is None, flush=True)
+            if frame is None:
                 cameraTry += 1
                 if cameraTry > 10:
                     saveImage(makeDeadImage("camera died. Restarting"))
@@ -392,7 +392,7 @@ def solve(fn, parms=[]):
                 #print ('duration', duration)
 
             elif stdoutdata.startswith('Field size'):
-                print("Field size")
+                print("Field size", stdoutdata, flush=True)
                 solveLog.append(stdoutdata)
                 solveStatus += (". " + stdoutdata.split(":")[1].rstrip())
             elif stdoutdata.find('pixel scale') > 0:

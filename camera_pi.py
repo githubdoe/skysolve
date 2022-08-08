@@ -3,6 +3,7 @@ import io
 import time
 from tkinter import EXCEPTION
 import picamera
+
 from fractions import Fraction
 import threading
 try:
@@ -88,6 +89,7 @@ class skyCamera():
         self.resolution=resolution
         self.format = format
         self.setupGain()
+        self.count = 0
         self.thread = threading.Thread(target=self._thread)
         self.thread.start()
 
@@ -165,7 +167,7 @@ class skyCamera():
         """Return the current camera frame."""
         # wait for a signal from the camera thread
         if not self.event.wait(tt=20.):
-            print("camera image timput")
+            print("camera image event wait timed out", flush=True)
             return None
         self.event.clear()
         return self.frame
@@ -175,21 +177,25 @@ class skyCamera():
         """Camera background thread."""
         while not self.runMode:
             time.sleep(.5)
-        print('Starting camera thread.')
-
-        frames_iterator = self.getImage()
-        for frame in frames_iterator:
-            self.frame = frame
-            self.event.set()  # send signal to clients
-            time.sleep(0)
+        while True:
+            try:
+                self.count = 0
+                print('camera thread. LOOP started', flush = True)
+                frames_iterator = self.getImage()
+                for frame in frames_iterator:
+                    self.frame = frame
+                    self.event.set()  # send signal to clients
+                time.sleep(0)
+            except picamera.PiCameraError as e:
+                print("camera thread caught e",e, flush=True)
+ 
         self.thread = None
 
     def getImage(self):
-        print ("frames called")
+  
         stream = io.BytesIO()
         print ("abortMOde", self.abortMode)
         while not self.abortMode:
-            print ("not abortMode", self.runMode)
             while not self.runMode:
                 if self.abortMode:
                     break
@@ -203,7 +209,7 @@ class skyCamera():
 
                     # return current frame
                     stream.seek(0)
-                    yield stream.read()
+                    yield stream.read() 
                     if not self.runMode:
                         self.cameraStopped = True
                         print ("camera stopped")
@@ -213,6 +219,6 @@ class skyCamera():
                     # reset stream for next frame
                     stream.seek(0)
                     stream.truncate()
-            except EXCEPTION as e:
-                self.cameraStopped = True
-                self.runMode = False
+            except picamera.PiCameraRuntimeError as e:
+                print("Getimage caught e", e,flush=True)
+                raise e
