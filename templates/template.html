@@ -604,7 +604,9 @@
                         <label for="solveVerbose">Verbose</label>
                         <input type="checkbox" style="margin:10px;"id="solveVerbose", name="solveVerbose"  >
                         <label for="showStars">Show found stars (slows the solve)</label>
-                        <input type="checkbox"style="margin:10px;" id="showStars", name="showStars"   >                
+                        <input type="checkbox"style="margin:10px;" id="showStars", name="showStars"   >     
+                        <label for="idverbose"> verbose (but slower) </label>
+                        <input type="checkbox"  style="margin:10px;" id="idverbose" name="verbose" {{ 'checked' if obsParms['verbose'] else ''}}>           
                 </div> 
 
 

@@ -99,6 +99,7 @@ sks.consts = {
         return x;
     },
 
+
     demoMode: false,
     showHistory: 0,
     showSolution: 0,
@@ -548,6 +549,23 @@ $(document).ready(function(){
             let x = sks.consts.showSolution;
 
             $.post("/saveImages/" + x, data = {
+                suggest: x
+            }, function(result) {});
+        }
+    ) 
+    $('#idverbose').click(
+        function() {
+
+            var checkBox = document.getElementById("idverbose");
+            if (checkBox.checked == true) {
+                sks.consts.verbose = 1;
+            }
+            else {
+                sks.consts.verbose = 0;
+            }
+            let x = sks.consts.verbose;
+
+            $.post("/verbose/" + x, data = {
                 suggest: x
             }, function(result) {});
         }

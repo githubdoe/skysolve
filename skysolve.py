@@ -196,6 +196,7 @@ def solveThread():
     lastpictureTime = datetime.now()
     while True:
         lastsolveTime = datetime.now()
+
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
  
@@ -269,8 +270,6 @@ def solveThread():
   
         saveImage(frame)
   
-    
-
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
             if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
                 s = tetraSolve(os.path.join(solve_path, imageName))
@@ -310,6 +309,8 @@ if skyConfig['solver']['startupSolveing']:
 #solveWatchDogTh.start()
 
 def solve(fn, parms=[]):
+    print("solving",flush = True)
+
     global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, solveStatus,\
         triggerSolutionDisplay, skyStatusText, lastObs
     startTime = datetime.now()
@@ -391,6 +392,7 @@ def solve(fn, parms=[]):
                 duration = stopTime - startTime
                 #print ('duration', duration)
 
+                skyStatusText = "solved "+str(duration)+'secs'
             elif stdoutdata.startswith('Field size'):
                 print("Field size", stdoutdata, flush=True)
                 solveLog.append(stdoutdata)
@@ -408,11 +410,9 @@ def solve(fn, parms=[]):
 
     solveStatus += ". scale " + ppa
 
-    if not solved:
-        skyStatusText = "Failed"
-        ra = 0
 
-    else:
+ 
+    if solved and skyConfig['observing']['verbose']:
         # Write-Overwrites
         file1 = open(os.path.join(solve_path, "radec.txt"), "w")  # write mode
         file1.write(radec)
@@ -480,10 +480,14 @@ def solve(fn, parms=[]):
  
         if skyConfig['observing']['showSolution']:
             triggerSolutionDisplay = True
+        stopTime = datetime.now()
+        duration = stopTime - startTime
         skyStatusText = foundStars + " "+str(duration) + ' secs'
-
+    if not solved:
+        skyStatusText = "Failed"
+        ra = 0
+ 
     solving = False
-
     return solved
 
 def tetraSolve(imageName):
@@ -662,6 +666,14 @@ def saveSolvedImage(value):
     print("config", skyConfig)
     return Response(status=204)
 
+@app.route('/verbose/<value>', methods=['POST'])
+def verbose(value):
+    global skyConfig
+
+    skyConfig['observing']['verbose'] = value == '1'
+    saveConfig()
+    print("config", skyConfig)
+    return Response(status=204)
 
 @app.route('/clearObsLog', methods=['POST'])
 def clearObsLog():
@@ -762,11 +774,15 @@ def apply():
     profile['fieldHiValue'] = req.get("fieldHiValue")
     profile['aPPLoValue'] = req.get("aPPLowValue")
     profile['aPPHiValue'] = req.get("aPPHiValue")
-    profile['searchRadius'] = float(req.get("searchRadius"))
+    if req.get("searchRadius") != "":
+        profile['searchRadius'] = float(req.get("searchRadius"))
+    else:
+        profile['searchRadius'] = 0
     profile['solveSigma'] = int(req.get("solveSigma"))
     profile['solveDepth'] = int(req.get("solveDepth"))
     profile['solveVerbose'] = bool(req.get("solveVerbose"))
     profile['showStars'] = bool(req.get("showStars"))
+    profile['verbose'] = bool(req.get("verbose"))
     profile['maxTime'] = float(req.get('CPUTimeout'))
     profile['additionalParms'] = req.get('additionalParms')
     #print("curprofile", profile)
