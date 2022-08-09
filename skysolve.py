@@ -438,7 +438,7 @@ def solve(fn, parms=[]):
                         starNames[con] = 1
         foundStars = ', '.join(stars).replace("\n", "")
         foundStars = foundStars.replace("The star", "")
-        solveLog.append(foundStars + "\n")
+        #solveLog.append(foundStars + "\n")
         constellations = ', '.join(starNames.keys())
         # copy the index over the ngc file so stars will display with the index triangle
         if profile['showStars']:
