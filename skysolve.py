@@ -669,10 +669,10 @@ def saveSolvedImage(value):
 @app.route('/verbose/<value>', methods=['POST'])
 def verbose(value):
     global skyConfig
-
+    print("verbose", value)
     skyConfig['observing']['verbose'] = value == '1'
     saveConfig()
-    print("config", skyConfig)
+    print("config", skyConfig['observing']['verbose'])
     return Response(status=204)
 
 @app.route('/clearObsLog', methods=['POST'])

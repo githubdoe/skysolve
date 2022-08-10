@@ -601,8 +601,7 @@
                         <input type = "number" width="6" id="SolveSigma" name = "solveSigma" class="nightColor"  Lower numbers show more stars<br>
                         <label for = "searchRadius"> Search Radius in Deg from last solved location (blank for do not use)  :</label>
                         <input type = "number" id = "searchRadius" class="nightColor" name="searchRadius"  ><br>
-                        <label for="solveVerbose">Verbose</label>
-                        <input type="checkbox" style="margin:10px;"id="solveVerbose", name="solveVerbose"  >
+
                         <label for="showStars">Show found stars (slows the solve)</label>
                         <input type="checkbox"style="margin:10px;" id="showStars", name="showStars"   >     
                         <label for="idverbose"> verbose (but slower) </label>
@@ -733,13 +732,14 @@
 
         <script>
             $(document).ready(function(){
-                const x= '{"result":true, "count":42}';
+  
                 var v = "{{ profiles|safe }}"
+   
                 v = v.replace(/False/g,"false")
                 v = v.replace(/True/g,"true")
 
-
                 setProfiles(v.replace(/'/g,"\""));
+
                 console.log("solveP", "{{ solveP }}")
                 setSolverParams( "{{ solveP }}");
                 $('#solveProfile').val("{{ solveP }}");

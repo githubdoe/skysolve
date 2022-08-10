@@ -90,15 +90,15 @@ sks.consts = {
     },
 
 
-    solveVerbose: function() {
-        var x = $('#solveVerbose');
+    verbose: function() {
+        var x = $('#idverbose');
         return x;
     },
+
     showStars: function() {
         var x = $('#showStars');
         return x;
     },
-
 
     demoMode: false,
     showHistory: 0,
@@ -110,17 +110,16 @@ sks.consts = {
 
 function setSolverParams(  cur){
     sks.consts.currentProfile = cur;
-    //console.log('cur profile',cur)
-    //console.log('profiles', sks.consts.profiles)
-    //console.log("const.profiles",cur, JSON.stringify(sks.consts.profiles[cur]));
+    console.log('cur profile',cur)
+    // console.log('profiles', sks.consts.profiles)
+    console.log("const.profiles",cur, JSON.stringify(sks.consts.profiles[cur]));
     sks.consts.showStars()[0].checked =sks.consts.profiles[cur]["showStars"];
     sks.consts.SolveDepth().val(sks.consts.profiles[cur]['solveDepth'])
     sks.consts.SolveSigma().val(sks.consts.profiles[cur]['solveSigma'])
     sks.consts.FieldWidthaPPLow().val(sks.consts.profiles[cur]['aPPLoValue'])
     sks.consts.FieldWidthaPPHi().val(sks.consts.profiles[cur]['aPPHiValue'])
     sks.consts.CPUtimeout().val(sks.consts.profiles[cur]['maxTime'])
-    sks.consts.solveVerbose()[0].checked = sks.consts.profiles[cur]['solveVerbose']
-    sks.consts.searchRadius().val(sks.consts.profiles[cur]['searchRadius'])
+       sks.consts.searchRadius().val(sks.consts.profiles[cur]['searchRadius'])
     sks.consts.additionalParms().val(sks.consts.profiles[cur]['additionalParms'])
     sks.consts.fieldHiValue().val(sks.consts.profiles[cur]['fieldHiValue'])
     sks.consts.fieldLoValue().val(sks.consts.profiles[cur]['fieldHiValue'])
@@ -133,6 +132,7 @@ function setSolverParams(  cur){
 }
 
 function setProfiles(profiles){
+    console.log("profile",profiles)
     var x = JSON.parse(profiles)
     sks.consts.profiles = x;
 
@@ -353,7 +353,7 @@ $(document).ready(function(){
     $('#skyImage').click(
         function(){
             
-            if ( sks.consts.currentProfile === 'Tetra3')
+            if ( sks.consts.verbose().checked ===true || sks.consts.currentProfile === 'Tetra3')
                 return
             var src = document.getElementById("solu");
             var d = new Date();
@@ -557,6 +557,7 @@ $(document).ready(function(){
         function() {
 
             var checkBox = document.getElementById("idverbose");
+            console.log("verbose",checkBox.checked)
             if (checkBox.checked == true) {
                 sks.consts.verbose = 1;
             }
