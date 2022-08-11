@@ -3,7 +3,7 @@ from attr import get_run_validators
 from flask import Flask, render_template, request, Response, send_file
 import time
 from flask.wrappers import Request
-
+import pprint
 
 from camera_pi import skyCamera
 
@@ -26,7 +26,7 @@ from tetra3 import Tetra3
 
 print("argssss",sys.argv, len(sys.argv))
 print('user', getpass.getuser())
-
+usedIndexes = {}
 # Create instance and load default_database (built with max_fov=12 and the rest as default)
 t3 = None
 if t3 == None:
@@ -367,14 +367,20 @@ def solve(fn, parms=[]):
     solveLog.append("solving:\n")
     while not p.poll():
         stdoutdata = p.stdout.readline().decode(encoding='UTF-8')
-        if stdoutdata:
-            if profile['solveVerbose']:
-                solveLog.append(stdoutdata)
+        if stdoutdata and skyConfig['observing']['verbose']:
+            solveLog.append(stdoutdata)
             #print("stdout", str(stdoutdata))
             if 'simplexy: found' in stdoutdata:
                 delayedStatus(2, stdoutdata)
-   
-            if stdoutdata.startswith('Field center: (RA,Dec) = ('):
+            elif stdoutdata.startswith("Field 1: solved with"):
+                ndx = stdoutdata.split("index-")[-1].strip()
+                print("index", ndx, stdoutdata, flush= True)
+                usedIndexes[ndx] = usedIndexes.get(ndx,0)+1
+                pp = pprint.pformat(usedIndexes)
+                print("Used indexes", pp, flush=True)
+                solveLog.append('used indexes ' + pp + '\n')
+
+            elif stdoutdata.startswith('Field center: (RA,Dec) = ('):
                 solved = stdoutdata
                 fields = solved.split()[-3:-1]
                 #print ('f',fields)

@@ -353,7 +353,7 @@ $(document).ready(function(){
     $('#skyImage').click(
         function(){
             
-            if ( sks.consts.verbose().checked ===true || sks.consts.currentProfile === 'Tetra3')
+            if ( sks.consts.verbose === 0|| sks.consts.currentProfile === 'Tetra3')
                 return
             var src = document.getElementById("solu");
             var d = new Date();
