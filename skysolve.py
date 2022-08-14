@@ -286,6 +286,7 @@ def solveThread():
                 continue
             fn = testFiles[testNdx]
             skyStatusText = "%d %s"%(testNdx, fn)
+            solveLog.append(skyStatusText + '\n')
             testNdx += 1
 
             #print ("image", testNdx, fn)
@@ -312,7 +313,9 @@ def solveThread():
             else:
                 if state is Mode.SOLVING:
                     skyStatusText = ""
-                solve(os.path.join(solve_path, imageName))
+                f = solve(os.path.join(solve_path, imageName))
+                if f == False:
+                    state = Mode.PLAYBACK
             continue
 
         # else measaure contrast for focus bar
@@ -382,7 +385,8 @@ def solve(fn, parms=[]):
            '--overwrite'] + parms
 
     #print("\n\nsolving ", cmd)
-    solveLog.append(' '.join(cmd) + '\n')
+    if skyConfig['observing']['verbose']:
+        solveLog.append(' '.join(cmd) + '\n')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     solveLog.clear()
     ppa = ''
@@ -402,6 +406,25 @@ def solve(fn, parms=[]):
             lastmessage = stdoutdata
             if 'simplexy: found' in stdoutdata:
                 skyStatusText = stdoutdata
+
+            elif stdoutdata.startswith('Field center: (RA,Dec) = ('):
+                solved = stdoutdata
+                fields = solved.split()[-3:-1]
+                #print ('f',fields)
+                ra = fields[0][1:-1]
+                dec = fields[1][0:-1]
+                ra = float(fields[0][1:-1])
+                dec = float(fields[1][0:-1])
+                radec = "%s %6.6lf %6.6lf \n" % (
+                    time.strftime('%H:%M:%S'), ra, dec)
+                file1 = open(os.path.join(
+                    solve_path, "radec.txt"), "w")  # write mode
+                file1.write(radec)
+                file1.close()
+                stopTime = datetime.now()
+                duration = stopTime - startTime
+                #print ('duration', duration)
+                skyStatusText = skyStatusText + " solved "+str(duration)+'secs'
             if stdoutdata and skyConfig['observing']['verbose']:
                 solveLog.append(stdoutdata)
                 print("stdout", str(stdoutdata))
@@ -414,25 +437,6 @@ def solve(fn, parms=[]):
                     print("Used indexes", pp, flush=True)
                     solveLog.append('used indexes ' + pp + '\n')
 
-                elif stdoutdata.startswith('Field center: (RA,Dec) = ('):
-                    solved = stdoutdata
-                    fields = solved.split()[-3:-1]
-                    #print ('f',fields)
-                    ra = fields[0][1:-1]
-                    dec = fields[1][0:-1]
-                    ra = float(fields[0][1:-1])
-                    dec = float(fields[1][0:-1])
-                    radec = "%s %6.6lf %6.6lf \n" % (
-                        time.strftime('%H:%M:%S'), ra, dec)
-                    file1 = open(os.path.join(
-                        solve_path, "radec.txt"), "w")  # write mode
-                    file1.write(radec)
-                    file1.close()
-                    stopTime = datetime.now()
-                    duration = stopTime - startTime
-                    #print ('duration', duration)
-
-                    skyStatusText = skyStatusText + " solved "+str(duration)+'secs'
                 elif stdoutdata.startswith('Field size'):
                     print("Field size", stdoutdata, flush=True)
                     solveLog.append(stdoutdata)
@@ -526,7 +530,8 @@ def solve(fn, parms=[]):
     if not solved:
         skyStatusText = skyStatusText + " Failed"
         ra = 0
- 
+    if not solved:
+        solveLog.append("Failed\n")
     solving = False
     return solved
 
