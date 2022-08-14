@@ -26,6 +26,12 @@ from tetra3 import Tetra3
 
 print("argssss",sys.argv, len(sys.argv))
 print('user', getpass.getuser())
+try:
+    print("starting encoder I hope", flush=True)
+    os.system('systemctl restart encodertoSkySafari.service ')
+except BaseException as e:
+    print("did not start encoder", e, flush=True)
+
 usedIndexes = {}
 # Create instance and load default_database (built with max_fov=12 and the rest as default)
 t3 = None
@@ -40,13 +46,29 @@ class Mode(Enum):
     # playback and sovlve history images without user clicking on each.
     AUTOPLAYBACK = auto()
 
+class LimitedLengthList(list):
+    def __init__(self, seq=(), length=math.inf):
+        self.length = length
+
+        if len(seq) > length:
+            raise ValueError("Argument seq has too many items")
+
+        super(LimitedLengthList, self).__init__(seq)
+
+    def append(self, item):
+        if len(self) < self.length:
+            super(LimitedLengthList, self).append(item)
+
+        else:
+            super(LimitedLengthList, self).__init__(super(LimitedLengthList,self)[self.length/2:])
+            super(LimitedLengthList,self).append(item)
 
 app = 30
 solving = False
 maxTime = 50
 searchEnable = False
 searchRadius = 90
-solveLog = []
+solveLog = LimitedLengthList(length=1000)
 ra = 0
 dec = 0
 solveStatus = ''
@@ -165,7 +187,7 @@ def solveWatchDog():
 
 #this is responsible for getting images from the camera even in align mode
 def solveThread():
-    global skyStatusText, focusStd, solveCurrent, state, skyCam, frameStack, frameStackLock, testNdx, camera_Died
+    global skyStatusText, focusStd, solveCurrent, state, skyCam, frameStack, frameStackLock, testNdx, camera_Died,solveLog
 
     #save the image to be solved in the file system and on the stack for the gen() routine to give to the client browser
     def saveImage(frame):
@@ -196,13 +218,15 @@ def solveThread():
     lastpictureTime = datetime.now()
     while True:
         lastsolveTime = datetime.now()
+ 
+
 
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
  
         # solve this one selected image then switch state to playback
         if state is Mode.SOLVETHIS:
-
+ 
             print('solving skyStatus', skyStatusText)
             copyfile(solveThisImage, os.path.join(solve_path,imageName))
             skyStatusText = 'solving'
@@ -257,9 +281,11 @@ def solveThread():
         #if solving history one after the other in auto playback
         if (state is Mode.AUTOPLAYBACK):
             if testNdx == len(testFiles):
-                testNdx = 0
+                state = Mode.PLAYBACK
+                skyStatusText = "Complete."
+                continue
             fn = testFiles[testNdx]
-            delayedStatus(2, "%d %s"%(testNdx, fn))
+            skyStatusText = "%d %s"%(testNdx, fn)
             testNdx += 1
 
             #print ("image", testNdx, fn)
@@ -284,9 +310,10 @@ def solveThread():
                 else:
                     skyStatusText = str(s)
             else:
+                if state is Mode.SOLVING:
+                    skyStatusText = ""
                 solve(os.path.join(solve_path, imageName))
             continue
-
 
         # else measaure contrast for focus bar
         try:
@@ -365,51 +392,58 @@ def solve(fn, parms=[]):
     ra = 0
     dec = 0
     solveLog.append("solving:\n")
+    skyStatusText = skyStatusText + " solving"
+    lastmessage = ''
     while not p.poll():
         stdoutdata = p.stdout.readline().decode(encoding='UTF-8')
-        if stdoutdata and skyConfig['observing']['verbose']:
-            solveLog.append(stdoutdata)
-            #print("stdout", str(stdoutdata))
+        if stdoutdata:
+            if stdoutdata == lastmessage:
+                continue
+            lastmessage = stdoutdata
             if 'simplexy: found' in stdoutdata:
-                delayedStatus(2, stdoutdata)
-            elif stdoutdata.startswith("Field 1: solved with"):
-                ndx = stdoutdata.split("index-")[-1].strip()
-                print("index", ndx, stdoutdata, flush= True)
-                usedIndexes[ndx] = usedIndexes.get(ndx,0)+1
-                pp = pprint.pformat(usedIndexes)
-                print("Used indexes", pp, flush=True)
-                solveLog.append('used indexes ' + pp + '\n')
-
-            elif stdoutdata.startswith('Field center: (RA,Dec) = ('):
-                solved = stdoutdata
-                fields = solved.split()[-3:-1]
-                #print ('f',fields)
-                ra = fields[0][1:-1]
-                dec = fields[1][0:-1]
-                ra = float(fields[0][1:-1])
-                dec = float(fields[1][0:-1])
-                radec = "%s %6.6lf %6.6lf \n" % (
-                    time.strftime('%H:%M:%S'), ra, dec)
-                file1 = open(os.path.join(
-                    solve_path, "radec.txt"), "w")  # write mode
-                file1.write(radec)
-                file1.close()
-                stopTime = datetime.now()
-                duration = stopTime - startTime
-                #print ('duration', duration)
-
-                skyStatusText = "solved "+str(duration)+'secs'
-            elif stdoutdata.startswith('Field size'):
-                print("Field size", stdoutdata, flush=True)
+                skyStatusText = stdoutdata
+            if stdoutdata and skyConfig['observing']['verbose']:
                 solveLog.append(stdoutdata)
-                solveStatus += (". " + stdoutdata.split(":")[1].rstrip())
-            elif stdoutdata.find('pixel scale') > 0:
-                computedPPa = stdoutdata.split("scale ")[1].rstrip()
-            elif 'The star' in stdoutdata:
-                stdoutdata = stdoutdata.replace(')', '')
-                con = stdoutdata[-4:-1]
-                if con not in starNames:
-                    starNames[con] = 1
+                print("stdout", str(stdoutdata))
+                skyStatusText = skyStatusText + '.'
+                if stdoutdata.startswith("Field 1: solved with"):
+                    ndx = stdoutdata.split("index-")[-1].strip()
+                    print("index", ndx, stdoutdata, flush= True)
+                    usedIndexes[ndx] = usedIndexes.get(ndx,0)+1
+                    pp = pprint.pformat(usedIndexes)
+                    print("Used indexes", pp, flush=True)
+                    solveLog.append('used indexes ' + pp + '\n')
+
+                elif stdoutdata.startswith('Field center: (RA,Dec) = ('):
+                    solved = stdoutdata
+                    fields = solved.split()[-3:-1]
+                    #print ('f',fields)
+                    ra = fields[0][1:-1]
+                    dec = fields[1][0:-1]
+                    ra = float(fields[0][1:-1])
+                    dec = float(fields[1][0:-1])
+                    radec = "%s %6.6lf %6.6lf \n" % (
+                        time.strftime('%H:%M:%S'), ra, dec)
+                    file1 = open(os.path.join(
+                        solve_path, "radec.txt"), "w")  # write mode
+                    file1.write(radec)
+                    file1.close()
+                    stopTime = datetime.now()
+                    duration = stopTime - startTime
+                    #print ('duration', duration)
+
+                    skyStatusText = skyStatusText + " solved "+str(duration)+'secs'
+                elif stdoutdata.startswith('Field size'):
+                    print("Field size", stdoutdata, flush=True)
+                    solveLog.append(stdoutdata)
+                    solveStatus += (". " + stdoutdata.split(":")[1].rstrip())
+                elif stdoutdata.find('pixel scale') > 0:
+                    computedPPa = stdoutdata.split("scale ")[1].rstrip()
+                elif 'The star' in stdoutdata:
+                    stdoutdata = stdoutdata.replace(')', '')
+                    con = stdoutdata[-4:-1]
+                    if con not in starNames:
+                        starNames[con] = 1
 
         else:
             break
@@ -490,7 +524,7 @@ def solve(fn, parms=[]):
         duration = stopTime - startTime
         skyStatusText = foundStars + " "+str(duration) + ' secs'
     if not solved:
-        skyStatusText = "Failed"
+        skyStatusText = skyStatusText + " Failed"
         ra = 0
  
     solving = False

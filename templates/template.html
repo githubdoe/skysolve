@@ -707,7 +707,7 @@
         <p><div style="color:rgb(160, 0, 0); background:rgb(2, 0, 0);" >Log:</div>
             
         <div style="overflow-y: scroll;  height: 300px; color:rgb(155, 0, 0); background:rgb(2, 0, 9);"  id="solveStatusText">
-              initialiing camera Waiting for first Image </div></p>
+              SkySolve is ready</div></p>
 
   
   <!-- Modal -->
@@ -870,7 +870,7 @@
                 // position tracks how many messages have been handled
                 // messages end with a newline, so split will always show one extra empty message at the end
                 var messages = xhr.responseText.split('\n');
-                messages.slice(position, -1).forEach(function(value) {
+                 messages.slice(position, -1).forEach(function(value) {
 
                     // build and append a new item to a list to log all output
                     //value = "<br>" + value;
@@ -879,6 +879,13 @@
                     element.scrollTop = element.scrollHeight;
                 });
                 position = messages.length - 1;
+                if (output.innerHTML.length > 10000){
+                    var list = output.innerHTML.split('<br>')
+                    var shorter = list.splice(1,list.length/2)
+                    output.innerHTML = shorter.join('<br>')
+                }
+                console.log("log length", output.innerHTML.length)
+ 
             }
         
             var timer;
