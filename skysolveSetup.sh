@@ -319,9 +319,21 @@ if [ "$answer" == "y" ]
     echo "4202  4.0 - 5.6"
     echo "4201  2.8 - 4.0"
     echo "4200  2.0 - 2.8"
-
+    echo "RPI25FL for RPI HiQuality Camera with 25 FL Lens"
+    echo ""
     read -p "Which file set would you like to download? Remember, type either 'large' or the file number(s) above: (large recommended)" indexFile
 
+    if [ "$indexFile" = "RPI25FL" ]
+    then 
+        wget http://data.astrometry.net/debian/astrometry-data-4208-4219_0.45_all.deb
+        wget -P /usr/share/astrometry/ http://data.astrometry.net/4100/index-4112.fits
+        wget -P /usr/share/astrometry/ http://data.astrometry.net/4100/index-4113.fits
+        wget -P /usr/share/astrometry/ http://data.astrometry.net/4100/index-4114.fits
+        wget -P /usr/share/astrometry/ http://data.astrometry.net/4100/index-4115.fits    
+        wget -P /usr/share/astrometry/ http://data.astrometry.net/4100/index-4116.fits
+        wget -P /usr/share/astrometry/ http://data.astrometry.net/4100/index-4117.fits
+        wget -P /usr/share/astrometry/ http://data.astrometry.net/4100/index-4118.fits     
+    fi
     if [[ $indexFile = *"large"* ]]
     then
         wget http://data.astrometry.net/debian/astrometry-data-4208-4219_0.45_all.deb
