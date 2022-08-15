@@ -352,9 +352,11 @@ $(document).ready(function(){
     )
     $('#skyImage').click(
         function(){
-            
-            if ( sks.consts.verbose === 0|| sks.consts.currentProfile === 'Tetra3')
+            var verb = document.getElementById('idverbose').checked;
+
+            if ( !verb || sks.consts.currentProfile === 'Tetra3')
                 return
+
             var src = document.getElementById("solu");
             var d = new Date();
             var n = d.getTime();
@@ -555,17 +557,10 @@ $(document).ready(function(){
     ) 
     $('#idverbose').click(
         function() {
-
+  
             var checkBox = document.getElementById("idverbose");
-            console.log("verbose",checkBox.checked)
-            if (checkBox.checked == true) {
-                sks.consts.verbose = 1;
-            }
-            else {
-                sks.consts.verbose = 0;
-            }
-            let x = sks.consts.verbose;
-
+            var x = (checkBox.checked == true)
+            console.log("was checked",x)
             $.post("/verbose/" + x, data = {
                 suggest: x
             }, function(result) {});

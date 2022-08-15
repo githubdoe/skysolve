@@ -248,7 +248,7 @@ def solveThread():
                     skyStatusText = 'Failed. Retrying with no position hint.'
                     # try again but this time since the previous failed it will not use a starting guess possition
                     solve(os.path.join(solve_path, imageName))
-            
+
             state = Mode.PLAYBACK
             continue
 
@@ -406,7 +406,7 @@ def solve(fn, parms=[]):
             lastmessage = stdoutdata
             if 'simplexy: found' in stdoutdata:
                 skyStatusText = stdoutdata
-
+                print("stdoutdata", stdoutdata)
             elif stdoutdata.startswith('Field center: (RA,Dec) = ('):
                 solved = stdoutdata
                 fields = solved.split()[-3:-1]
@@ -455,8 +455,9 @@ def solve(fn, parms=[]):
     solveStatus += ". scale " + ppa
 
 
- 
+    #create solved plot
     if solved and skyConfig['observing']['verbose']:
+
         # Write-Overwrites
         file1 = open(os.path.join(solve_path, "radec.txt"), "w")  # write mode
         file1.write(radec)
@@ -530,7 +531,6 @@ def solve(fn, parms=[]):
     if not solved:
         skyStatusText = skyStatusText + " Failed"
         ra = 0
-    if not solved:
         solveLog.append("Failed\n")
     solving = False
     return solved
@@ -715,9 +715,9 @@ def saveSolvedImage(value):
 def verbose(value):
     global skyConfig
     print("verbose", value)
-    skyConfig['observing']['verbose'] = value == '1'
+    skyConfig['observing']['verbose'] = (value == 'true')
     saveConfig()
-    print("config", skyConfig['observing']['verbose'])
+    print("config verbose", skyConfig['observing']['verbose'])
     return Response(status=204)
 
 @app.route('/clearObsLog', methods=['POST'])
