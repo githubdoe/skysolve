@@ -80,7 +80,9 @@ class skyCamera():
     runMode = True
     cameraStopped = True
     format = 'jpeg'
-    def __init__(self, shutter=1000000, ISO=800, resolution=(2000,1500), format = 'jpeg'):
+    def __init__(self, skystatus, shutter=1000000, ISO=800, resolution=(2000,1500), format = 'jpeg'):
+        print("skystatus", skystatus)
+        self.skyStatus = skystatus
         self.camera = picamera.PiCamera()
         self.camera.resolution = (2000,1500)
         self.camera.framerate = Fraction(1,6)
@@ -115,11 +117,11 @@ class skyCamera():
     def setResolution(self,  size):
         self.resolution = size
         self.runMode = False
-        print ("waiting for camera to stop to set resolution")
+        print ("waiting for camera to stop to set resolution",flush=True)
         while not self.cameraStopped:
             time.sleep(.2)
         res = tuple(map(int, size.split('x')))
-        print ("setting resolution", res, self.camera.resolution)
+        print ("setting resolution", res, self.camera.resolution, flush=True)
         self.camera.resolution = res
         self.runMode = True
 
@@ -133,7 +135,8 @@ class skyCamera():
     def setShutter(self, value):
         self.camera.shutter_speed = value
         self.shutter = value
-        print ("new shutter speed", value)
+        self.setupGain()
+        print ("new shutter speed", value, flush=True)
 
     def setupGain(self):
         #make sure previous instance gain thread is not already running
@@ -146,13 +149,14 @@ class skyCamera():
         if self.camera:
             self.runMode = False
   
-        print ("cam setup called")
+        print ("cam setup called",flush=True)
         selfrunMode = False
+        self.skyStatus(4," stopping camera to apply changes")
         while not self.cameraStopped:
             pass
 
         self.camera.resolution = self.resolution
-        print ('camera framesize at init', self.resolution)
+        print ('camera framesize at init', self.resolution, flush=True)
         self.camera.iso = self.ISO
         self.camera.exposure_mode = 'auto'
         self.camera.framerate = Fraction(1,6)
@@ -166,7 +170,7 @@ class skyCamera():
     def get_frame(self):
         """Return the current camera frame."""
         # wait for a signal from the camera thread
-        if not self.event.wait(tt=20.):
+        if not self.event.wait(tt=40.):
             print("camera image event wait timed out", flush=True)
             return None
         self.event.clear()
@@ -203,6 +207,7 @@ class skyCamera():
             if self.abortMode:
                 break
             print ("picamera started", flush=True)
+            self.skyStatus(0," camera started")
             try:
                 for _ in self.camera.capture_continuous(stream, self.format,
                                                         use_video_port=False):
@@ -212,7 +217,7 @@ class skyCamera():
                     yield stream.read() 
                     if not self.runMode:
                         self.cameraStopped = True
-                        print ("camera stopped")
+                        print ("camera stopped",flush=True)
                         break
                     self.cameraStopped = False
 

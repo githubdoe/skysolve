@@ -27,7 +27,6 @@ from tetra3 import Tetra3
 print("argssss",sys.argv, len(sys.argv))
 print('user', getpass.getuser())
 try:
-    print("starting encoder I hope", flush=True)
     os.system('systemctl restart encodertoSkySafari.service ')
 except BaseException as e:
     print("did not start encoder", e, flush=True)
@@ -126,7 +125,8 @@ skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'frame': '800x600','format': 'j
 
 def saveConfig():
     with open('skyConfig.json', 'w') as f:
-        json.dump(skyConfig, f)
+        
+        json.dump(skyConfig, f, indent=4)
 
 
 #saveConfig()
@@ -135,20 +135,28 @@ print('cwd', os.getcwd())
 
 with open(os.path.join(root_path, 'skyConfig.json')) as f:
     skyConfig = json.load(f)
-print (skyConfig['solverProfiles']['25FL'])
+print (json.dumps(skyConfig['solverProfiles']['25FL'], indent=4))
+print(json.dumps(skyConfig['observing'],indent=4))
+print(json.dumps(skyConfig['camera'], indent=4),flush=True)
 
 imageName = 'cap.'+skyConfig['camera']['format']
 
 #print (skyConfig)
 skyCam = None
-
+skyStatusText = ''
+def delayedStatus(delay,status):
+    global skyStatusText
+    time.sleep(delay)
+    skyStatusText = status
 def setupCamera():
     global skyCam, cameraNotPresent, state, skyStatusText
     if not skyCam:
         print('creating cam')
         try:
-            skyCam = skyCamera(shutter=int(
-                1000000 * float(skyConfig['camera']['shutter'])), format=skyConfig['camera']['format'], resolution=skyConfig['camera']['frame'])
+            skyCam = skyCamera(delayedStatus,shutter=int(
+                1000000 * float(skyConfig['camera']['shutter'])),
+                 format=skyConfig['camera']['format'],
+                  resolution=skyConfig['camera']['frame'])
             cameraNotPresent = False
             if skyConfig['solver']['startupSolveing']:
                 print("startup in solving")
@@ -164,25 +172,11 @@ def setupCamera():
 setupCamera()
 
 framecnt = 0
-def delayedStatus(delay,status):
-    global skyStatusText
-    time.sleep(delay)
-    skyStatusText = status
+
 
 lastsolveTime = datetime.now()
 justStarted = True
 camera_Died = False
-def solveWatchDog():
-    global lastsolveTime, state, skyStatusText, justStarted, framecnt, camera_Died
-    while (True):
-        time.sleep(45)
-        if camera_Died:
-            state = Mode.PAUSED
-            skyStatusText = "camera seens to have stopped.  Restarting"
-            os.system('./restartsky.sh')
-            time.sleep(10)
-            break
-
 
 
 #this is responsible for getting images from the camera even in align mode
@@ -653,7 +647,7 @@ def Solving():
 def setISO(value):
     global solveLog, skyStatusText, isoglobal
     solveLog.append("ISO changing will take 10 seconds to stabilize gain.\n")
-    skyStatusText = "changing to ISO " + value
+    delayedStatus(2, "changing to ISO " + value)
     isoglobal = value
     skyCam.setISO(int(value))
 
@@ -685,10 +679,13 @@ def setFormat(value):
 
 @app.route('/setShutter/<value>', methods=['POST'])
 def setShutter(value):
+    global skyStatusText
     print("shutter value", value)
     skyCam.setShutter(int(1000000 * float(value)))
     skyConfig['camera']['shutter'] = value
+    delayedStatus(2,"Setting shutter to "+str(value)+" may take about 10 seconds.")
     saveConfig()
+
     return Response(status=204)
 
 
@@ -736,9 +733,7 @@ def skyStatus():
     global skyStatusText,setTimeDate
     if setTimeDate:
         setTimeDate = False
-        print ('time was', request.form['time'])
         t = float(request.form['time'])/1000
-        print ("ttt", t, time.time())
         time.clock_settime(time.CLOCK_REALTIME, t)
     return Response(skyStatusText)
 
@@ -910,12 +905,13 @@ def reboot3():
 def reboot():
     global skyStatusText, state
     state = Mode.PAUSED
-    th = threading.Thread(tarket = reboot3)
+    th = threading.Thread(target = reboot3)
     th.start()
     skyStatusText = "reboot in 3 seconds goodbye. You will need to reload this page after about 3 minutes"
     return Response(skyStatusText)
 
 def restartThread():
+    print("restarting thread waiting for 5 seconds",flush=True)
     time.sleep(5)
     os.system('./restartsky.sh')
 
@@ -1093,7 +1089,7 @@ def clearImages():
 
 @app.route('/zip', methods=['GET'])
 def zipImages():
-    global solve_path
+    global solve_path, skyStatusText
     print("download zip file")
     skyStatusText = "zipping images"
     solveLog.append("zipping images into history.zip\n")
