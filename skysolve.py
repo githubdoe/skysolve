@@ -901,6 +901,18 @@ def reboot3():
     time.sleep(3)
     os.system('sudo reboot')
 
+from subprocess import call
+def shutThread():
+    time.sleep(3)
+    call("sudo nohup shutdown -h now", shell=True)
+
+@app.route('/shutdown', methods=['post'])
+def shutdown():
+    skyStatusText = "shutting down.  Good Bye"
+    th = threading.Thread(target=shutThread)
+    th.start()
+
+
 @app.route('/reboot', methods=['POST'])
 def reboot():
     global skyStatusText, state

@@ -327,7 +327,12 @@ $(document).ready(function(){
             ajax_get_Status('/reboot')
         }
     )
-    
+    $('#shutdown').click(
+        function(){
+            ajax_get_Status('/shutdown')
+        }
+    )
+
     $('#restartc').click(
         function(){
             ajax_get_Status('/restartc')
