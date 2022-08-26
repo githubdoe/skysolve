@@ -556,7 +556,8 @@ skyStatusText = 'Initilizing Camera'
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
-    global skyCam, cameraNotPresent, skyStatusText, solveT
+    global skyCam, cameraNotPresent, skyStatusText, solveT,verboseSolveText
+    verboseSolveText = ""
     shutterValues = ['.001','.002','.005','.01', '.02','.05', '.1', '.15', '.2',
                      '.5', '.7', '.9', '1', '2.', '3', '4', '5', '10']
     skyFrameValues = ['400x300', '640x480', '800x600', '1024x768',
