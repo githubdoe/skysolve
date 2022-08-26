@@ -144,7 +144,7 @@ imageName = 'cap.'+skyConfig['camera']['format']
 #print (skyConfig)
 skyCam = None
 skyStatusText = ''
-verboseSolveText = 'Hey I solved this one.'
+verboseSolveText = ''
 def delayedStatus(delay,status):
     global skyStatusText
     time.sleep(delay)
