@@ -144,6 +144,7 @@ imageName = 'cap.'+skyConfig['camera']['format']
 #print (skyConfig)
 skyCam = None
 skyStatusText = ''
+verboseSolveText = 'Hey I solved this one.'
 def delayedStatus(delay,status):
     global skyStatusText
     time.sleep(delay)
@@ -336,7 +337,7 @@ def solve(fn, parms=[]):
     print("solving",flush = True)
 
     global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, solveStatus,\
-        triggerSolutionDisplay, skyStatusText, lastObs
+        triggerSolutionDisplay, skyStatusText, lastObs,verboseSolveText
     startTime = datetime.now()
     solving = True
     solved = ''
@@ -521,7 +522,8 @@ def solve(fn, parms=[]):
             triggerSolutionDisplay = True
         stopTime = datetime.now()
         duration = stopTime - startTime
-        skyStatusText = foundStars + " "+str(duration) + ' secs'
+        skyStatusText = "solved "+str(duration) + ' secs'
+        verboseSolveText = foundStars
     if not solved:
         skyStatusText = skyStatusText + " Failed"
         ra = 0
@@ -555,7 +557,7 @@ skyStatusText = 'Initilizing Camera'
 @app.route("/", methods=['GET', 'POST'])
 def index():
     global skyCam, cameraNotPresent, skyStatusText, solveT
-    shutterValues = ['.01', '.05', '.1', '.15', '.2',
+    shutterValues = ['.001','.002','.005','.01', '.02','.05', '.1', '.15', '.2',
                      '.5', '.7', '.9', '1', '2.', '3', '4', '5', '10']
     skyFrameValues = ['400x300', '640x480', '800x600', '1024x768',
                       '1280x960', '1920x1440', '2000x1000', '2000x1500']
@@ -642,9 +644,24 @@ def Solving():
         skyStatusText = 'Solving Mode'
     return Response(skyStatusText)
 
+@app.route('/setISO',methods=['POST'])
+def setISOx():
+    print("setISO FORM", request.form.values)
+    global solveLog, skyStatusText, isoglobal
+    value = request.form.get('setISO')
+    solveLog.append("ISO changing will take 10 seconds to stabilize gain.\n")
+    delayedStatus(2, "changing to ISO " + value)
+    isoglobal = value
+    skyCam.setISO(int(value))
 
-@app.route('/setISO/<value>', methods=['POST'])
+    skyConfig['camera']['ISO'] = value
+    saveConfig()
+    return Response(status=204)
+
+@app.route('/setISO/<value>', methods=['POST','GET'])
 def setISO(value):
+
+    print("setting iso",value)
     global solveLog, skyStatusText, isoglobal
     solveLog.append("ISO changing will take 10 seconds to stabilize gain.\n")
     delayedStatus(2, "changing to ISO " + value)
@@ -676,6 +693,17 @@ def setFormat(value):
 
     return Response(status=204)
 
+@app.route('/setShutter', methods=['POST'])
+def setShutterx():
+    global skyStatusText
+    value = request.form.get('setShutter')
+    print("shutter value", value)
+    skyCam.setShutter(int(1000000 * float(value)))
+    skyConfig['camera']['shutter'] = value
+    delayedStatus(2,"Setting shutter to "+str(value)+" may take about 10 seconds.")
+    saveConfig()
+
+    return Response(status=204)
 
 @app.route('/setShutter/<value>', methods=['POST'])
 def setShutter(value):
@@ -727,8 +755,12 @@ def clearObsLog():
     return Response("observing log cleared")
 
 setTimeDate = True
-@app.route('/skyStatus', methods=['post'])
+@app.route('/lastVerboseSolve', methods=['post'])
+def verboseSolveUpdate():
+    global verboseSolveText
+    return Response(verboseSolveText)
 
+@app.route('/skyStatus', methods=['post'])
 def skyStatus():
     global skyStatusText,setTimeDate
     if setTimeDate:
@@ -908,6 +940,7 @@ def shutThread():
 
 @app.route('/shutdown', methods=['post'])
 def shutdown():
+    global skyStatusText
     skyStatusText = "shutting down.  Good Bye"
     th = threading.Thread(target=shutThread)
     th.start()
@@ -992,17 +1025,18 @@ def startup(value):
 
 @app.route('/historyNdx', methods=['POST'])
 def historyNdx():
-    global nextImage, testNdx ,solveThisImage
+    global nextImage, testNdx ,solveThisImage,state
     print("submitted values1", request.form.values)
-    req = request.form
-    testNdx = int(req.get("hNdx"))
-    if (testNdx > 0):
-        testNdx -= 1
-    else:
-        testNdx = len(testFiles)-1
+    if state is Mode.PLAYBACK:
+        req = request.form
+        testNdx = int(req.get("hNdx"))
+        if (testNdx > 0):
+            testNdx -= 1
+        else:
+            testNdx = len(testFiles)-1
 
-    nextImage = True
-    solveThisImage = testFiles[testNdx]
+        nextImage = True
+        solveThisImage = testFiles[testNdx]
     return Response(status=205)
 
 

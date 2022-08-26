@@ -1,16 +1,16 @@
 {
     "camera": {
-        "shutter": ".7",
-        "ISO": "800",
+        "shutter": ".02",
+        "ISO": "100",
         "frame": "800x600",
         "format": "jpeg"
     },
     "solver": {
-        "currentProfile": "25FL",
-        "startupSolveing": true
+        "currentProfile": "Demo",
+        "startupSolveing": false
     },
     "observing": {
-        "saveImages": false,
+        "saveImages": "on",
         "showSolution": false,
         "savePosition": true,
         "verbose": true,
@@ -206,6 +206,50 @@
             "showStars": false,
             "plots": true,
             "additionalParms": ""
+        },
+        "bigdipper": {
+            "name": "bigdipper",
+            "solver_type": "solverAstromet",
+            "maxTime": 10.0,
+            "solveSigma": 9,
+            "solveDepth": 10,
+            "UselastDelta": false,
+            "FieldWidthMode": "FieldWidthModeOther",
+            "FieldWidthModeaPP": "checked",
+            "FieldWidthModeField": "",
+            "FieldWidthModeOther": "",
+            "aPPLoValue": "64",
+            "aPPHiValue": "65",
+            "fieldLoValue": "15",
+            "fieldHiValue": "15",
+            "searchRadius": 10.0,
+            "solveVerbose": false,
+            "showStars": false,
+            "plots": true,
+            "additionalParms": "",
+            "verbose": true
+        },
+        "Demo": {
+            "name": "Demo",
+            "solver_type": "solverAstromet",
+            "maxTime": 10.0,
+            "solveSigma": 9,
+            "solveDepth": 10,
+            "UselastDelta": false,
+            "FieldWidthMode": "FieldWidthModeField",
+            "FieldWidthModeaPP": "checked",
+            "FieldWidthModeField": "",
+            "FieldWidthModeOther": "",
+            "aPPLoValue": "64",
+            "aPPHiValue": "65",
+            "fieldLoValue": "10",
+            "fieldHiValue": "30",
+            "searchRadius": 10.0,
+            "solveVerbose": false,
+            "showStars": false,
+            "plots": true,
+            "additionalParms": "",
+            "verbose": true
         }
     }
 }

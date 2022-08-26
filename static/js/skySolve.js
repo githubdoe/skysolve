@@ -119,7 +119,7 @@ function setSolverParams(  cur){
     sks.consts.FieldWidthaPPLow().val(sks.consts.profiles[cur]['aPPLoValue'])
     sks.consts.FieldWidthaPPHi().val(sks.consts.profiles[cur]['aPPHiValue'])
     sks.consts.CPUtimeout().val(sks.consts.profiles[cur]['maxTime'])
-       sks.consts.searchRadius().val(sks.consts.profiles[cur]['searchRadius'])
+    sks.consts.searchRadius().val(sks.consts.profiles[cur]['searchRadius'])
     sks.consts.additionalParms().val(sks.consts.profiles[cur]['additionalParms'])
     sks.consts.fieldHiValue().val(sks.consts.profiles[cur]['fieldHiValue'])
     sks.consts.fieldLoValue().val(sks.consts.profiles[cur]['fieldHiValue'])
@@ -140,10 +140,14 @@ function setProfiles(profiles){
 function setIniShutter( shutVal){
     console.log("shutter value", shutVal)
     sks.consts.shutter().val(shutVal);
+    var shutr = document.getElementById('setShutter');
+    shutr.value = shutVal;
 }
 function setIniISO( ISOVal){
     console.log("ISO val", ISOVal)
     sks.consts.ISO().val(ISOVal);
+    var iso2 = document.getElementById('setISO');
+    iso2.value = ISOVal;
 }
 function setIniFrame( frameVal){
     sks.consts.frame().val(frameVal);
@@ -187,6 +191,8 @@ $(document).ready(function(){
             $.post("/setShutter/" + x, data = {
                 suggest: x
             }, function(result) {});
+            var numberVal = document.getElementById('setShutter');
+            numberVal.value = x;
     });
 
     sks.consts.ISO().change(
@@ -197,6 +203,9 @@ $(document).ready(function(){
             $.post("/setISO/" + x, data = {
                 suggest: x
             }, function(result) {});
+
+            var numberVal = document.getElementById('setISO');
+            numberVal.value = x;
     });
 
     sks.consts.frame().change(

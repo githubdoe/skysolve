@@ -281,7 +281,7 @@
                 <div class = "collapse " id="historyNdx">
                     <form action="/historyNdx" class="btn  nightColor" method="POST">
                         <label for="image number"class="btn nightColor">Image number:</label>
-                        <input type="number" class="btn bg-danger"  style="background-color: rgb(70, 48, 48);" id="hNdx" name="hNdx" step="1">
+                        <input type="number" class="nightColor" style="background-color: rgb(70, 48, 48);" id="hNdx" name="hNdx" step="1">
                         <input class="btn nightColor"type="submit" value="Select" style="background-color: rgb(70, 48, 48);">
                       </form> 
 
@@ -439,11 +439,13 @@
                 <div class="col mx-2">
                     <label class="form-check-label nightColor">
                       <input  type="checkbox" id="autoStatusCB" checked="checked"  class=" pl-5 form-check-input" 
-                        onclick="updateStatusField() ; checked">Update every 1 second 
+                        onclick="updateStatusField() ; checked">Update every .5 second 
                     </label>
                 </div>
                 <div class="nightColor">Status:</div>
                 <div id="statusField" class="col-10 nightColor">
+                </div>
+                <div id="verboseSolve" class = "col-10 nightColor">
                 </div>
             </div>
 
@@ -452,6 +454,21 @@
 
         
         <div id="skyConfig" class="collapse">
+            <div id="advancedShutter" class="collapse">
+                <div class = "row">
+                        <form action="/setShutter" class="btn  nightColor" method="POST">
+                            <label for="setShutter"class="btn nightColor">Shutter</label>
+                            <input type="number" class="nightColor"  style="background-color: rgb(70, 48, 48);" id="setShutter" name="setShutter" step=".0005">
+                            <input class="btn nightColor"type="submit" value="Apply" style="background-color: rgb(70, 48, 48);">
+                        </form> 
+
+                        <form action="/setISO" class="btn  nightColor" method="POST">
+                            <label for="setISO"class="btn nightColor">ISO</label>
+                            <input type="number" class="nightColor"  style="background-color: rgb(70, 48, 48);" id="setISO" name="setISO" step="1">
+                            <input class="btn nightColor"type="submit" value="Apply" style="background-color: rgb(70, 48, 48);">
+                        </form> 
+                </div>
+            </div>
             <div class="btn-group" role="group" aria-label="b">
 
                 
@@ -498,8 +515,10 @@
                     <button type="button" class="btn btn-primary btn-sm" onclick="increaseMagnification()">+</button>
                     <button type="button" class="btn btn-primary btn-sm" onclick="decreaseMagnification()">-</button>
                     <button type="button" class="btn btn-primary btn-sm" onclick="brighten()">Bright</button> 
+                    <button type="button" class="btn btn-primary btn-sm" onclick="brightNormal()"> norm</button> 
                     <button type="button" class="btn btn-primary btn-sm" onclick="darken()">dark</button> 
                     <button type="button" class="btn btn-primary btn-sm" id="idSaveCurrent">save current Image</button> 
+                    <button type="button" class="btn btn-primary btn-sm" data-toggle="collapse" data-target="#advancedShutter" Adv</button>
                 </div>
 
             </div>
@@ -705,7 +724,7 @@
         <div ,class = "img-magnifier-container " style="position: relative; left: 100; top: 100;">
             <img src="{{ url_for('video_feed') }}" id="skyImage" class="fishes" style="filter: brightness(600%);">
             <img src="/static/cap-ngc.png" id="solu"  class="fish" style = "display : none;">
-            </div>
+        </div>
         <p><div style="color:rgb(160, 0, 0); background:rgb(2, 0, 0);" >Log:</div>
             
         <div style="overflow-y: scroll;  height: 300px; color:rgb(155, 0, 0); background:rgb(2, 0, 9);"  id="solveStatusText">
@@ -931,12 +950,36 @@
 
                         var checkBox = document.getElementById("autoStatusCB");
                         if (checkBox.checked == true) {
-                            setTimeout(updateStatusField, 1000);
+                            setTimeout(updateStatusField, 500);
                         } else {
                             clearTimeout(updateStatusField);
                         }
                     }
+                
+
                 });
+                var verb = document.getElementById('idverbose').checked;
+                var st = document.getElementById("verboseSolve");
+                if (verb == true) {
+                    st.style.display = "inline";
+                    $.ajax({
+                            url: '/lastVerboseSolve',
+                            data: {'time': Date.now().toString()},
+                            type: 'post',
+                            success: function(data) {
+                                    // Perform operation on return value
+                                var st = document.getElementById("verboseSolve");
+                                st.innerHTML = data
+                            },
+                            complete: function(data) {
+
+                        }
+                    });
+                }
+                else{
+
+                    st.style.display = "none";
+                }
 
 
             }
@@ -996,6 +1039,11 @@
                 solve.style.width = (100 * zoom) + "%";
                 solve.style.width = (100 * zoom) + "%";
 
+            }
+            function brightNormal() {
+                var sky = document.getElementById("skyImage");
+                skyBright = 100
+                sky.style.filter = "brightness("+(skyBright)+"%)";
             }
             function brighten() {
                 var sky = document.getElementById("skyImage");
