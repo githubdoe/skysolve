@@ -439,7 +439,7 @@
                 <div class="col mx-2">
                     <label class="form-check-label nightColor">
                       <input  type="checkbox" id="autoStatusCB" checked="checked"  class=" pl-5 form-check-input" 
-                        onclick="updateStatusField() ; checked">Update every .5 second 
+                        onclick="updateStatusField() ; checked">Update every second 
                     </label>
                 </div>
                 <div class="nightColor">Status:</div>
@@ -950,7 +950,7 @@
 
                         var checkBox = document.getElementById("autoStatusCB");
                         if (checkBox.checked == true) {
-                            setTimeout(updateStatusField, 500);
+                            setTimeout(updateStatusField, 1000);
                         } else {
                             clearTimeout(updateStatusField);
                         }
@@ -1029,6 +1029,7 @@
 
 
             function increaseMagnification() {
+                console.log("mag is", skyimageMag)
                 skyimageMag = skyimageMag * 1.5;
                 var zoom = skyimageMag
                 var sky = document.getElementById("skyImage");

@@ -125,7 +125,7 @@ skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'frame': '800x600','format': 'j
 
 def saveConfig():
     with open('skyConfig.json', 'w') as f:
-        
+
         json.dump(skyConfig, f, indent=4)
 
 
@@ -156,8 +156,8 @@ def setupCamera():
         try:
             skyCam = skyCamera(delayedStatus,shutter=int(
                 1000000 * float(skyConfig['camera']['shutter'])),
-                 format=skyConfig['camera']['format'],
-                  resolution=skyConfig['camera']['frame'])
+                format=skyConfig['camera']['format'],
+                resolution=skyConfig['camera']['frame'])
             cameraNotPresent = False
             if skyConfig['solver']['startupSolveing']:
                 print("startup in solving")
@@ -187,7 +187,7 @@ def solveThread():
     #save the image to be solved in the file system and on the stack for the gen() routine to give to the client browser
     def saveImage(frame):
         global frameStack, frameStackLock
-          
+
         with open(os.path.join(solve_path, imageName), "wb") as f:
             try:
                 f.write(frame)
@@ -213,21 +213,22 @@ def solveThread():
     lastpictureTime = datetime.now()
     while True:
         lastsolveTime = datetime.now()
- 
+
 
 
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
- 
+
         # solve this one selected image then switch state to playback
         if state is Mode.SOLVETHIS:
- 
+
             print('solving skyStatus', skyStatusText)
             copyfile(solveThisImage, os.path.join(solve_path,imageName))
             skyStatusText = 'solving'
             print("solving",solveThisImage)
             if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
-                s = tetraSolve(os.path.join(solve_path,imageName))
+                verboseSolveText = ""
+                s = tetraSolve(os.path.join(solve_path, imageName))
                 if s['RA'] != None:
                     ra = s['RA']
                     dec = s['Dec']
@@ -238,7 +239,7 @@ def solveThread():
                 else:
                     skyStatusText = str(s)
             else:
-            
+
                 if not solve(os.path.join(solve_path, imageName)) and skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['searchRadius'] > 0:
                     skyStatusText = 'Failed. Retrying with no position hint.'
                     # try again but this time since the previous failed it will not use a starting guess possition
@@ -262,7 +263,7 @@ def solveThread():
                     camera_Died = True
                     continue
                 continue
- 
+
             if frame is None:
                 cameraTry += 1
                 if cameraTry > 10:
@@ -270,7 +271,7 @@ def solveThread():
                     print("camera died\nRestarting", flush=True)
                     camera_Died = True
                 continue
-  
+
             lastpictureTime = datetime.now()
         cameraTry = 0
         #if solving history one after the other in auto playback
@@ -288,10 +289,10 @@ def solveThread():
 
             with open(fn, 'rb') as infile:
                 frame = infile.read()
-            
+
   
         saveImage(frame)
-  
+
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
             if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
                 s = tetraSolve(os.path.join(solve_path, imageName))
@@ -364,7 +365,7 @@ def solve(fn, parms=[]):
     else:
         field = []
     if profile['additionalParms'] != '':
-        parmlist = profile['additionalParms'].split();
+        parmlist = profile['additionalParms'].split()
         parms = parms + parmlist
     parms = parms + field
     parms = parms + ['--cpulimit', str(profile['maxTime'])]
@@ -375,7 +376,7 @@ def solve(fn, parms=[]):
     if not profile['showStars']:
         parms = parms + ['-p']
     parms = parms + ["--uniformize", "0","--no-remove-lines","--new-fits","none", "--corr", "none", "--pnm", "none", "--rdls", 
-                "none"]
+                     "none"]
     cmd = ["solve-field", fn, "--depth", str(profile['solveDepth']), "--sigma", str(profile['solveSigma']),
            '--overwrite'] + parms
 
@@ -624,11 +625,11 @@ def saveCurrent():
     fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.") + \
         skyConfig['camera']['format']
     copyfile(os.path.join(solve_path, imageName),
-                os.path.join(solve_path, 'history', fn))
- 
+             os.path.join(solve_path, 'history', fn))
+
     skyStatusText = 'saved'
     return Response(skyStatusText)
-    
+
 @app.route('/Solve', methods=['POST'])
 def Solving():
     global skyStatusText, state, skyCam
@@ -705,6 +706,7 @@ def setShutterx():
     saveConfig()
 
     return Response(status=204)
+
 
 @app.route('/setShutter/<value>', methods=['POST'])
 def setShutter(value):
@@ -803,7 +805,7 @@ def gen():
             frame = infile.read()
         frameStack.clear()
         frameStackLock.release()
-  
+
         if state is Mode.ALIGN:
             framecnt = framecnt + 1
             skyStatusText = "frame %d" % (framecnt)
@@ -812,13 +814,13 @@ def gen():
 
         if state is Mode.SOLVING:
             solveCurrent = True
-       
+
 
 @app.route('/deleteProfile/<value>', methods=['POST'])
 def deleteProfile(value):
     print('delete profile', value,">",skyConfig['solverProfiles'].keys())
     if value in skyConfig['solverProfiles']: del skyConfig['solverProfiles'][value]
-    
+
     return json.dumps(skyConfig['solverProfiles'])
 
 @app.route('/applySolve2', methods=['GET','POST'])
@@ -826,15 +828,14 @@ def apply():
     print("submitted values2", request.form.values)
 
     req = request.form
-    cur = req.get("currentProfile")
+    cur = req.get("currentProfile").strip()
     if cur not in skyConfig['solverProfiles']:
         newProfile = copy.deepcopy(skyConfig['solverProfiles']['default'])
         newProfile['name'] = cur
         skyConfig['solverProfiles'][cur] = newProfile
 
-    print("starup", req.get("startupType"))
     skyConfig['solver']['currentProfile'] = cur
- 
+
     skyConfig['solver']['startupSolveing'] = bool(req.get('startupType'))
     profile = skyConfig['solverProfiles'][cur]
 
@@ -860,7 +861,7 @@ def apply():
     profile['additionalParms'] = req.get('additionalParms')
     #print("curprofile", profile)
     saveConfig()
-    print('\n\n\nskyconfig', skyConfig['solverProfiles'][cur])
+    print('\n\n\nskyconfig', json.dumps(skyConfig['solverProfiles'][cur], indent = 4))
 
     # print (request.form.['submit_button'])
 
@@ -870,7 +871,7 @@ def apply():
 
 @app.route('/demoMode', methods=['POST'])
 def demoMode():
-    global testMode, testFiles, testNdx, nextImage, frameStack,  solveLog, state, solveThisImage
+    global testMode, testFiles, testNdx, frameStack,  solveLog, state, solveThisImage
 
     skyStatusText = 'Demo images will be set for playback'
     state = Mode.PLAYBACK
@@ -878,11 +879,12 @@ def demoMode():
         demo_path) if any(fn.endswith(ext) for ext in ['jpg', 'png'])]
     testFiles.sort(key=os.path.getmtime)
     testNdx = 0
-    nextImage = True
-    print("demo files len", len(testFiles))
-    solveThisImage = testFiles[0]
 
+    print("demo files len", len(testFiles))
+    time.sleep(2)
     frameStack.clear()
+    setupImageFromFile()
+
     solveLog = [x + '\n' for x in testFiles]
 
     return Response(skyStatusText)
@@ -891,25 +893,25 @@ def demoMode():
 def setupImageFromFile():
     global solveThisImage, frameStackLock, frameStack,skyStatusText, nextImage
     nextImage = True
-    solveThisImage = testFiles[testNdx]
+    solveThisImage = testFiles[testNdx] 
  
     frameStackLock.acquire()
     frameStack.clear()
-   
+
     frameStack.append(( solveThisImage, datetime.now()))
     frameStackLock.release()
 
     skyStatusText = "%d %s" % (testNdx, testFiles[testNdx])
 
 def findHistoryFiles():
-    global saveLog, skyStatusText, testFiles, testNdx, frameStack, solveThisImage, nextImage
+    global saveLog, skyStatusText, testFiles, testNdx, frameStack, solveThisImage
     print("finding files")
     x = datetime.now() + timedelta(seconds=2)
     testFiles = [history_path + '/' + fn for fn in os.listdir(
-    history_path) if any(fn.endswith(ext) for ext in ['jpg', 'jpeg', 'png'])]
+        history_path) if any(fn.endswith(ext) for ext in ['jpg', 'jpeg', 'png'])]
     testFiles.sort(key=os.path.getmtime)
     testNdx = 0
-    nextImage = True
+
     print("test files len", len(testFiles))
     frameStack.clear()
     solveLog = [x + '\n' for x in testFiles]
@@ -934,7 +936,7 @@ def reboot3():
     time.sleep(3)
     os.system('sudo reboot')
 
-from subprocess import call
+
 def shutThread():
     time.sleep(3)
     call("sudo nohup shutdown -h now", shell=True)
@@ -961,6 +963,7 @@ def restartThread():
     time.sleep(5)
     os.system('./restartsky.sh')
 
+
 @app.route('/restartc', methods=['POST'])
 def restartc():
     global skyStatusText, skyCam, state
@@ -974,7 +977,7 @@ def restartc():
 
 @app.route('/testMode', methods=['POST'])
 def toggletestMode():
-    global testMode, testFiles, testNdx, nextImage, frameStack,  solveLog, state, solveThisImage, skyStatusText
+    global testMode, testFiles, testNdx, frameStack,  solveLog, state, solveThisImage, skyStatusText
     if state is not Mode.PLAYBACK:
         state = Mode.PLAYBACK
         print('will find files')
@@ -996,10 +999,10 @@ def nextImagex():
     testNdx += 1
     if testNdx >= len(testFiles):
         testNdx = 0
-  
+
     setupImageFromFile()
     return Response(skyStatusText)
- 
+
 
 @app.route('/prevImage', methods=['POST'])
 def prevImagex():
@@ -1011,7 +1014,7 @@ def prevImagex():
     print('prev pressed')
     setupImageFromFile()
     return Response(skyStatusText)
-  
+
 
     
 @app.route('/startup/<value>',methods=['POST'])
@@ -1024,9 +1027,10 @@ def startup(value):
 
     return Response(status=204)
 
+
 @app.route('/historyNdx', methods=['POST'])
 def historyNdx():
-    global nextImage, testNdx ,solveThisImage,state
+    global  testNdx, solveThisImage, state
     print("submitted values1", request.form.values)
     if state is Mode.PLAYBACK:
         req = request.form
@@ -1036,7 +1040,6 @@ def historyNdx():
         else:
             testNdx = len(testFiles)-1
 
-        nextImage = True
         solveThisImage = testFiles[testNdx]
     return Response(status=205)
 
@@ -1050,7 +1053,7 @@ def setObserveParams():
     skyConfig['observing']['savePosition']= bool(request.form.get('SaveOBS'))
 
     saveConfig()
-  
+
     skyStatusText = "observing session parameters received."
     return Response(status=205)
 
@@ -1094,10 +1097,9 @@ def prevObs():
 
 @app.route('/solveThis', methods=['POSt'])
 def solveThis():
-    global solveCurrent, state, nextImage
+    global solveCurrent, state
     solveCurrent = True
     state = Mode.SOLVETHIS
-    nextImage = True
     skyStatusText = "Solving"
     return Response(skyStatusText)
 
@@ -1142,7 +1144,7 @@ def zipImages():
     solveLog.append("zipping images into history.zip\n")
     zipFilesInDir(os.path.join(solve_path, 'history'),
                   os.path.join(solve_path, 'history', 'history.zip'))
- 
+
     skyStatusText = "history.zip file is being sent."
     solveLog.append("History.zip file is being sent\n")
 
@@ -1155,7 +1157,7 @@ def zipImages():
 @app.route('/video_feed')
 def video_feed():
     r =  Response(gen(),
-                    mimetype='multipart/x-mixed-replace; boundary=framex')
+                 mimetype='multipart/x-mixed-replace; boundary=framex')
 
     return (r)
 

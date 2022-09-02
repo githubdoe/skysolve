@@ -122,7 +122,7 @@ function setSolverParams(  cur){
     sks.consts.searchRadius().val(sks.consts.profiles[cur]['searchRadius'])
     sks.consts.additionalParms().val(sks.consts.profiles[cur]['additionalParms'])
     sks.consts.fieldHiValue().val(sks.consts.profiles[cur]['fieldHiValue'])
-    sks.consts.fieldLoValue().val(sks.consts.profiles[cur]['fieldHiValue'])
+    sks.consts.fieldLoValue().val(sks.consts.profiles[cur]['fieldLoValue'])
     var mode = sks.consts.profiles[sks.consts.currentProfile]['FieldWidthMode']
     var type = sks.consts.profiles[sks.consts.currentProfile]['solver_type'];
     var yyy = $('#' + mode)
@@ -366,6 +366,7 @@ $(document).ready(function(){
     )
     $('#skyImage').click(
         function(){
+            console.log("skyimage was clicked");
             var verb = document.getElementById('idverbose').checked;
 
             if ( !verb || sks.consts.currentProfile === 'Tetra3')
@@ -466,6 +467,7 @@ $(document).ready(function(){
                 ajax_get_Status('/demoMode');
                 showReplaybuttons(true);
                 sks.consts.demoMode=true;
+                brightNormal()
  
             }
         }
