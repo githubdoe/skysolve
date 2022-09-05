@@ -535,25 +535,7 @@ $(document).ready(function(){
             text.innerHTML = "";
         }
     )
-/*
-    $('#showSolutionCB').click(
-        function() {
 
-            var checkBox = document.getElementById("showSolutionCB");
-            if (checkBox.checked == true) {
-                sks.consts.showSolution = 1;
-            }
-            else {
-                sks.consts.showSolution = 0;
-            }
-            let x = sks.consts.showSolution;
-
-            $.post("/showSolution/" + x, data = {
-                suggest: x
-            }, function(result) {});
-        }
-    ) 
-    */
     $('#saveImages').click(
         function() {
 

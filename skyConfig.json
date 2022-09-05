@@ -7,13 +7,13 @@
     },
     "solver": {
         "currentProfile": "25FL",
-        "startupSolveing": false
+        "startupSolveing": true
     },
     "observing": {
         "saveImages": "on",
         "showSolution": false,
         "savePosition": true,
-        "verbose": false,
+        "verbose": true,
         "obsDelta": 0.5
     },
     "solverProfiles": {
@@ -58,7 +58,7 @@
             "showStars": false,
             "plots": false,
             "additionalParms": "",
-            "verbose": false
+            "verbose": true
         },
         "16FL": {
             "name": "16FL",

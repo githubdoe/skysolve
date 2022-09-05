@@ -267,7 +267,7 @@
 
                     <button type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig" id="cameraParms">camera params</button>
-                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory" id="resultsCfg">resultsConfig</button>
+                    <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory" id="resultsCfg">results Config</button>
                     <button type="button" class="btn nightColor" style="margin:10px;" id="demoMode" >Demo</button>
                 
                     <!-- Trigger/Open The solver params -->
@@ -706,10 +706,7 @@
         </div>
 
         <div id="solveHistory" class="collapse" >
-            <button type="button" class="btn nightColor" id="ClearLog" >Clear Log</button>
-
-            <button  type="button" class = "btn nightColor" id="showSolution" >Show Solution</button>
-             
+            <button type="button" class="btn nightColor" id="ClearLog" >Clear Log</button>        
              <button type="button" class="btn nightColor" id="ShowStars" >show found stars</button>
              <button type="button" class="btn nightColor" id="observingSession"> setup observing session</button>
             
@@ -819,28 +816,6 @@
             }
 
 
-
-            // Get the button that opens the modal image
-            var btn = document.getElementById("showSolution");
-
-            // Get the <span> element that closes the modal
-            var solutionspan = document.getElementById("solutionClose");
-
-            // When the user clicks on the button, open the modal
-            btn.onclick = function() {
-                var src = document.getElementById("solutionSrc");
-                 var d = new Date();
-                var n = d.getTime();
-                var fn = "/static/cap-ngc.png";
-                var x = fn.concat( "?dummy=",n,"?");
-                src.src = x
-                 solvedImageModal.style.display = "block";
-            }
-
-            // When the user clicks on <span> (x), close the modal
-            solutionspan.onclick = function() {
-                solvedImageModal.style.display = "none";
-            }
 
             // Get the button that opens the modal image
             var btn = document.getElementById("observingSession");
