@@ -124,7 +124,7 @@
         #myBar {
             width: 1%;
             height: 30px;
-            text-align: center;
+            text-align: left;
             background-color: #cf440c;
         }
     </style>
@@ -969,7 +969,7 @@
                 var shown = f.getAttribute("data-shown");
                 console.log("shown value is ", shown);
                 if (shown == 'false') {
-                    intervalID = setInterval(updateFocus, 500);
+                    intervalID = setInterval(updateFocus, 1000);
                     console.log('setup focus');
                     f.setAttribute("data-shown", true);
                 } else {
@@ -984,11 +984,6 @@
                         url: '/Focus',
                         method: 'POST',
                         success: function(result) {
-                            var width = parseInt(result)
-                            while (width < 50) {
-                                width *= 2;
-                            }
-                            elem.style.width = width + "%";
                             elem.innerHTML = result;
 
                         }

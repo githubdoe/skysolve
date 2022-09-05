@@ -23,9 +23,13 @@ import getpass
 import copy
 import sys
 from tetra3 import Tetra3
-
+import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 print("argssss",sys.argv, len(sys.argv))
 print('user', getpass.getuser())
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(7, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+initGPIO7 = GPIO.input(7)
+print("gpio", initGPIO7)
 try:
     os.system('systemctl restart encodertoSkySafari.service ')
 except BaseException as e:
@@ -179,6 +183,10 @@ lastsolveTime = datetime.now()
 justStarted = True
 camera_Died = False
 
+from subprocess import call
+def shutThread():
+    time.sleep(3)
+    call("sudo nohup shutdown -h now", shell=True)
 
 #this is responsible for getting images from the camera even in align mode
 def solveThread():
@@ -208,12 +216,21 @@ def solveThread():
         arr = io.BytesIO()
         img.save(arr, format='JPEG')
         return arr.getvalue()
+
+        
     cameraTry = 0
     print('solvethread', state)
     lastpictureTime = datetime.now()
     while True:
         lastsolveTime = datetime.now()
-
+        pin7 = GPIO.input(7)
+        if pin7 != initGPIO7:
+            time.sleep(3)
+            if GPIO.input(7) == pin7:
+                skyStatusText = "shutting down."
+                th = threading.Thread(target=shutThread)
+                state = Mode.PAUSED
+                th.start()
 
 
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
@@ -319,8 +336,13 @@ def solveThread():
             img = Image.open(os.path.join(solve_path, imageName)).convert("L")
             imgarr = numpy.array(img)
             avg = imgarr.mean()
+            imax = imgarr.max()
+            if avg == 0:
+                avg = 1
 
-            focusStd = f"{100 * imgarr.std()/avg:.2f}"
+            contrast = (imax - avg)/avg
+
+            focusStd = f"{contrast:.2f}"
 
         except Exception as e:
             print(e)
@@ -538,8 +560,11 @@ def tetraSolve(imageName):
     solveLog.append("solving " + imageName + '\n')
     img = Image.open(os.path.join(solve_path, imageName))
     #print('solving', imageName)
-    solved = t3.solve_from_image(img,fov_estimate=14)
-    #print(str(solved))
+    profile = skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]
+
+    solved = t3.solve_from_image(img,fov_estimate=float(profile['fieldLoValue']))
+
+    #print(str(solved),profile['fieldLoValue'],flush=True)
     if solved['RA'] == None:
         return solved
     radec = "%s %6.6lf %6.6lf \n" % (time.strftime('%H:%M:%S'), solved['RA'], solved['Dec'])
@@ -937,9 +962,6 @@ def reboot3():
     os.system('sudo reboot')
 
 
-def shutThread():
-    time.sleep(3)
-    call("sudo nohup shutdown -h now", shell=True)
 
 @app.route('/shutdown', methods=['post'])
 def shutdown():
