@@ -1,13 +1,13 @@
 {
     "camera": {
-        "shutter": ".7",
+        "shutter": ".9",
         "ISO": "800",
         "frame": "800x600",
         "format": "jpeg"
     },
     "solver": {
         "currentProfile": "25FL",
-        "startupSolveing": true
+        "startupSolveing": false
     },
     "observing": {
         "saveImages": "on",
@@ -42,8 +42,8 @@
             "name": "25FL",
             "solver_type": "solverAstromet",
             "maxTime": 10.0,
-            "solveSigma": 9,
-            "solveDepth": 9,
+            "solveSigma": 5,
+            "solveDepth": 20,
             "UselastDelta": false,
             "FieldWidthMode": "FieldWidthModeField",
             "FieldWidthModeaPP": "checked",
@@ -51,13 +51,13 @@
             "FieldWidthModeOther": "",
             "aPPLoValue": "30",
             "aPPHiValue": "80",
-            "fieldLoValue": "14",
+            "fieldLoValue": "13",
             "fieldHiValue": "16",
             "searchRadius": 10.0,
             "solveVerbose": false,
             "showStars": false,
             "plots": false,
-            "additionalParms": "",
+            "additionalParms": "--tag-all",
             "verbose": true
         },
         "16FL": {

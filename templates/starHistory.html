@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sky Solve</title>
+    <link rel="stylesheet" href="../static/styles/bootstrap.min.css">
+    <script src="/static/js/jquery_3.5.1.min.js"></script>
+    <script src="/static/js/popper.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <style>
+        body {
+            background-color: rgba(114, 106, 109, 0.952);
+            color:#f3c5c5
+        }
+        
+        .btn-primary,
+        .btn-primary:hover,
+        .btn-primary:active,
+        .btn-primary:visited {
+            background-color: #e02020 !important;
+        }
+        
+        .btn-primary:hover {
+            background-color: #f54e4eb9 !important;
+        }
+        
+       
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 24px;
+        }
+        
+      
+        .nightColor {
+            color:#f74a4a;
+            background-color:#1f0303;
+        }
+       
+
+        * {
+            box-sizing: border-box;
+        }
+        
+        .img-magnifier-container {
+            filter: brightness(300%);
+            position: relative;
+        }
+        
+        .img-magnifier-glass {
+            position: absolute;
+            border: 3px solid #000;
+            border-radius: 50%;
+            cursor: none;
+            /*Set the size of the magnifier glass:*/
+            width: 200px;
+            height: 200px;
+        }
+
+ 
+          
+        /* The Modal (background) */
+
+        .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        color:#f0a9a9
+        }
+
+        /* Modal Content/Box */
+        .modal-content {
+        background-color: #110a0a;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        color:#9b6a6a;
+        width: 80%; /* Could be more or less, depending on screen size */
+        }
+
+        /* The Close Button */
+        .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+        }
+        fieldset {
+            margin: 8px;
+            border: 1px solid silver;
+            padding: 8px;    
+            border-radius: 4px;
+            color:#f0d3d3
+        }
+        body {
+            background-color: rgb(71, 35, 40);
+        }
+        button:hover {
+            background-color:#b13c3c
+        }
+  
+    </style>
+    </head>
+  <body>
+   <div class="about">
+     <h1>Transparancy estimation</h1>
+   </div>
+   <div class="container-fluid">
+
+            <button type="button" class="btn nightColor" 
+            onclick ="ajax_get_Status('/skyQualitySample?all=true')">Reset sky database and gather stats from history</button>
+        
+            <button type="button" class="btn nightColor" 
+            onclick ="ajax_get_Status('/skyQualitySample')">Stats for Current History</button>
+            <button type="button" class="btn nightColor" 
+            onclick ="ajax_get_Status('/sqPrevious')">Previous History</button>
+            <button type="button" class="btn nightColor" 
+            onclick ="ajax_get_Status('/sqNext')">Next History</button>
+            <button type="button" class="btn nightColor" 
+            onclick ="ajax_get_Status('/sqAdd')">Add to Data base</button>
+            <button type="button" class="btn nightColor" 
+            onclick ="ajax_get_Status('/qualityHistoryStars')">Review History</button>
+            <button type="button" class="btn nightColor" 
+
+            onclick ="ajax_get_Status('/sqDelete')">Delete image from History</button>
+        
+            <button type="button" class="btn nightColor" id="skyQualitySample"> Image Star Stats
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                </button>
+      
+            <form action="/">
+                <input type="submit" class="btn nightColor" value="Back" />
+            </form>
+        
+        <div>
+            <div class="nightColor" id="statusArea">
+                <p id="statusArea2"></p>
+
+            </div>
+        </div>
+
+        <div class="w3-container">
+            <div class=" text-warning">
+                <div class="nightColor"><br><br><br>
+                    <p id="Outputarea"></p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+
+<script>
+
+    var updateStatus = new EventSource("/skyQstatus");
+    var target_output = document.getElementById("Outputarea");
+    var stat1 = document.getElementById("statusArea")
+    updateStatus.onmessage = function (e) {
+        if (e.data == "close") {
+            target_output.innerHTML = ":All Done"
+        } else {
+            if (e.data.charAt(0) != '<'){
+                stat1.innerHTML = e.data;
+            }
+            else {
+                console.log('got htmlxxxxxx',e.data)
+
+                target_output.innerHTML =  e.data;
+            }
+        }
+    };
+
+
+    function ajax_get_Status(cmdroute) {
+        $.ajax({
+            url: cmdroute,
+            method: 'POST',
+            success: function(result) {
+                document.getElementById("statusArea").innerHTML = result;
+                $('.spinner-border').hide();
+            }
+        });
+    }
+    
+        $(document).ready(function(){
+
+            $('.spinner-border').hide();
+            $('#skyQualitySample').click(
+                function() {
+                $('.spinner-border').show();
+                console.log("imageStep pressed")
+                ajax_get_Status('/skyQualitySample')
+            })
+
+        })
+        
+    </script>
+
+  </body>
+
+</html>

@@ -319,6 +319,14 @@ $(document).ready(function(){
             
         }
     )
+    
+    $('#starHistory').click(
+        function() {
+            ajax_get_Status('/qualityHistoryStars')
+        }
+    )
+
+
     $('#stepNext').click(
         function() {
             ajax_get_Status('/nextImage')

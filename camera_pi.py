@@ -194,7 +194,11 @@ class skyCamera():
                 print("camera thread caught e",e, flush=True)
  
         self.thread = None
+    # import picamera.array
 
+    #         with picamera.PiCamera() as camera:
+    #             with picamera.array.PiBayerArray(camera) as output:
+    #                 camera.capture(output, 'jpeg', bayer=True)
     def getImage(self):
   
         stream = io.BytesIO()
@@ -214,7 +218,7 @@ class skyCamera():
 
                     # return current frame
                     stream.seek(0)
-                    yield stream.read() 
+                    yield stream.read()
                     if not self.runMode:
                         self.cameraStopped = True
                         print ("camera stopped",flush=True)

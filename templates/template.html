@@ -248,9 +248,9 @@
         button:hover {
             background-color:#8b1717
         }
-  
-    </style>
 
+    </style>
+    </head>
     <body >
 
 
@@ -273,6 +273,14 @@
                     <!-- Trigger/Open The solver params -->
                     <button id="openSolverConfig" class="btn nightColor">Solver Params</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#helpButtons">help</button>
+                    <button type="button" class="btn nightColor" 
+                        onclick ="window.location.href='/skyQualitySample'">Sky</button>
+
+                    <button type="button" class="btn nightColor" id="starHistory">QH</button>
+                    
+                    <form action="/StarHistory">
+                        <input type="submit" class="btn nightColor" value="Star History" />
+                    </form>
                     <buton type=""button" class = "btn nightColor" id="showMore">...</buton>
 
                 </div>

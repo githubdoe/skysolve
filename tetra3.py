@@ -1082,8 +1082,8 @@ def get_centroids_from_image(image, sigma=3, image_th=None, crop=None, downsampl
             assert filtsize is not None, \
                 'Must define filter size for local median background subtraction'
             assert filtsize % 2 == 1, 'Filter size must be odd'
-            image = image - scipy.ndimage.filters.uniform_filter(image, size=filtsize,
-                                                                 output=image.dtype)
+            image = image - scipy.ndimage.filters.uniform_filter(image, size=filtsize)
+
         elif bg_sub_mode.lower() == 'global_median':
             image = image - np.median(image)
         elif bg_sub_mode.lower() == 'global_mean':
