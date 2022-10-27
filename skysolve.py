@@ -115,8 +115,7 @@ solveThisImage = ''
 solveCurrent = False
 triggerSolutionDisplay = False
 saveObs = False
-transDB = None #TinyDB(os.path.join(solve_path, 'transparent.json'),indent=4)
-print("tiny db was made?", transDB)
+
 obsList = []
 ndx = 0
 lastObs = ""
@@ -1071,14 +1070,15 @@ measureStackLock = threading.Lock()
 allDone = False
 # measure transparency of current image
 import traceback
-def measureTransparency(addToDatabase = False):
+def measureTransparency(solveLiveImage = False):
     # tell system to pause taking images after solving the current image
     global skyStatusText, state, solveThisImage, frameStackLock, frameStack,skyStatusText, solveCurrent,\
-         solveCompleted,  transDB, measureHtmlStack
-
+         solveCompleted,   measureHtmlStack
     solveCurrent = True
     sendStatus('solving')
-    state = Mode.SOLVETHIS
+    if state is Mode.PLAYBACK:
+        state = Mode.SOLVETHIS
+    
     skyStatusText = "Solving"
     solveCompleted = False
     while not solveCompleted:
@@ -1144,45 +1144,35 @@ def measureTransparency(addToDatabase = False):
 
         stars = starlist
         sendStatus('Sorting by Mag')
-        stars.sort(key=lambda x: x['mag'])
+        # stars.sort(key=lambda x: x['mag'])
 
-        bg = np.asarray([ back['Background'] for back in stars])
-        min = bg.min()
-        max = bg.max()
-        mean = bg.mean()
-        std = bg.std()
+        # bg = np.asarray([ back['Background'] for back in stars])
+        # min = bg.min()
+        # max = bg.max()
+        # mean = bg.mean()
+        # std = bg.std()
 
-        out = '<div style="float:left"><table border = "2"><caption>' + sourcefn + \
-            ' min:%d Mean:%4.2lf Max:%d std:%4.2lf %dx%d'%(min,mean,max,std,width,height) + \
-            '</caption><th>Star</th><th>Magnitude</th><th>Flux</th><th>Background</th>'
-        sendStatus('adding to Database')
-        if addToDatabase:
-            q = Query()
-            if len(transDB.search(q.sample == sourcefn)) == 0:
-                print('file not seen yet', sourcefn)
-                transDB.insert({'sample': sourcefn,'width': width, 'height':height,\
-                'constellation':stars[0]['constellation'],'BackgroundStats':[min,max,mean,std]})
-            else:
-                print('file allready in db', sourcefn)
-            for star in stars:
-                transDB.insert(star)
+        # out = '<div style="float:left"><table border = "2"><caption>' + sourcefn + \
+        #     ' min:%d Mean:%4.2lf Max:%d std:%4.2lf %dx%d'%(min,mean,max,std,width,height) + \
+        #     '</caption><th>Star</th><th>Magnitude</th><th>Flux</th><th>Background</th>'
+      
         sendStatus('Making html')
 
-        for star in stars:
+        # for star in stars:
 
-            out = out + '<tr><td style="text-align:center">%s </td><td style="text-align:center">%4.2lf</td>'\
-                '<td style="text-align:center"> %4.2lf</td><td style="text-align:center">%4.2lf</td></tr>' % (
-                    star['name'], star['mag'], star['flux'], star['Background'])
+        #     out = out + '<tr><td style="text-align:center">%s </td><td style="text-align:center">%4.2lf</td>'\
+        #         '<td style="text-align:center"> %4.2lf</td><td style="text-align:center">%4.2lf</td></tr>' % (
+        #             star['name'], star['mag'], star['flux'], star['Background'])
 
 
-        out = out + '</table> </div><div " height="Auto">'
+        # out = out + '</table> </div><div " height="Auto">'
 
-        out = out + '<img src="./static/%s"></div>' % (qfilename)
+
 
         filename = 'qualityplotRatio'+datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpeg") 
         plt.savefig(os.path.join(solve_path, filename ),facecolor='#500000')
-        out += '<img src="%s" width="90%%">'%('./static/'+filename)
-
+        out = '<img src="%s" width="90%%">'%('./static/'+filename)
+        out += '<img src="./static/%s"></div>' % (qfilename)
 
         #skyStatusText = out
     #skyStatusText = out 
@@ -1219,12 +1209,9 @@ def skyQStatus():
 
 #update data base with history images
 def measureAll(truncate = True):
-    global state, solveCurrent, transDB, testNdx, solveThisImage, measureHtmlStack, measureTackLock,\
+    global state, solveCurrent,  testNdx, solveThisImage, measureHtmlStack, measureTackLock,\
         allDone
     skyStatusText = " Measure all was called."
-
-    #if truncate:
-        #transDB.truncate()
 
 
     results = "no history files selected"
@@ -1247,132 +1234,6 @@ def measureAll(truncate = True):
     allDone = True
     skyStatusText = results
     
-#Get stats for all stars in databas    
-def getAllOccurance(starList):
-    global transDB
-    Q = Query()
-    occlist = []
-    for star in starList:
-        occurances = transDB.search(Q.name == star['name'])
-        occlist.append(star)
-        for otherStar in occurances:
-            if otherStar['fileName'] == occlist[0]['fileName']:
-                continue
-            occlist.append(otherStar)
-
-    #make html table from data
-    #html = '<table><th>Name</th><th>contrast</th><tr><td>occlist[0]['name']'\
-      #  '</td><td>occlist[0]['contrast']</td>'
-    
-    for star in occlist:
-        html += '<td>%%d</td>'%(star['contrast'])
-
-
-def genHistoryData():
-    global transDB
-    Q = Query()
-    samples = transDB.search(Q.sample.matches('.*'))
-    for filename in glob.glob(os.path.join(solve_path,'plot*.jpeg')):
-        os.remove(filename)
-
-    fullhtml = '<div class="w3-container">'
-    last = len(samples)
-    for cnt, sample in enumerate(samples):
-        html = '<br><div>'
-        #get stars per sample
-        samplehtml = ''
-        sendStatus('%d of %d %s'%(cnt,last,sample['sample']))
-
-        stars = transDB.search(Q.fileName == sample['sample'])
-        if len(stars) > 3:
-            background = sample['BackgroundStats']
-            samplehtml += '<div style = "float:left"> <table border = "5"; width = "35%; float:left" >' +\
-                '<caption>' + sample['sample'] +'&nbsp' +str(sample['width']) +\
-                'x' + str(sample['height'])+\
-                    '&nbsp Background: Min:%d Max:%d Avg:%4.2lf'%(background[0],background[1],background[2])+'</caption>'
-            samplehtml += '<th>Star name </th><th>Mag</th><th>Flux</th><th>Back Gnd</th>'
-            mag = []
-            flux = []
-            for s in stars:
-                mag.append(s['mag'])
-                flux.append(s['flux'])
-                samplehtml += '<tr><td>' + s['name'] + '</td><td>' + '%4.2lf'%(s['mag']) + '</td><td>' +\
-                    '%4.2lf'%(s['flux']) + '<td>%4.2lf</td></tr>'%(s['Background'])
-            samplehtml += '</table></div>'
-
-            imagehtml = '<img style = "filter:brightness(500%%);" src=" ./static/history/%s.jpeg" width = "40%%">'%(sample['sample'])
-            samplehtml += imagehtml
-            plt.clf()
-            Quality.plotStarMags(stars)
-            filename = 'qualityPlot'+datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpeg") 
-            plt.savefig(os.path.join(solve_path, filename ),facecolor='#500000')
-            plt.clf()
-            samplehtml += '<br><img src="./static/%s" width = "40%%">' % (filename)
-
-        html += samplehtml
-        html += '</div></div>'
-        fullhtml += html
-        fullhtml += "</div>"
-        yield html
-histgen = None
-@app.route("/qualityHistoryStars", methods=['POST'])
-def showStarStatsHistory():
-
-    global  skyStatusText, transDB, histgen
-    sendStatus(' Retrieving Data')
-    if transDB is None:
-        transDB = TinyDB(os.path.join(solve_path, "transparent.json"),indent=4)
-        if transDB is None:
-            skyStatusText = 'db failed to open'
-            return Response(skyStatusText)
-
-    q = Query()
-
-    sourcefn = os.path.basename(solveThisImage).split(skyConfig['camera']['format'])[0][:-1]
-
-
-
-    db = transDB
-    print("db",db) 
-    q = Query()
-
-    samples = db.search(q.sample.matches('.*'))
-    rows = 2
-    cols = 3
-    last = len(samples)
-    plt.clf()
-    group = 0
-    while group < len(samples):
-        plt.clf()
-        plt.gcf().set_size_inches(19.20, 10.80, forward=True)
-        plt.gcf().set_dpi(200)
-        for ndx, s in enumerate(samples[group: group + rows * cols]):
-            plt.subplot(rows,cols, ndx+1 )
-            print(group + ndx,samples[group + ndx]['sample'])
-            stars = db.search(q.fileName == samples[group + ndx]['sample'])
-            if len(stars) > 3:
-                Quality.plotStarMags(stars)
-
-        filename = 'qualityPlot'+datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpeg") 
-        plt.savefig(os.path.join('static','plots', filename ),facecolor='#808080', dpi=200)
-        #plt.show()
-        group += rows * cols
-    return(Response('working on it'))
-    stars = transDB.search(q.fileName == sourcefn)
-    if len(stars) > 3:
-        plt.clf()
-        Quality.plotStarMags(stars)
-        filename = 'qualityPlot'+datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpeg") 
-        plt.savefig(os.path.join(solve_path, filename ),facecolor='#500000')
-        plt.clf()
-        samplehtml = '<img src="./static/%s">' % (filename)
-
-
-
-
-        return Response(samplehtml)
-    else:
-        return Response('not enough stars')
     
 @app.route('/showImage')
 def processImageX():
@@ -1390,33 +1251,28 @@ def processImageX():
 @app.route("/skyQualitySample", methods=['POST','GET'])
 def takeSkyQualitySample():
     global skyStatusText, state, solveThisImage, frameStackLock, frameStack,skyStatusText, solveCurrent,\
-         solveCompleted, starMeasures, transDB
-
-
-    if transDB is None:
-        transDB = TinyDB(os.path.join(solve_path, "transparent.json"),indent=4)
-        if transDB is None:
-            skyStatusText = 'db failed to open'
-            return Response(skyStatusText)
+         solveCompleted, starMeasures
 
     # if all parameter is true then use all images in history and rebuild transaprency database
-    if request.args.get('all'):
-        th = threading.Thread(target=measureAll)
-        th.start()
-        return Response("Gatheing stats from all history images.")
+    if request.args.get('live'):
+        #turn on solving mode and wait for an image to be solved
+        state = Mode.SOLVING
+        return Response("Analizying live image")
+    else:
+        # stop live solving if running and get history
+        if state != Mode.PLAYBACK:
+            state = Mode.PLAYBACK
+            findHistoryFiles()
 
-    #Just display the transparancy from the current history image
+    #display the transparancy from the current image
     starlist, out = measureTransparency()
 
     if len(starlist) == 0:
         skyStatusText = out
         return Response('<body style="background-color: rgb(70, 48, 48); color: lightpink">' + out+'</body>')
 
-    html =''# '<!doctype html><body style=" background-color: rgb(20,20,20); color:Crimson;">'
-    #for each star in this image find their history
-    #out += Quality.getAllOccurance(starlist,transDB)
 
-    html += out
+    html = out
     #html += '</body></html>'
     skyStatusText = 'Stats complete'
     return Response(html)

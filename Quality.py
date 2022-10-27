@@ -313,7 +313,8 @@ def plotStarMags(stars, maxflux = 200, minflux = .01):
     hist.set_title('flux histo')
     
     result = plotMagcurve(useThese, ax)
-    plt.title("Quality:%6.1lf  File: %s"%(result['QualityMetric'],stars[0]['fileName'].split('/')[0]))
+    plt.title("Quality:%6.1lf  File: %s"%(result['QualityMetric'],stars[0]['fileName'].split('/')[0]),\
+        color = 'w')
     return result
 
 

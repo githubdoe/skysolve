@@ -116,42 +116,67 @@
         button:hover {
             background-color:#b13c3c
         }
-  
+        
+        /* Tooltip container */
+        .tooltip {
+        position: relative;
+        display: inline-block;
+        border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+        }
+
+        /* Tooltip text */
+        .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 120px;
+        background-color: black;
+        color: #fff;
+        text-align: center;
+        padding: 5px 0;
+        border-radius: 6px;
+        
+        /* Position the tooltip text - see examples below! */
+        position: absolute;
+        z-index: 1;
+        }
+
+        /* Show the tooltip text when you mouse over the tooltip container */
+        .tooltip:hover .tooltiptext {
+        visibility: visible;
+        }
     </style>
     </head>
   <body>
    <div class="about">
-     <h1>Transparancy estimation</h1>
+     <h1 class = "nightColor">Transparancy Estimation </h1>
    </div>
    <div class="container-fluid">
+        <div class = "row">
 
+            <button title = "Show sky quality for live Image" type="button" class="btn nightColor" 
+            onclick ="ajax_get_Status('/skyQualitySample?live=False?live=true')">Analyze live image</button>
+            <button title = "Show sky quality plots for current history image" type="button" class="btn nightColor" 
+                onclick ="ajax_get_Status('/skyQualitySample')">Analyze Current history</button>
             <button type="button" class="btn nightColor" 
-            onclick ="ajax_get_Status('/skyQualitySample?all=true')">Reset sky database and gather stats from history</button>
-        
+                onclick ="ajax_get_Status('/sqPrevious')">Previous History</button>
             <button type="button" class="btn nightColor" 
-            onclick ="ajax_get_Status('/skyQualitySample')">Stats for Current History</button>
+                onclick ="ajax_get_Status('/sqNext')">Next History</button>
+            <!-- <button type="button" class="btn nightColor" 
+                onclick ="ajax_get_Status('/sqAdd')">Add to Data base</button> -->
+            <!-- <button type="button" class="btn nightColor" 
+                onclick ="ajax_get_Status('/qualityHistoryStars')">Review History</button> -->
             <button type="button" class="btn nightColor" 
-            onclick ="ajax_get_Status('/sqPrevious')">Previous History</button>
-            <button type="button" class="btn nightColor" 
-            onclick ="ajax_get_Status('/sqNext')">Next History</button>
-            <button type="button" class="btn nightColor" 
-            onclick ="ajax_get_Status('/sqAdd')">Add to Data base</button>
-            <button type="button" class="btn nightColor" 
-            onclick ="ajax_get_Status('/qualityHistoryStars')">Review History</button>
-            <button type="button" class="btn nightColor" 
+                onclick ="ajax_get_Status('/sqDelete')">Delete image from History</button>
+            <!-- <button type="button" class="btn nightColor"
+                title=" analyze history images and add to quaility history starting with current image"  
+                onclick ="ajax_get_Status('/skyQualitySample?all=true')">Update Database</button> -->
 
-            onclick ="ajax_get_Status('/sqDelete')">Delete image from History</button>
-        
-            <button type="button" class="btn nightColor" id="skyQualitySample"> Image Star Stats
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                </button>
       
             <form action="/">
-                <input type="submit" class="btn nightColor" value="Back" />
+                <input title="Go back to main page" type="submit" class="btn nightColor" value="Back" />
             </form>
-        
+        </div>
         <div>
-            <div class="nightColor" id="statusArea">
+            <div title = "current status" class="nightColor" id="statusArea">
                 <p id="statusArea2"></p>
 
             </div>
