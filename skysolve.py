@@ -211,9 +211,30 @@ def shutThread():
     time.sleep(3)
     call("sudo nohup shutdown -h now", shell=True)
 
-# this is responsible for getting images from the camera even in align mode
+#thread to watch for the switch to change positions for 10 seconds then shutdown
+def switchWatcher():
+    
+    #check for shutdown switch throw
 
+    initGPIO7 = GPIO.input(7)
+    while True:
+        time.sleep(2)
+        pin7 = GPIO.input(7)
+        if pin7 != initGPIO7:
+            print("pin7 changed states")
+            time.sleep(3)
+            if GPIO.input(7) == pin7:
+                print("shutting down")
+                skyStatusText = "shutting down."
+                th = threading.Thread(target=shutThread)
+                state = Mode.PAUSED
+                th.start()
+                break
 
+switcherWatcherThread  = threading.Thread(target=switchWatcher)
+switcherWatcherThread.start()
+#
+#  this is responsible for getting images from the camera even in align mod
 def solveThread():
     global skyStatusText, focusStd, solveCurrent, state, skyCam, frameStack, frameStackLock, testNdx, camera_Died,\
         solveLog, solveCompleted
@@ -250,15 +271,7 @@ def solveThread():
     lastpictureTime = datetime.now()
     while True:
         lastsolveTime = datetime.now()
-        #check for shutdown switch throw
-        pin7 = GPIO.input(7)
-        if pin7 != initGPIO7:
-            time.sleep(3)
-            if GPIO.input(7) == pin7:
-                skyStatusText = "shutting down."
-                th = threading.Thread(target=shutThread)
-                state = Mode.PAUSED
-                th.start()
+
 
         if state is Mode.PAUSED or state is Mode.PLAYBACK:
             continue
