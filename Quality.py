@@ -279,12 +279,14 @@ def plotStarMags(stars, maxflux = 200, minflux = .01):
 
     rawFlux = []
     degamad = []
+    backgrounds = []
     # remove supposed gama correction
     fluxMin = 1000
     for s in stars:
         f = s['flux']/255
         rawFlux.append(f)
         degamad.append (s.copy())
+        backgrounds.append(s['Background'])
         flx = 255 * (f ** 2.2)
         degamad[-1]['flux'] = flx
         if flx < fluxMin:
@@ -306,12 +308,15 @@ def plotStarMags(stars, maxflux = 200, minflux = .01):
     starFlux = [v[1]for v in useThese]
 
     ax = plt.gca()
-    hist = ax.inset_axes([.65,.6,.3,.2])
-    n, bins, patches = hist.hist(starFlux, 50, facecolor='b')
+    hist = ax.inset_axes([.65,.6,.3,.15])
+    n, bins, patches = hist.hist(starFlux, 25, facecolor='b')
     hist.set_facecolor('#808080')
-    hist.set_xlabel('flux')
-    hist.set_title('flux histo')
-    
+    hist.set_title('flux')
+
+    histBackground = ax.inset_axes([.65, .35, .3, .1])
+    n,bins,patches = histBackground.hist(backgrounds, 10, facecolor='b')
+    histBackground.set_facecolor('#808080')
+    histBackground.set_title("background")
     result = plotMagcurve(useThese, ax)
     plt.title("Quality:%6.1lf  File: %s"%(result['QualityMetric'],stars[0]['fileName'].split('/')[0]),\
         color = 'w')

@@ -350,7 +350,8 @@ def solveThread():
                 frame = infile.read()
 
         saveImage(frame)
-
+        #debug to fake camera image with a real star image
+        #copyfile("static/history/11_01_22_23_47_15.jpeg", os.path.join(solve_path, imageName))
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
             if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
                 s = tetraSolve(os.path.join(solve_path, imageName))
@@ -371,6 +372,7 @@ def solveThread():
                 f = solve(os.path.join(solve_path, imageName))
                 if f == False:
                     state = Mode.PLAYBACK
+            solveCompleted = True
             continue
 
         # else measaure contrast for focus bar
@@ -396,8 +398,7 @@ if skyConfig['solver']['startupSolveing']:
     print("should startup solver now")
     solveT = threading.Thread(target=solveThread)
     solveT.start()
-#solveWatchDogTh = threading.Thread(target = solveWatchDog)
-# solveWatchDogTh.start()
+
 
 
 def solve(fn, parms=[]):
@@ -1159,10 +1160,10 @@ def measureTransparency(solveLiveImage = False):
         sendStatus('Sorting by Mag')
         # stars.sort(key=lambda x: x['mag'])
 
-        # bg = np.asarray([ back['Background'] for back in stars])
+        bg = np.asarray([ back['Background'] for back in stars])
         # min = bg.min()
         # max = bg.max()
-        # mean = bg.mean()
+        mean = bg.mean()
         # std = bg.std()
 
         # out = '<div style="float:left"><table border = "2"><caption>' + sourcefn + \
@@ -1184,8 +1185,8 @@ def measureTransparency(solveLiveImage = False):
 
         filename = 'qualityplotRatio'+datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpeg") 
         plt.savefig(os.path.join(solve_path, filename ),facecolor='#500000')
-        out = '<img src="%s" width="90%%">'%('./static/'+filename)
-        out += '<img src="./static/%s"></div>' % (qfilename)
+        out = '<img src="%s" width="70%%">'%('./static/'+filename)
+        out += '<img src="./static/%s" width="70%%"></div>' % (qfilename)
 
         #skyStatusText = out
     #skyStatusText = out 
@@ -1220,33 +1221,6 @@ def skyQStatus():
                 
     return Response(inner(), mimetype='text/event-stream')
 
-#update data base with history images
-def measureAll(truncate = True):
-    global state, solveCurrent,  testNdx, solveThisImage, measureHtmlStack, measureTackLock,\
-        allDone
-    skyStatusText = " Measure all was called."
-
-
-    results = "no history files selected"
-    for ndx,fn in enumerate(testFiles):
-        sendStatus('%d of %d %s'%(ndx+1,len(testFiles),fn),2)
-        scolveCurrent = False
-        testNdx = ndx
-        setupImageFromFile()
-        try:
-            starlist, html = measureTransparency(addToDatabase = True)
-        except ValueError as e:
-            sendStatus(str(e))
-            continue
-            
-        sendStatus(html)
-    sendStatus('',2)
-    sendStatus('done')
-
-
-    allDone = True
-    skyStatusText = results
-    
     
 @app.route('/showImage')
 def processImageX():
@@ -1270,7 +1244,7 @@ def takeSkyQualitySample():
     if request.args.get('live'):
         #turn on solving mode and wait for an image to be solved
         state = Mode.SOLVING
-        return Response("Analizying live image")
+        #return Response("Analizying live image")
     else:
         # stop live solving if running and get history
         if state != Mode.PLAYBACK:
@@ -1474,13 +1448,6 @@ def zipImages():
                   os.path.join(solve_path, 'history', 'history.zip'))
 
     skyStatusText = "history.zip file is being sent."
-    solveLog.append("History.zip file is being sent\n")
-
-    return send_file(os.path.join(solve_path, 'history', 'history.zip'),
-                     attachment_filename='history.zip',
-                     mimetype='application/zip')
-
-
 @app.route('/video_feed')
 def video_feed():
     r = Response(gen(),
@@ -1491,5 +1458,4 @@ def video_feed():
 
 if __name__ == '__main__':
     print("working dir", os.getcwd())
-
     app.run(host='0.0.0.0', debug=True, use_reloader=False)
