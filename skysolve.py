@@ -28,7 +28,7 @@ import RPi.GPIO as GPIO  # Import Raspberry Pi GPIO library
 import Quality
 
 import glob
-from tinydb import TinyDB, Query
+
 import matplotlib.pyplot as plt
 from scipy import stats
 
