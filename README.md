@@ -72,10 +72,11 @@ When you are ready, you can follow these steps to install it on the Raspberry pi
 5. Connecto your computer to the PI. [(See how)](https://www.raspberrypi.org/documentation/remote-access/)
   I use VNC viewer from RealVNC on a windows PC.  So download RealVNC to your PC.  Follow the instructions for connecting to a VNC server like the RPI.
   First we need to enable VNC on the PI.   We will do that from the command line on the RPI.  
-  	 On windows machine start a command promt.  Type ssh pi@<PI IP address>  Replace <PI IP address> with either the hostname you set for the pi or by its IP address.
+  	 On windows machine start a command promt.  Type ssh pi@IPXXX  (Replace IPXxx with either the hostname you set for the pi or by its IP address.)
   	* Enter your password for the PI that you set in step 2.2.
   	* Once logged into the RPI then type sudo raspi-config.
   	* Select 3. Interface Options then P3 VNC and enable it.  Then select yes and then OK.  Now VNC should be enabled.
+	* Chose display options and select resolution to be 1080 x 720
 	* Optionally enable the Raspberrypi camera now.  From Interface Options select the enable camera option.  Then reboot.
   Back on the windows PC start the VNC viewer and connect to the IP address of the Raspberry PI.
   
