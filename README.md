@@ -47,18 +47,15 @@ If the "show stars button is dimmed out" you can enable it by pressing the "Solv
 When you are ready, you can follow these steps to install it on the Raspberry pi:
 
 
-1.  First you need to get the standard Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
-      from [Raspberry Pi org](https://www.raspberrypi.org/software/)
+1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
+      from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Note that the software to download is not the most recent version by an older 32 bit version.
+      It can be found under Raspberry Pi OS (other) then Raspberry Pi OS (Legacy)
       
       Download this software onto a computer that can write SD cards.  I use a Windows laptop.
 
 2. Set the advance menu options in Raspberry pi imager.
 
-The Raspberry Pi Imager v1.6 has an advanced menu which is hidden away from general users just looking to write an operating system for the Pi. To activate the menu we need to press CTRL + SHIFT + X and we then gain access to advanced options that enable advanced users to customize the OS to meet their needs before they write the software to a micro SD card. 
-
-     You need to use those advanced options to setup network parameters so that when you boot the pi it will show up on your network and you can talk to it with another computer instead of using an external display and keyboard.
-
-     To learn more about the acvanced options see here: https://www.raspberrypi.org/blog/raspberry-pi-imager-update-to-v1-6/
+     You need to use those advanced options to setup network parameters so that when you boot the pi it will show up on your network and you can talk to it with 	another computer instead of using an external display and keyboard.
 
      * Set Hostname you want for the PI.   I used SKYPI.
      * Enable SSH and set password
