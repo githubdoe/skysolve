@@ -404,6 +404,6 @@ fi
 #install python scipy
 sudo pip3 install scipy
 sudo apt install python3-matplotlib
-sudo pip3 install tinydb
+sudo pip3 install fitsio
 echo "Your requested installations are complete."
 display "Script Execution Complete.  Your Raspberry should now be ready to use for SkySolve.  You should restart your Pi."

@@ -21,7 +21,7 @@ import re
 import constellations
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import stats, spatial
+from scipy import stats, spatial, curve_fit
 from tinydb import TinyDB, Query
 import fitsio
 from fitsio import FITS,FITSHDR
@@ -43,21 +43,13 @@ def findClosestPoint(x1,y1,starx, stary):
             bestdel = delta
             bestNdx = ndx
     return bestNdx
+
+# get star magnitudes from the caps.cor file then find it's name from the bright stars file
+# return the stars info and the labeled image
 def findStarMags(fn, sourceOfImage= None):
     global brightNamesStars, kdtree
 
-    def getHipStar(ra,dec):
-        global hiptree,hiptable
-        if hiptree is None:
-            hipTable,h= fitsio.read('hip.fits',header=True)
-            data = [[r[1],r[0]] for r in hipTable[:10000]]
-
-            hiptree = spatial.KDTree(data[0::200])
-        delta,index = hiptree.query([ra,dec])
-
-        return 'Hip%d'%(index)
-
-
+    
     def getStarName(ra,dec,tree):
         delta,index = tree.query([ra,dec],1)
         if delta < .1:
@@ -164,7 +156,8 @@ def findStarMags(fn, sourceOfImage= None):
                     'Background':float(star['Background']),'xy':[star['x'],star['y']] }) 
 
         return stars, im_output ,img.width, img.height
-from scipy.optimize import curve_fit
+
+
 def selectStarsBetweenFluxValues(stars, minflux,maxflux):
     useThese = []
     # find the brightest mag that has a flux less than maxflux
@@ -177,12 +170,25 @@ def selectStarsBetweenFluxValues(stars, minflux,maxflux):
             useThese.append([m,flx, s['xy'], s['name']])
     return useThese
 
-#make the actual mag versus flux curves (expected and actual)
+#make the actual mag versus plotStarMagsflux curves (expected and actual)
 # given a list of stars and a matplotlib axes
 def plotMagcurve(useThese, ax, leg = True):
+    #input stars are sorted by assending magnitude. Darkest first
+    mag1 = [row[0] for row in useThese]
+    flux1 = [row[1] for row in useThese]
+    
+    #remove any stars whose perfect flux would be greater than 240
+    flux = []
+    mag = []
+    for ndx, f in enumerate(flux1[1:]):
 
-    mag = [row[0] for row in useThese]
-    flux = [row[1] for row in useThese]
+        #I2/I1 = 10 ^ (m1-m2)/2.5
+        ilast = flux1[0] * 10 ** ((mag1[ndx] - mag1[0])/2.512)
+        if ilast > 240:
+            continue
+        flux.append( flux1[ndx])
+        mag.append( mag1[ndx])
+
     avgflux = sum(flux)/len(flux)
     fig = plt.gcf()
     minMag = min(mag)
@@ -271,6 +277,7 @@ def plotMagcurve(useThese, ax, leg = True):
     return {'ref':useThese[ndx][2],'stars':useThese, 'QualityMetric':qualMetric} 
 
 # select stars to be plotted in the flux/mag curves
+# min will be less than 1. because they have been reverse gamma corrected.
 def plotStarMags(stars, maxflux = 200, minflux = .01):
 
     starsAvg = {}
@@ -281,7 +288,7 @@ def plotStarMags(stars, maxflux = 200, minflux = .01):
     degamad = []
     backgrounds = []
     # remove supposed gama correction
-    fluxMin = 1000
+
     for s in stars:
         f = s['flux']/255
         rawFlux.append(f)
@@ -289,8 +296,7 @@ def plotStarMags(stars, maxflux = 200, minflux = .01):
         backgrounds.append(s['Background'])
         flx = 255 * (f ** 2.2)
         degamad[-1]['flux'] = flx
-        if flx < fluxMin:
-            fluxMin = flx
+
 
 
     xys = []

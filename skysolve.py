@@ -1110,8 +1110,9 @@ def measureTransparency(solveLiveImage = False):
     if len(starlist) == 0:
         return starlist,'No named bright stars found'
 
-    #at this point we have found star and thier stats in the image. So now get relative brightness ratios compared to actual ratious.
+    #at this point we have found star and thier stats in the image. So now get relative brightness ratios compared to actual ratios.
     try:
+        #make magnitude plot curves and return the x,y positions of the stars in the image
         plt.clf()
         results= Quality.plotStarMags(starlist)
     except TypeError as e:
@@ -1271,6 +1272,17 @@ def returnImage():
     copyfile(solveThisImage, os.path.join(solve_path, filename))
     out = '<img style = "filter:brightness(500%%)" src="%s" width="50%%">'%('./static/'+filename)
     print("file name",out,flush=True)
+    from PIL import Image, ExifTags
+
+    img = Image.open('./static/' + filename)
+    img_exif = img._getexif()
+
+    for key, val in img_exif.items():
+        if key in ExifTags.TAGS:
+            if 'ExposureTime' in ExifTags.TAGS[key]:
+                print('EXP  ',f'{ExifTags.TAGS[key]}:{val[0]/val[1]}')
+                break
+
     sendStatus(out)
     return Response('%d %s'%(testNdx, solveThisImage))
 
