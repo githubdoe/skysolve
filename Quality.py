@@ -21,8 +21,8 @@ import re
 import constellations
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import stats, spatial, curve_fit
-from tinydb import TinyDB, Query
+from scipy import stats, spatial
+from scipy.optimize import curve_fit
 import fitsio
 from fitsio import FITS,FITSHDR
 
@@ -358,49 +358,12 @@ def linkCss():
         '}'\
         '</style>'\
 
-def getAllOccurance(starList ,transDB):
-
-    Q = Query()
-    occlist = []
-    seen = set({})
-    for star in starList:
-        name = star['name']
-        if name in seen:
-            continue
-        seen.add(name)
-
-        occurances = transDB.search(Q.name == name)
-        starstats = makeStarStats(star)
-
-        files = [{'filename':star['fileName'], 'flux':star['flux'], 'background':star['Background']}]
-        for otherStar in occurances:
-            if otherStar['fileName'] == star['fileName']:
-                continue
-            files.append({'filename':otherStar['fileName'],'flux':otherStar['flux'],'background':otherStar['Background']})
-        occlist.append([name, star['mag'], files])
-
-
-    sortedStars = sorted(occlist, key= lambda s: s[1] )
-    html = linkCss() + '<table border = "2"><th>Star</th><th>Magnitude</th><th colspan="5">Flux : Backgr</th>'
-    for star in sortedStars:
-        html += '<tr><td>%s</td><td>%3.1lf</td>'%(star[0], float(star[1]))
-
-        for ndx, r in enumerate(star[2]):
-            html += '<td><a href="/showImage?fn=%s.jpeg">%3.1lf : %3.0lf</a></td>'%(r['filename'],r['flux'], r['background'])
-        html += '<tr>'
-    html += '</table>'
-        
-    return html
-
-
-
     
 if __name__ == '__main__':
 
     path = '/home/pi/work/skysolve/static/'  #only used for debugging.
     results, im, width, height = findStarMags(path + 'cap.jpeg')
-    transDB = TinyDB(os.path.join(path, "transparent.json"),indent=4)
-    #getAllOccurance(results,transDB)
+
     try:
         plt.clf()
         results = plotStarMags(results,maxflux = 150)
