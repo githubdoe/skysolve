@@ -95,7 +95,7 @@ sudo tar -xzvf main.tar.gz --strip-components=1
 7.  Run the setup script 
 	
     ```
-	sudo ./skysolveSetup
+	sudo ./skysolveSetup.sh
     ```
 	
     Here is a list of what the script does (If you want to disable or modify any of these, please edit before running the script):
