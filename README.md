@@ -49,7 +49,7 @@ When you are ready, you can follow these steps to install it on the Raspberry pi
 
 
 1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
-      from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Note that the software to download is not the most recent version by an older 32 bit version.
+      from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Note that the software to download is not the most recent version but an older 32 bit version.
       It can be found under Raspberry Pi OS (other) then Raspberry Pi OS (Legacy)
       
       Download this software onto a computer that can write SD cards.  I use a Windows laptop.
