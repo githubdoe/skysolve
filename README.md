@@ -46,6 +46,7 @@ If the "show stars button is dimmed out" you can enable it by pressing the "Solv
 ## Install
 
 When you are ready, you can follow these steps to install it on the Raspberry pi:
+Note: Do not change the default username on the pi from pi to anything else.  There is code that depends upon there being a using named lower case "pi".
 
 
 1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
