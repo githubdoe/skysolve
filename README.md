@@ -27,7 +27,7 @@ After setup if the RPI is booted out of range from the WIFI it knows then it wil
 	
 	The switch should be connected to the ground GPIO pin and and to GPIO pin 7.  Pin 7 is the 4th pin on the left row of pins when looking at the pi with the USB at the bottom.
 	
-	If the switch is not attached the default is the home position where it will look for a known WIIFII.
+	If the switch is not attached the default is the home position where it will look for a known WIFI.
 
 
 There is a setup script meant to automate the many setup steps involved with configuring a Raspberry 4 running Raspbian,
