@@ -1,5 +1,5 @@
 # skysolve
-
+![screen](images/hand_1.2.1.jpg)
 See video for a quick introduction.  https://youtu.be/IewMli4AJLw  
 stl files for the case and mount can be found on Thingiverse at https://www.thingiverse.com/thing:4920959 and https://www.thingiverse.com/thing:5594916
 
