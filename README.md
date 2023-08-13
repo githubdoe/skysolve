@@ -140,6 +140,7 @@ When the RPI reboots it should be running the skysolve application.
 ### Testing SkySafari connection
     * On your device running Skysafari start SkySafari and setup the Telescope control to use the IP address of the RPI and to use port 5005.
     * Try to connect to the Telescope.   If it connects then the RPI is running and will give a default position set by the setup.
+    * Set the telescope type to StellarCat ServoCat and mount type to ALT=AZ. Push-TO.  Set the Connect Via WIFI and do not select Auto-Detect SkyFi.
 
 10.  Setup the PI camera and plate solving parameters.
     1. On a pc or tablet on the same network as the pi using a network browser like Chrome connect to <RPI IP>:5000  where <RPI IP> is the ip address of the Raspberry pi.
