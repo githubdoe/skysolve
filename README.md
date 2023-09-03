@@ -1,6 +1,7 @@
 # skysolve
-
-See video for a quick introduction.  https://youtu.be/IewMli4AJLw
+![screen](images/hand_1.2.1.jpg)
+See video for a quick introduction.  https://youtu.be/IewMli4AJLw  
+stl files for the case and mount can be found on Thingiverse at https://www.thingiverse.com/thing:4920959 and https://www.thingiverse.com/thing:5594916
 
 Uses RaspberryPi and plate solving to take images of the night sky and identify the location of the image.
  It uses a Raspberry PI 4 with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SkySafari.  It continually takes images and solves them about every 1 to 10 seconds so that Skysafari can always show where the scope is pointing.
@@ -26,7 +27,7 @@ After setup if the RPI is booted out of range from the WIFI it knows then it wil
 	
 	The switch should be connected to the ground GPIO pin and and to GPIO pin 7.  Pin 7 is the 4th pin on the left row of pins when looking at the pi with the USB at the bottom.
 	
-	If the switch is not attached the default is the home position where it will look for a known WIIFII.
+	If the switch is not attached the default is the home position where it will look for a known WIFI.
 
 
 There is a setup script meant to automate the many setup steps involved with configuring a Raspberry 4 running Raspbian,
@@ -45,10 +46,11 @@ If the "show stars button is dimmed out" you can enable it by pressing the "Solv
 ## Install
 
 When you are ready, you can follow these steps to install it on the Raspberry pi:
+Note: Do not change the default username on the pi from pi to anything else.  There is code that depends upon there being a using named lower case "pi".
 
 
 1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
-      from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Note that the software to download is not the most recent version by an older 32 bit version.
+      from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Note that the software to download is not the most recent version but an older 32 bit version.
       It can be found under Raspberry Pi OS (other) then Raspberry Pi OS (Legacy)
       
       Download this software onto a computer that can write SD cards.  I use a Windows laptop.
@@ -76,7 +78,7 @@ When you are ready, you can follow these steps to install it on the Raspberry pi
   	* Enter your password for the PI that you set in step 2.2.
   	* Once logged into the RPI then type sudo raspi-config.
   	* Select 3. Interface Options then P3 VNC and enable it.  Then select yes and then OK.  Now VNC should be enabled.
-	* Chose display options and select resolution to be 1080 x 720
+	* Chose display options and select resolution to be 1280 x 720
 	* Optionally enable the Raspberrypi camera now.  From Interface Options select the enable camera option.  Then reboot.
   Back on the windows PC start the VNC viewer and connect to the IP address of the Raspberry PI.
   
@@ -95,7 +97,7 @@ sudo tar -xzvf main.tar.gz --strip-components=1
 7.  Run the setup script 
 	
     ```
-	sudo ./skysolveSetup
+	sudo ./skysolveSetup.sh
     ```
 	
     Here is a list of what the script does (If you want to disable or modify any of these, please edit before running the script):
@@ -138,6 +140,7 @@ When the RPI reboots it should be running the skysolve application.
 ### Testing SkySafari connection
     * On your device running Skysafari start SkySafari and setup the Telescope control to use the IP address of the RPI and to use port 5005.
     * Try to connect to the Telescope.   If it connects then the RPI is running and will give a default position set by the setup.
+    * Set the telescope type to StellarCat ServoCat and mount type to ALT=AZ. Push-TO.  Set the Connect Via WIFI and do not select Auto-Detect SkyFi.
 
 10.  Setup the PI camera and plate solving parameters.
     1. On a pc or tablet on the same network as the pi using a network browser like Chrome connect to <RPI IP>:5000  where <RPI IP> is the ip address of the Raspberry pi.
