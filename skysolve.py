@@ -1,11 +1,11 @@
 from subprocess import call
 from zipfile import ZipFile
 from attr import get_run_validators
-from flask import Flask, render_template, request, Response, send_file
+from flask import Flask, render_template, request, Response, send_file, send_from_directory
 import time
 from flask.wrappers import Request
 import pprint
-
+import copy
 from camera_pi import skyCamera
 
 from datetime import datetime, timedelta
@@ -25,12 +25,20 @@ import copy
 import sys
 from tetra3 import Tetra3
 import RPi.GPIO as GPIO  # Import Raspberry Pi GPIO library
-import Quality
+
 
 import glob
 
 import matplotlib.pyplot as plt
 from scipy import stats
+import logging
+
+debugLastState = 'startup'
+
+solveReadyForImage = False
+solveImage = None
+GUIReadyForImage = False
+GUIImage = None
 
 print("argssss", sys.argv, len(sys.argv))
 print('user', getpass.getuser())
@@ -41,7 +49,7 @@ print("gpio", initGPIO7)
 try:
     os.system('systemctl restart encodertoSkySafari.service ')
 except BaseException as e:
-    print("did not start encoder", e, flush=True)
+    print("did not start encoder", e )
 
 usedIndexes = {}
 
@@ -57,6 +65,7 @@ class Mode(Enum):
     SOLVING = auto()
     PLAYBACK = auto()
     SOLVETHIS = auto()
+
     # playback and sovlve history images without user clicking on each.
     AUTOPLAYBACK = auto()
 
@@ -90,14 +99,14 @@ ra = 0
 dec = 0
 solveStatus = ''
 computedPPa = ''
-frameStack = []  # holds images and the time it was taken
-frameStackLock = threading.Lock()
+
 
 
 focusStd = ''
 state = Mode.ALIGN
 
 testNdx = 0
+lastDisplayedFile = ''
 testFiles = []
 root_path = os.getcwd()
 if len(sys.argv) == 2:
@@ -106,6 +115,9 @@ if len(sys.argv) == 2:
 
 solve_path = os.path.join(root_path, 'static')
 history_path = os.path.join(solve_path, 'history')
+doDebug = True
+logging.basicConfig(filename=os.path.join(solve_path,'skysolve.log'),\
+     format='%(levelname)s %(asctime)s %(message)s',filemode='w',level=logging.WARNING)
 if not os.path.exists(history_path):
     os.mkdir(history_path)
 demo_path = os.path.join(solve_path, 'demo')
@@ -140,6 +152,16 @@ skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'frame': '800x600','format': 'j
            'FieldWidthModeaPP': 'checked', 'FieldWidthModeField':"", 'FieldWidthModeOther':'', 'aPPLoValue': 40, 'aPPHiValue': 0,
             'fieldLoValue': 22, 'fieldHiValue': 0, 'searchRadius': 10,  'solveVerbose':False , "showStars": False ,"plots":False}}}
 """
+import builtins
+class ListStream:
+    def write(self, s):
+        global doDebug
+        if doDebug:
+            logging.warning(s)
+    def flush(self):
+        pass
+
+
 
 
 def saveConfig():
@@ -156,7 +178,7 @@ with open(os.path.join(root_path, 'skyConfig.json')) as f:
     skyConfig = json.load(f)
 print(json.dumps(skyConfig['solverProfiles']['25FL'], indent=4))
 print(json.dumps(skyConfig['observing'], indent=4))
-print(json.dumps(skyConfig['camera'], indent=4), flush=True)
+print(json.dumps(skyConfig['camera'], indent=4) )
 
 imageName = 'cap.'+skyConfig['camera']['format']
 
@@ -189,15 +211,27 @@ def setupCamera():
             if startFrame is None:
                 print("camera did not seem to start")
             print("camera started and frame received",
-                  cameraNotPresent, flush=True)
+                  cameraNotPresent )
         except Exception as e:
             print(e)
             cameraNotPresent = True
             skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
 
-
+def frameGrabberThread():
+    global solveReadyForImage, GUIReadyForImage, solveImage, GUIImage
+    while(True):
+        frame = skyCam.get_frame()
+        if solveReadyForImage:
+            print('getting solve image')
+            solveImage = copy.deepcopy(frame)
+            solveReadyForImage = False
+        if GUIReadyForImage:
+            print('getting gui image')
+            GUIImage = copy.deepcopy(frame)
+            GUIReadyForImage = False
 setupCamera()
-
+frameGrabberT = threading.Thread(target=frameGrabberThread)
+frameGrabberT.start()
 framecnt = 0
 
 
@@ -206,6 +240,44 @@ justStarted = True
 camera_Died = False
 solveCompleted = False
 
+lastpictureTime = -1
+framecnt = 0
+
+
+def delayedStatus(delay,status):
+    global skyStatusText
+    time.sleep(delay)
+    skyStatusText = status
+
+
+
+
+def solveWatchDog():
+    global lastsolveTime, state, skyStatusText, justStarted, framecnt, camera_Died,\
+     doDebug, debugLastState,lastpictureTime
+    lastmode = -1
+    if doDebug:
+        logging.warning("watch dog started %s", doDebug)
+        logging.warning("state %s",state)
+    while (True):
+        time.sleep(5)
+        if doDebug:
+            if lastmode != state:
+                if doDebug:
+                    logging.warning("watchdog last state %s",state)
+                    logging.warning("debug last state, %s",debugLastState)
+                lastmode = state
+        if state is Mode.SOLVING:
+            now = datetime.now()
+            duration = now - lastpictureTime 
+            if duration > 20 and doDebug:
+                logging.warning("watchdog says not solving within " + str(duration) + "seconds.")
+        if camera_Died:
+            state = Mode.PAUSED
+            skyStatusText = "camera seens to have stopped.  Restarting"
+            os.system('./restartsky.sh')
+            time.sleep(10)
+            break
 
 def shutThread():
     time.sleep(3)
@@ -236,23 +308,23 @@ switcherWatcherThread.start()
 #
 #  this is responsible for getting images from the camera even in align mod
 def solveThread():
-    global skyStatusText, focusStd, solveCurrent, state, skyCam, frameStack, frameStackLock, testNdx, camera_Died,\
-        solveLog, solveCompleted
+    global skyStatusText, focusStd, solveCurrent, state, skyCam,  testNdx, camera_Died,\
+        solveLog, solveCompleted, debugLastState, lastpictureTime,\
+            solveReadyForImage,solveImage,solveThisImage
 
     # save the image to be solved in the file system and on the stack for the gen() routine to give to the client browser
     def saveImage(frame):
-        global frameStack, frameStackLock
+        global doDebug
 
         with open(os.path.join(solve_path, imageName), "wb") as f:
             try:
                 f.write(frame)
-                frameStackLock.acquire()
-                # save to stack so gen can send it to the client browser
-                frameStack.append(
-                    (os.path.join(solve_path, imageName), datetime.now()))
-                frameStackLock.release()
+
                 return True
             except Exception as e:
+
+                if doDebug:
+                    logging.error(str(e))
                 print(e)
                 solveLog.append(str(e) + '\n')
                 return False
@@ -300,34 +372,55 @@ def solveThread():
 
                 if not solve(os.path.join(solve_path, imageName)) and skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['searchRadius'] > 0:
                     skyStatusText = 'Failed. Retrying with no position hint.'
+                    if doDebug:
+                        logging.warning("did not solve first try")
                     # try again but this time since the previous failed it will not use a starting guess possition
                     solve(os.path.join(solve_path, imageName))
 
             state = Mode.PLAYBACK
             solveCompleted = True
+
             continue
 
         else:  # live solving loop path
-            #print("getting image in solve", flush=True)
+            #print("getting image in solve" )
             if cameraNotPresent:
                 continue
             try:
-                frame = skyCam.get_frame()
+                debugLastState = "waiting for image"
+                if doDebug:
+                    logging.warning("waiting for image frame")
+                solveReadyForImage = True
+                print("solvesetting ready")
+                while solveReadyForImage:
+                    print('solve waiting for image')
+                    time.sleep(1)
+                print('got image')
+                frame = solveImage
+
             except Exception as e:
                 cameraTry += 1
-
+                if doDebug:
+                    logging.error("no image after timeout retry count %s",cameraTry)
                 if cameraTry > 10:
+
+                    debugLastState = "no image after timeout"
                     saveImage(makeDeadImage("no camera. Restarting"))
-                    print("camera failed", flush=True)
+                    print("camera failed" )
                     camera_Died = True
                     continue
                 continue
-
+            if doDebug:
+                logging.warning("got frame %s",framecnt)
             if frame is None:
+                print('frame is none')
                 cameraTry += 1
                 if cameraTry > 10:
+                    if doDebug:
+                        logging.error("empty frame after 10 retries")
+                    debugLastState = "frame was none after 10 retries"
                     saveImage(makeDeadImage("camera died. Restarting"))
-                    print("camera died\nRestarting", flush=True)
+                    print("camera died\nRestarting" )
                     camera_Died = True
                 continue
 
@@ -340,6 +433,8 @@ def solveThread():
                 skyStatusText = "Complete."
                 continue
             fn = testFiles[testNdx]
+
+            solveThisImage = fn
             skyStatusText = "%d %s" % (testNdx, fn)
             solveLog.append(skyStatusText + '\n')
             testNdx += 1
@@ -352,7 +447,7 @@ def solveThread():
         saveImage(frame)
         #debug to fake camera image with a real star image
         #copyfile("static/history/11_01_22_23_47_15.jpeg", os.path.join(solve_path, imageName))
-        if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK:
+        if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK :
             if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
                 s = tetraSolve(os.path.join(solve_path, imageName))
                 # print(str(s))
@@ -373,6 +468,7 @@ def solveThread():
                 if f == False:
                     state = Mode.PLAYBACK
             solveCompleted = True
+
             continue
 
         # else measaure contrast for focus bar
@@ -399,11 +495,15 @@ if skyConfig['solver']['startupSolveing']:
     solveT = threading.Thread(target=solveThread)
     solveT.start()
 
-
+#solveWatchDogTh = threading.Thread(target = solveWatchDog)
+#solveWatchDogTh.start()
 
 def solve(fn, parms=[]):
-    print("solving", flush=True)
-
+    global doDebug, debugLastState
+    print("solving" )
+    if doDebug:
+        logging.warning("solving function")
+    debugLastState = 'solving'
     global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, solveStatus,\
         triggerSolutionDisplay, skyStatusText, lastObs, verboseSolveText
     startTime = datetime.now()
@@ -485,6 +585,9 @@ def solve(fn, parms=[]):
                     solve_path, "radec.txt"), "w")  # write mode
                 file1.write(radec)
                 file1.close()
+                if doDebug:
+                    logging.warning('here is RAdec')
+                    logging.warning(radec)
                 stopTime = datetime.now()
                 duration = stopTime - startTime
                 #print ('duration', duration)
@@ -495,14 +598,14 @@ def solve(fn, parms=[]):
                 skyStatusText = skyStatusText + '.'
                 if stdoutdata.startswith("Field 1: solved with"):
                     ndx = stdoutdata.split("index-")[-1].strip()
-                    print("index", ndx, stdoutdata, flush=True)
+                    print("index", ndx, stdoutdata )
                     usedIndexes[ndx] = usedIndexes.get(ndx, 0)+1
                     pp = pprint.pformat(usedIndexes)
-                    print("Used indexes", pp, flush=True)
+                    print("Used indexes", pp )
                     solveLog.append('used indexes ' + pp + '\n')
 
                 elif stdoutdata.startswith('Field size'):
-                    print("Field size", stdoutdata, flush=True)
+                    print("Field size", stdoutdata )
                     solveLog.append(stdoutdata)
                     solveStatus += (". " + stdoutdata.split(":")[1].rstrip())
                 elif stdoutdata.find('pixel scale') > 0:
@@ -591,11 +694,20 @@ def solve(fn, parms=[]):
         duration = stopTime - startTime
         skyStatusText = "solved "+str(duration) + ' secs'
         verboseSolveText = foundStars
+        if doDebug:
+            logging.warning(skyStatusText)
+            logging.warning(verboseSolveText)
+            logging.warning(radec)
     if not solved:
         skyStatusText = skyStatusText + " Failed"
         ra = 0
         solveLog.append("Failed\n")
     solving = False
+    solvestatestr = 'solved'
+    if  not solved:
+        solvestatestr = 'failed'
+    if doDebug:
+        logging.warning("solve finished with solve state %s", solvestatestr)
     return solved
 
 
@@ -625,7 +737,7 @@ def tetraSolve(imageName):
 
 
 app = Flask(__name__)
-
+doDebug = False
 skyStatusText = 'Initilizing Camera'
 
 @app.route("/StarHistory", methods=['GET','POST'])
@@ -700,7 +812,7 @@ def Align():
 @app.route('/saveCurrent', methods=['POST'])
 def saveCurrent():
     global skyStatusText, imageName
-    print("save current image", flush=True)
+    print("save current image" )
     fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.") + \
         skyConfig['camera']['format']
     copyfile(os.path.join(solve_path, imageName),
@@ -861,7 +973,9 @@ def skyStatus():
         setTimeDate = False
         t = float(request.form['time'])/1000
         time.clock_settime(time.CLOCK_REALTIME, t)
-    return Response(skyStatusText)
+    resp = copy.deepcopy(skyStatusText)
+    skyStatusText = ''
+    return Response(resp)
 
 
 @app.route('/Focus', methods=['post'])
@@ -869,32 +983,40 @@ def Focus():
     global focusStd
     return Response(focusStd)
 
-
+lastmode = state
 def gen():
-    global skyStatusText, solveT, testNdx,  triggerSolutionDisplay, testMode, state, solveCurrent, frameStack, frameStackLock, framecnt, tmr
+    global skyStatusText, solveT, testNdx,  triggerSolutionDisplay,\
+            doDebug, state, solveCurrent,  framecnt, lastDisplayedFile,lastmode,\
+                GUIReadyForImage, GUIImage
     # Video streaming generator function.
 
     lastImageTime = datetime.now()
     yield (b'\r\n--framex\r\n' b'Content-Type: image/jpeg\r\n\r\n')
     while True:
-        if len(frameStack) == 0:
+        frame = None
+        if state is Mode.PAUSED:
+            time.sleep(1)
             continue
 
-        frameStackLock.acquire()
-        if len(frameStack) == 0:
+        if (state != Mode.ALIGN) and (state != Mode.SOLVING):
 
-            frameStackLock.release()
-            continue
+            if lastDisplayedFile == solveThisImage:
+                continue
+            lastDisplayedFile = solveThisImage
+            with open(solveThisImage, 'rb') as infile:
+                frame = infile.read()
+        else:
+            GUIReadyForImage = True
+            while(GUIReadyForImage):
+                time.sleep(.1)
+            frame = GUIImage
 
-        lastImageTime = frameStack[-1][1]
 
-        fn = frameStack[-1][0]
-
-        with open(fn, 'rb') as infile:
-            frame = infile.read()
-        frameStack.clear()
-        frameStackLock.release()
-
+        if doDebug:
+            logging.warning("frame sent to GUI %d", framecnt)
+            if state is Mode.SOLVING:
+                framecnt = framecnt + 1
+            
         if state is Mode.ALIGN:
             framecnt = framecnt + 1
             skyStatusText = "frame %d" % (framecnt)
@@ -963,7 +1085,7 @@ def apply():
 
 @app.route('/demoMode', methods=['POST'])
 def demoMode():
-    global testMode, testFiles, testNdx, frameStack,  solveLog, state, solveThisImage
+    global testMode, testFiles, testNdx,   solveLog, state, solveThisImage
 
     skyStatusText = 'Demo images will be set for playback'
     state = Mode.PLAYBACK
@@ -974,7 +1096,7 @@ def demoMode():
 
     print("demo files len", len(testFiles))
     time.sleep(2)
-    frameStack.clear()
+
     setupImageFromFile()
 
     solveLog = [x + '\n' for x in testFiles]
@@ -983,21 +1105,14 @@ def demoMode():
 
 
 def setupImageFromFile():
-    global solveThisImage, frameStackLock, frameStack, skyStatusText
+    global solveThisImage,   skyStatusText
 
     solveThisImage = testFiles[testNdx]
-
-    frameStackLock.acquire()
-    frameStack.clear()
-
-    frameStack.append((solveThisImage, datetime.now()))
-    frameStackLock.release()
-
     skyStatusText = "%d %s" % (testNdx, testFiles[testNdx])
 
 
 def findHistoryFiles():
-    global saveLog, skyStatusText, testFiles, testNdx, frameStack, solveThisImage
+    global saveLog, skyStatusText, testFiles, testNdx,  solveThisImage
     print("finding files")
     x = datetime.now() + timedelta(seconds=2)
     testFiles = [history_path + '/' + fn for fn in os.listdir(
@@ -1006,7 +1121,7 @@ def findHistoryFiles():
 
 
     print("test files len", len(testFiles))
-    frameStack.clear()
+
     solveLog = [x + '\n' for x in testFiles]
     while datetime.now() < x:
         time.sleep(1)
@@ -1051,7 +1166,7 @@ def reboot():
 
 
 def restartThread():
-    print("restarting thread waiting for 5 seconds", flush=True)
+    print("restarting thread waiting for 5 seconds" )
     time.sleep(5)
     os.system('./restartsky.sh')
 
@@ -1069,7 +1184,7 @@ def restartc():
 
 @app.route('/testMode', methods=['POST'])
 def toggletestMode():
-    global testMode, testFiles, testNdx, frameStack,  solveLog, state, solveThisImage, skyStatusText
+    global testMode, testFiles, testNdx,   solveLog, state, solveThisImage, skyStatusText
 
     state = Mode.PLAYBACK
     print('will find files')
@@ -1084,114 +1199,7 @@ measureStackLock = threading.Lock()
 allDone = False
 # measure transparency of current image
 import traceback
-def measureTransparency(solveLiveImage = False):
-    # tell system to pause taking images after solving the current image
-    global skyStatusText, state, solveThisImage, frameStackLock, frameStack,skyStatusText, solveCurrent,\
-         solveCompleted,   measureHtmlStack
-    solveCurrent = True
-    sendStatus('solving')
-    if state is Mode.PLAYBACK:
-        state = Mode.SOLVETHIS
-    
-    skyStatusText = "Solving"
-    solveCompleted = False
-    while not solveCompleted:
-        time.sleep(.5)
-    skyStatusText = "computing star stats"
-    sourcefn = os.path.basename(solveThisImage).split(skyConfig['camera']['format'])[0][:-1]
-    try:
-        sendStatus('Inspecting stars')
-        starlist, image, width, height= Quality.findStarMags(os.path.join(solve_path, imageName),sourcefn)
-    except Exception as e:
-        print("exception",e)
-        traceback.print_exception(*sys.exc_info())
-        return 'Image corrupt', ''
 
-    if len(starlist) == 0:
-        return starlist,'No named bright stars found'
-
-    #at this point we have found star and thier stats in the image. So now get relative brightness ratios compared to actual ratios.
-    try:
-        #make magnitude plot curves and return the x,y positions of the stars in the image
-        plt.clf()
-        results= Quality.plotStarMags(starlist)
-    except TypeError as e:
-        return(Response('too few stars to plot'))
-
-    #draw color disks indicating how much the flux differes from expected value compared to reference star
-    draw = ImageDraw.Draw(image, 'RGBA')
-
-    x = results['ref'][0]
-    y = results['ref'][1]
-    draw.ellipse((x - 20, y-20,x+20,y+20), outline="yellow")
-    for s in results['stars']:
-        x = s[2][0]
-        y = s[2][1]
-
-        if (s[2][2]< 1.25 and s[2][2] >= 1)  or (s[2][2] < 1 and s[2][2] > .75):
-            continue
-        if s[2][2] > 1:
-            delet = s[2][2]
-            color = (10,255,0,40)
-        else:
-            color = (255,0,0,40)
-            delet = 1/s[2][2]
-
-        rad = 6 + 2 * (delet)
-        draw.ellipse((x-rad,y-rad,x+rad,y+rad), fill = color)
-
-    if starlist is None:
-        skyStatusText = 'No bright stars found'
-        return Response(skyStatusText)
-
-    print("removing tmp files")
-    for filename in glob.glob(os.path.join(solve_path,'quality*.jpeg')):
-        os.remove(filename)
-    qfilename = 'quality'+datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpeg")  
-
-    imfn = os.path.join(solve_path, qfilename)
-    image.save(imfn)
-    print("image saved",flush=True)
-
-    if len(starlist) == 0:
-        out = 'no named bright stars found'
-    else:
-
-        stars = starlist
-        sendStatus('Sorting by Mag')
-        # stars.sort(key=lambda x: x['mag'])
-
-        bg = np.asarray([ back['Background'] for back in stars])
-        # min = bg.min()
-        # max = bg.max()
-        mean = bg.mean()
-        # std = bg.std()
-
-        # out = '<div style="float:left"><table border = "2"><caption>' + sourcefn + \
-        #     ' min:%d Mean:%4.2lf Max:%d std:%4.2lf %dx%d'%(min,mean,max,std,width,height) + \
-        #     '</caption><th>Star</th><th>Magnitude</th><th>Flux</th><th>Background</th>'
-      
-        sendStatus('Making html')
-
-        # for star in stars:
-
-        #     out = out + '<tr><td style="text-align:center">%s </td><td style="text-align:center">%4.2lf</td>'\
-        #         '<td style="text-align:center"> %4.2lf</td><td style="text-align:center">%4.2lf</td></tr>' % (
-        #             star['name'], star['mag'], star['flux'], star['Background'])
-
-
-        # out = out + '</table> </div><div " height="Auto">'
-
-
-
-        filename = 'qualityplotRatio'+datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpeg") 
-        plt.savefig(os.path.join(solve_path, filename ),facecolor='#500000')
-        out = '<img src="%s" width="70%%">'%('./static/'+filename)
-        out += '<img src="./static/%s" width="70%%"></div>' % (qfilename)
-
-        #skyStatusText = out
-    #skyStatusText = out 
-    return starlist,out  
 
 readytoSend = False
 message = ''
@@ -1236,34 +1244,7 @@ def processImageX():
 
 
 
-@app.route("/skyQualitySample", methods=['POST','GET'])
-def takeSkyQualitySample():
-    global skyStatusText, state, solveThisImage, frameStackLock, frameStack,skyStatusText, solveCurrent,\
-         solveCompleted, starMeasures
 
-    # if all parameter is true then use all images in history and rebuild transaprency database
-    if request.args.get('live'):
-        #turn on solving mode and wait for an image to be solved
-        state = Mode.SOLVING
-        #return Response("Analizying live image")
-    else:
-        # stop live solving if running and get history
-        if state != Mode.PLAYBACK:
-            state = Mode.PLAYBACK
-            findHistoryFiles()
-
-    #display the transparancy from the current image
-    starlist, out = measureTransparency()
-
-    if len(starlist) == 0:
-        skyStatusText = out
-        return Response('<body style="background-color: rgb(70, 48, 48); color: lightpink">' + out+'</body>')
-
-
-    html = out
-    #html += '</body></html>'
-    skyStatusText = 'Stats complete'
-    return Response(html)
 
 def returnImage():
     global testNdx, solveThisImage
@@ -1271,7 +1252,7 @@ def returnImage():
     filename = 'quality'+datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpeg") 
     copyfile(solveThisImage, os.path.join(solve_path, filename))
     out = '<img style = "filter:brightness(500%%)" src="%s" width="50%%">'%('./static/'+filename)
-    print("file name",out,flush=True)
+    print("file name",out)
     from PIL import Image, ExifTags
 
     img = Image.open('./static/' + filename)
@@ -1288,7 +1269,9 @@ def returnImage():
 
 @app.route('/sqDelete', methods=['POST'])
 def deletecurrentHistoryImage():
-    global testNdx, testFiles
+    global testNdx, testFiles, state
+    if state != Mode.PLAYBACK:
+        return('%d %s'%('Replay Images must be selected first', ' '))
     fn = testFiles[testNdx]
     testFiles.remove(fn)
     os.remove(fn)
@@ -1359,6 +1342,16 @@ def historyNdx():
     setupImageFromFile()
     return Response(status=205)
 
+@app.route('/Debug', methods= ['POST'])
+def debugcommands():
+    global doDebug
+    doDebug = request.form.get("enableDebug") == "on"
+    if (doDebug):
+        sys.stdout = x = ListStream()
+    else:
+        sys.stdout = sys.__stdout__
+    print("debug",doDebug, request.form.get("enableDebug"))
+    return Response(status=205)
 
 @app.route('/Observe', methods=['POST'])
 def setObserveParams():
@@ -1449,6 +1442,21 @@ def clearImages():
         os.remove(os.path.join(solve_path, 'history', f))
     return Response("images deleted")
 
+@app.route('/downloadImage', methods=['GET'])
+def downloadImage():
+    global  solveThisImage
+
+    if (state != Mode.ALIGN) and (state != Mode.SOLVING):
+
+        with open(solveThisImage, 'rb') as infile:
+            frame = infile.read()
+    else:
+        frame = skyCam.get_frame()
+
+    fn = os.path.join(solve_path, "current.jpg")
+    with open(fn, "wb") as f:
+        f.write(frame)
+    return send_file(fn, as_attachment=True)
 
 @app.route('/zip', methods=['GET'])
 def zipImages():

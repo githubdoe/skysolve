@@ -287,7 +287,7 @@
                       }
                     </script>
 
-                    <button class="btn nightColor" onclick="swapScreen()" id="ShowQualityScreen">Sky Quality</button>
+                    <button class="btn nightColor" onclick="swapScreen()" id="ShowQualityScreen">History</button>
 
                     <buton type=""button" class = "btn nightColor" id="showMore">...</buton>
 
@@ -313,7 +313,7 @@
                         <button type="button" class="btn  nightColor" id="reboot" style="margin-left:100px;" ">Reboot</button>
                         <button type="button" class="btn  nightColor" id="restartc" style="margin-left:30px;" ">Restart</button>
                         <button type="button" class="btn  nightColor" id="shutdown" style="margin-left:30px;" ">Shutdown</button>
-                    
+                        <button type="button" class="btn  nightColor" data-toggle="collapse" data-target="#debugScreen" id="debug" style="margin-left:30px;" ">Debug</button>      
                     </div>
             </div>
             <div id="helpScreen" class="collapse">
@@ -392,6 +392,7 @@
                             </li>
                         </ul>
                     </dd>
+                    
                 
             </div>
             <div- id="solverHelp" class="collapse">
@@ -520,24 +521,24 @@
                         {% endfor %}
 
                 </select>
-                <div class="nightColor">
-                        <button type="button" class="nightColor" style="margin-left:10px; margin-right:10px;" id="doFocus" 
-                        data-toggle="collapse" data-target="#collapseFocusBar" onclick="showFocus()">Focus bar</button>
-                      </label>
-                </div>
-
-
-                <div class="btn-group-horizontal  nightColor ">                 zoom image
-                    <button type="button" class="btn btn-primary btn-sm" onclick="increaseMagnification()">+</button>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="decreaseMagnification()">-</button>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="brighten()">Bright</button> 
-                    <button type="button" class="btn btn-primary btn-sm" onclick="brightNormal()"> norm</button> 
-                    <button type="button" class="btn btn-primary btn-sm" onclick="darken()">dark</button> 
-                    <button type="button" class="btn btn-primary btn-sm" id="idSaveCurrent">save current Image</button> 
-                    <button type="button" class="btn btn-primary btn-sm" data-toggle="collapse" data-target="#advancedShutter" Adv</button>
-                </div>
-
             </div>
+
+                <div class = "grid">
+                    <div class="row ">
+                        <button type="button" class="btn  nightColor" onclick="increaseMagnification()">+</button>
+                        <button type="button" class="btn  nightColor" onclick="decreaseMagnification()">-</button>
+                        <button type="button" class="btn  nightColor" onclick="brighten()">Bright</button> 
+                        <button type="button" class="btn  nightColor" onclick="brightNormal()"> norm</button> 
+                        <button type="button" class="btn  nightColor" onclick="darken()">dark</button> 
+                        <button type="button" class="btn  nightColor" id="idSaveCurrent">save current Image</button> 
+
+                        <a roll = "button" class="btn  nightColor" download href="downloadImage"
+                            id="idDownloadImage">Download Image</button> </a>
+                        
+                    </div>
+                </div>
+
+            
         </div>
 
 
@@ -651,6 +652,29 @@
 
         </div>
 
+         <!-- Modal for debug form-->
+         <div id="debugScreen" class="modal">
+            <div class="modal-content">
+                <span id="debugClose" class="close">&times;</span>
+
+                <form action="/Debug" method="POST">
+                    <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Debug </legend>
+
+                    <div>
+                        <input type="checkbox" id="enableDebug", name="enableDebug" {{ 'checked' if obsParms['saveImages'] else ''}} >
+                        <label for="enableDebug">Enable debug write to log file</label>  
+                        
+
+                    </div>
+                        <br>
+                        <input type="submit" class="btn nightColor" value="Submit">
+                        </fieldset>
+                    
+                </form>
+                <a class="btn nightColor" role="button" href="/static/skysolve.log"
+                download="skysolve.log" style="margin:20px; ""> Download debug log</a>
+            </div>
+        </div>
         <!-- The Modal  for stars image-->
         <div id="starsModal" class="modal">
             <!-- Modal content -->
@@ -684,7 +708,8 @@
 
                         <button class="btn nightColor" id="clearImages">clear observing history images</button>
                         <a class="btn nightColor" role="button" href="/zip"
-                            download="historyImages.zip" style="margin:20px; ""> Download images as a zip</a>
+                            download="historyImages.zip" style="margin:20px; "> Download images as a zip</a>
+                            
                         </div>
 
                     <input type="checkbox" id="saveImages", name="saveImages" {{ 'checked' if obsParms['saveImages'] else ''}} >
@@ -714,10 +739,6 @@
 
                 </fieldset>
 
-
-             
-
-
             </div>
         </div>
 
@@ -743,28 +764,31 @@
         <div style="overflow-y: scroll;  height: 300px; color:rgb(155, 0, 0); background:rgb(2, 0, 9);"  id="solveStatusText">
               SkySolve is ready</div></p>
 
-  
-  <!-- Modal -->
-  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          ...
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
-        </div>
-      </div>
-    </div>
-  </div>
+
         <!-- SCRIPTS  -------------------------------------------->
 
         <script>
+            audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            function beep(freq) {
+                var oscillator = audioCtx.createOscillator();
+                var gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                gainNode.gain.value = .5;
+                oscillator.frequency.value = freq;
+                oscillator.type = 'sine';
+
+                oscillator.start();
+
+                setTimeout(
+                    function() {
+                    oscillator.stop();
+                    },
+                    100
+                );
+            };
             $(document).ready(function(){
   
                 var v = "{{ profiles|safe }}"
@@ -833,6 +857,22 @@
 
 
 
+            // Get the button that opens the debug modal form
+            var debugbtn = document.getElementById("debug");
+
+            // Get the <span> element that closes the modal
+            var debugspan = document.getElementById("debugClose");
+
+            // When the user clicks on the button, open the modal
+            debugbtn.onclick = function() {
+                debugScreen.style.display = "block";
+            }
+
+            // When the user clicks on <span> (x), close the modal
+            debugspan.onclick = function() {
+                debugScreen.style.display = "none";
+            }
+
             // Get the button that opens the modal image
             var btn = document.getElementById("observingSession");
 
@@ -848,7 +888,6 @@
             observingspan.onclick = function() {
                 observingModal.style.display = "none";
             }
-
             // When the user clicks anywhere outside of the modal, close it
             window.onclick = function(event) {
                 if (event.target == observingModal) {
@@ -859,6 +898,9 @@
                 }
                 if (event.target == starsModal) {
                     starsModal.style.display = "none";
+                }
+                if (event.target == debugScreen){
+                    debugScreen.style.display = "none";
                 }
             }
 
@@ -926,6 +968,7 @@
 
         <!-- Update status and clear timeout if needed-->
         <script>
+            
             function updateStatusField() {
                 var time = new Date()
                 $.ajax({
@@ -933,9 +976,19 @@
                     data: {'time': Date.now().toString()},
                     type: 'post',
                     success: function(data) {
+ 
                             // Perform operation on return value
                         var st = document.getElementById("statusField");
-                        st.innerHTML = data
+
+                        if (data != ""){
+                            st.innerHTML = data;
+                             if (data.includes('Failed')){
+                                beep(200);
+                            }else if (data.includes('solved') && !data.includes('sources')) {
+                                beep(300);
+                            }
+                        }
+
                     },
                     complete: function(data) {
 

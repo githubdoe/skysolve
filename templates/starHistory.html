@@ -147,16 +147,12 @@
     </head>
   <body>
    <div class="about">
-     <h1 class = "nightColor">Transparancy Estimation </h1>
+     <h1 class = "nightColor">History </h1>
    </div>
    <div class="container-fluid">
         <div class = "row">
 
-            <button title = "Show sky quality for live Image" type="button" class="btn nightColor" 
-            onclick ="ajax_get_Status('/skyQualitySample?live=False?live=true')">Analyze live image</button>
-            <button title = "Show sky quality plots for current history image" type="button" class="btn nightColor" 
-                onclick ="ajax_get_Status('/skyQualitySample')">Analyze Current history</button>
-            <button type="button" class="btn nightColor" 
+             <button type="button" class="btn nightColor" 
                 onclick ="ajax_get_Status('/sqPrevious')">Previous History</button>
             <button type="button" class="btn nightColor" 
                 onclick ="ajax_get_Status('/sqNext')">Next History</button>
