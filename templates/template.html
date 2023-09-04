@@ -778,7 +778,7 @@
 
                 gainNode.gain.value = .5;
                 oscillator.frequency.value = freq;
-                oscillator.type = 'sine';
+                oscillator.type = 'triangle';
 
                 oscillator.start();
 
@@ -983,9 +983,10 @@
                         if (data != ""){
                             st.innerHTML = data;
                              if (data.includes('Failed')){
-                                beep(200);
-                            }else if (data.includes('solved') && !data.includes('sources')) {
+
                                 beep(300);
+                            }else if (data.includes('solved') && !data.includes('sources')) {
+                                beep(1840);
                             }
                         }
 
