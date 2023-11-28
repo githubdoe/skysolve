@@ -79,8 +79,12 @@ Note: Do not change the default username on the pi from pi to anything else.  Th
   	* Once logged into the RPI then type sudo raspi-config.
   	* Select 3. Interface Options then P3 VNC and enable it.  Then select yes and then OK.  Now VNC should be enabled.
 	* Chose display options and select resolution to be 1280 x 720
-	* Optionally enable the Raspberrypi camera now.  From Interface Options select the enable camera option.  Then reboot.
-  Back on the windows PC start the VNC viewer and connect to the IP address of the Raspberry PI.
+	* Optionally enable the Raspberrypi camera now.  From Interface Options select the enable camera option. 
+  	* UPDATE: November 2023:
+	There is another step needed to be done while still in the raspi-config.  That is to set all localization options to your local.
+	
+ 	Then reboot.
+  	Back on the windows PC start the VNC viewer and connect to the IP address of the Raspberry PI.
   
 
 
