@@ -406,6 +406,6 @@ sudo pip3 install scipy
 sudo apt install python3-matplotlib
 sudo pip3 install fitsio
 echo "This next step may take 10 to 15 minutes."
-sudo pip3 install -U numpy
+#sudo pip3 install -U numpy
 echo "Your requested installations are complete."
 display "Script Execution Complete.  Your Raspberry should now be ready to use for SkySolve.  You should restart your Pi."
