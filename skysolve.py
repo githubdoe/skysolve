@@ -1,6 +1,5 @@
 from subprocess import call
 from zipfile import ZipFile
-from attr import get_run_validators
 from flask import Flask, render_template, request, Response, send_file, send_from_directory
 import time
 from flask.wrappers import Request
@@ -25,12 +24,8 @@ import copy
 import sys
 from tetra3 import Tetra3
 import RPi.GPIO as GPIO  # Import Raspberry Pi GPIO library
-
-
+import cv2
 import glob
-
-import matplotlib.pyplot as plt
-from scipy import stats
 import logging
 
 debugLastState = 'startup'
@@ -55,7 +50,7 @@ usedIndexes = {}
 
 # Create instance and load default_database (built with max_fov=12 and the rest as default)
 t3 = None
-if t3 == None:
+if t3 != None:
     t3 = Tetra3('default_database')
 
 
@@ -114,6 +109,8 @@ if len(sys.argv) == 2:
 
 
 solve_path = os.path.join(root_path, 'static')
+capPath = os.path.join(solve_path, 'cap.jpeg')
+guiPath = os.path.join(solve_path, 'gui.jpeg')
 history_path = os.path.join(solve_path, 'history')
 doDebug = True
 logging.basicConfig(filename=os.path.join(solve_path,'skysolve.log'),\
@@ -168,7 +165,7 @@ def saveConfig():
     with open('skyConfig.json', 'w') as f:
 
         json.dump(skyConfig, f, indent=4)
-
+format
 
 # saveConfig()
 print('cwd', os.getcwd())
@@ -181,7 +178,7 @@ print(json.dumps(skyConfig['observing'], indent=4))
 print(json.dumps(skyConfig['camera'], indent=4) )
 
 imageName = 'cap.'+skyConfig['camera']['format']
-
+capPath = os.path.join(solve_path, imageName)
 #print (skyConfig)
 skyCam = None
 skyStatusText = ''
@@ -197,12 +194,12 @@ def delayedStatus(delay, status):
 def setupCamera():
     global skyCam, cameraNotPresent, state, skyStatusText
     if not skyCam:
-        print('creating cam')
+
         try:
-            skyCam = skyCamera(delayedStatus, shutter=int(
-                1000000 * float(skyConfig['camera']['shutter'])),
-                format=skyConfig['camera']['format'],
-                resolution=skyConfig['camera']['frame'])
+            skyCam = skyCamera(delayedStatus, shutter=
+                float(skyConfig['camera']['shutter']),
+                format='RGB888',
+                resolution= [int(x) for x in skyConfig['camera']['frame'].split('x')])
             cameraNotPresent = False
             if skyConfig['solver']['startupSolveing']:
                 print("startup in solving")
@@ -218,16 +215,16 @@ def setupCamera():
             skyStatusText = 'camera not connected or enabled.  Demo mode and replay mode will still work however.'
 
 def frameGrabberThread():
-    global solveReadyForImage, GUIReadyForImage, solveImage, GUIImage
+    global solveReadyForImage, GUIReadyForImage, solveImage, GUIImage,skyCam
     while(True):
-        frame = skyCam.get_frame()
+        frame = skyCam.camera.capture_array('main')
         if solveReadyForImage:
-            print('getting solve image')
+            #print('getting solve image')
             solveImage = copy.deepcopy(frame)
             solveReadyForImage = False
         if GUIReadyForImage:
-            print('getting gui image')
-            GUIImage = copy.deepcopy(frame)
+            #print('getting gui image')
+            GUIImage = JPEG = cv2.imencode('.jpeg', frame)[1].tobytes()
             GUIReadyForImage = False
 setupCamera()
 frameGrabberT = threading.Thread(target=frameGrabberThread)
@@ -312,22 +309,20 @@ def solveThread():
         solveLog, solveCompleted, debugLastState, lastpictureTime,\
             solveReadyForImage,solveImage,solveThisImage
 
-    # save the image to be solved in the file system and on the stack for the gen() routine to give to the client browser
+    # save the image to be solved in the file system  for the gen() routine to give to the client browser
     def saveImage(frame):
         global doDebug
+        try:
+            cv2.imwrite(os.path.join(solve_path, 'cap.jpg'),frame)
+            return True
 
-        with open(os.path.join(solve_path, imageName), "wb") as f:
-            try:
-                f.write(frame)
+        except Exception as e:
 
-                return True
-            except Exception as e:
-
-                if doDebug:
-                    logging.error(str(e))
-                print(e)
-                solveLog.append(str(e) + '\n')
-                return False
+            if doDebug:
+                logging.error(str(e))
+            print(e)
+            solveLog.append(str(e) + '\n')
+            return False
 
     def makeDeadImage(text):
         img = Image.new('RGB', (600, 200), color=(0, 0, 0))
@@ -391,11 +386,11 @@ def solveThread():
                 if doDebug:
                     logging.warning("waiting for image frame")
                 solveReadyForImage = True
-                print("solvesetting ready")
+                #print("solvesetting ready")
                 while solveReadyForImage:
-                    print('solve waiting for image')
+                    #print('solve waiting for image')
                     time.sleep(1)
-                print('got image')
+                #print('got image')
                 frame = solveImage
 
             except Exception as e:
@@ -548,7 +543,7 @@ def solve(fn, parms=[]):
     cmd = ["solve-field", fn, "--depth", str(profile['solveDepth']), "--sigma", str(profile['solveSigma']),
            '--overwrite'] + parms
 
-    #print("\n\nsolving ", cmd)
+    print("\n\nsolving ", cmd)
     if skyConfig['observing']['verbose']:
         solveLog.append(' '.join(cmd) + '\n')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -754,8 +749,8 @@ def index():
                      '.5', '.7', '.9', '1', '2.', '3', '4', '5', '10']
     skyFrameValues = ['400x300', '640x480', '800x600', '1024x768',
                       '1280x960', '1920x1440', '2000x1000', '2000x1500']
-    isoValues = ['100', '200', '400', '800']
-    formatValues = ['jpeg', 'png']
+    isoValues = ['10', '50', '100', '200', '400', '800', '1000', '2000','4000','8000','16000']
+    formatValues = ['jpg', 'png']
     solveParams = {'PPA': 27, 'FieldWidth': 14, 'Timeout': 34,
                    'Sigma': 9, 'Depth': 20, 'SearchRadius': 10}
     if cameraNotPresent:
@@ -839,29 +834,14 @@ def Solving():
     return Response(skyStatusText)
 
 
-@app.route('/setISO', methods=['POST'])
-def setISOx():
-    print("setISO FORM", request.form.values)
-    global solveLog, skyStatusText, isoglobal
-    value = request.form.get('setISO')
-    solveLog.append("ISO changing will take 10 seconds to stabilize gain.\n")
-    delayedStatus(2, "changing to ISO " + value)
-    isoglobal = value
-    skyCam.setISO(int(value))
-
-    skyConfig['camera']['ISO'] = value
-    saveConfig()
-    return Response(status=204)
 
 
-@app.route('/setISO/<value>', methods=['POST', 'GET'])
+
+@app.route('/setISO/<value>', methods=['POST'])
 def setISO(value):
 
     print("setting iso", value)
-    global solveLog, skyStatusText, isoglobal
-    solveLog.append("ISO changing will take 10 seconds to stabilize gain.\n")
-    delayedStatus(2, "changing to ISO " + value)
-    isoglobal = value
+
     skyCam.setISO(int(value))
 
     skyConfig['camera']['ISO'] = value
@@ -890,25 +870,14 @@ def setFormat(value):
     return Response(status=204)
 
 
-@app.route('/setShutter', methods=['POST'])
-def setShutterx():
-    global skyStatusText
-    value = request.form.get('setShutter')
-    print("shutter value", value)
-    skyCam.setShutter(int(1000000 * float(value)))
-    skyConfig['camera']['shutter'] = value
-    delayedStatus(2, "Setting shutter to "+str(value) +
-                  " may take about 10 seconds.")
-    saveConfig()
 
-    return Response(status=204)
 
 
 @app.route('/setShutter/<value>', methods=['POST'])
 def setShutter(value):
     global skyStatusText
-    print("shutter value", value)
-    skyCam.setShutter(int(1000000 * float(value)))
+
+    skyCam.setShutter(float(value))
     skyConfig['camera']['shutter'] = value
     delayedStatus(2, "Setting shutter to "+str(value) +
                   " may take about 10 seconds.")
@@ -972,7 +941,7 @@ def skyStatus():
     if setTimeDate:
         setTimeDate = False
         t = float(request.form['time'])/1000
-        time.clock_settime(time.CLOCK_REALTIME, t)
+        #time.clock_settime(time.CLOCK_REALTIME, t)  #fixme  set the real time clock
     resp = copy.deepcopy(skyStatusText)
     skyStatusText = ''
     return Response(resp)
@@ -987,9 +956,9 @@ lastmode = state
 def gen():
     global skyStatusText, solveT, testNdx,  triggerSolutionDisplay,\
             doDebug, state, solveCurrent,  framecnt, lastDisplayedFile,lastmode,\
-                GUIReadyForImage, GUIImage
+                GUIReadyForImage, GUIImage, imageName
     # Video streaming generator function.
-
+    print("gen called")
     lastImageTime = datetime.now()
     yield (b'\r\n--framex\r\n' b'Content-Type: image/jpeg\r\n\r\n')
     while True:
@@ -1002,14 +971,18 @@ def gen():
 
             if lastDisplayedFile == solveThisImage:
                 continue
+            print("history",lastDisplayedFile, solveThisImage)
             lastDisplayedFile = solveThisImage
             with open(solveThisImage, 'rb') as infile:
                 frame = infile.read()
+
+
         else:
             GUIReadyForImage = True
             while(GUIReadyForImage):
                 time.sleep(.1)
             frame = GUIImage
+
 
 
         if doDebug:
@@ -1020,6 +993,8 @@ def gen():
         if state is Mode.ALIGN:
             framecnt = framecnt + 1
             skyStatusText = "frame %d" % (framecnt)
+        
+
 
         # this send the image and also the header for the next image
         yield (frame + b'\r\n--framex\r\n' b'Content-Type: image/jpeg\r\n\r\n')
@@ -1447,16 +1422,16 @@ def downloadImage():
     global  solveThisImage
 
     if (state != Mode.ALIGN) and (state != Mode.SOLVING):
+        print("solve this image was", solveThisImage)
+        return send_file(solveThisImage, as_attachment=True)
 
-        with open(solveThisImage, 'rb') as infile:
-            frame = infile.read()
     else:
         frame = skyCam.get_frame()
 
-    fn = os.path.join(solve_path, "current.jpg")
-    with open(fn, "wb") as f:
-        f.write(frame)
-    return send_file(fn, as_attachment=True)
+        fn = os.path.join(solve_path, "current.jpg")
+        cv2.imwrite(fn, frame)
+
+        return send_file(fn, as_attachment=True)
 
 @app.route('/zip', methods=['GET'])
 def zipImages():
