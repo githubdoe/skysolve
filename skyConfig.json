@@ -1,6 +1,6 @@
 {
     "camera": {
-        "shutter": ".9",
+        "shutter": ".02",
         "ISO": "800",
         "frame": "800x600",
         "format": "jpeg"
@@ -41,16 +41,16 @@
         "25FL": {
             "name": "25FL",
             "solver_type": "solverAstromet",
-            "maxTime": 10.0,
-            "solveSigma": 5,
+            "maxTime": 15.0,
+            "solveSigma": 4,
             "solveDepth": 20,
             "UselastDelta": false,
             "FieldWidthMode": "FieldWidthModeaPP",
             "FieldWidthModeaPP": "checked",
             "FieldWidthModeField": "",
             "FieldWidthModeOther": "",
-            "aPPLoValue": "25",
-            "aPPHiValue": "66",
+            "aPPLoValue": "50",
+            "aPPHiValue": "102",
             "fieldLoValue": "13",
             "fieldHiValue": "16",
             "searchRadius": 10.0,

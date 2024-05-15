@@ -270,7 +270,10 @@
                     <button title="Get Next image in history"
                         type="button" class="btn nightColor" style="display: none;" id="stepNext">Next Image</button>
                     <button title="Jump to specified history file number"
-                        type="button" class="btn nightColor" data-toggle="collapse" data-target="#historyNdx" style="display: inline;" id="historyIndex">#</button>
+                        type="button" class="btn nightColor" data-toggle="collapse" data-target="#historyNdx" id="historyIndex">#</button>
+                    <button title="Delete history file"
+                        type="button" class="btn nightColor" onClick="confirmDeleteFile()" style="display: none;" id="deleteFile">Delete</button>
+                    
                     <button title="Solve the current history image"
                         type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig" id="cameraParms">camera params</button>
@@ -280,15 +283,6 @@
                     <!-- Trigger/Open The solver params -->
                     <button id="openSolverConfig" class="btn nightColor">Solver Params</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#helpButtons">help</button>
-                    
-                    <script>
-                    var swapScreen = () => {
-                        window.location.href = "/StarHistory";
-                      }
-                    </script>
-
-                    <button class="btn nightColor" onclick="swapScreen()" id="ShowQualityScreen">History</button>
-
                     <buton type=""button" class = "btn nightColor" id="showMore">...</buton>
 
                 </div>

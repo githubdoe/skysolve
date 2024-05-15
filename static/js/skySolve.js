@@ -242,6 +242,8 @@ $(document).ready(function(){
             }
         });
     }
+
+    
     $('#solveProfile').change(
         function() {
             console.log("this", this.value)
@@ -414,15 +416,18 @@ $(document).ready(function(){
         var x = document.getElementById("stepNext");
         var y = document.getElementById("stepPrev");
         var z = document.getElementById("solveThis");
+        var zz = document.getElementById("deleteFile");
 
         if (show) {
             x.style.display = "inline";
             y.style.display = "inline";
             z.style.display = "inline";
+            zz.style.display = "inline";
 
         }  else {
             x.style.display = "none";
             y.style.display = "none";
+            z.style.display = "none";
             z.style.display = "none";
 
         }              
@@ -575,6 +580,19 @@ $(document).ready(function(){
 
 
 });
+function confirmDeleteFile() {
+    let text = "Delete this file?";
+    if (confirm(text) == true) {
+        $.ajax({
+            url: "/sqDelete",
+            method: 'POST',
+            success: function(result) {
+                document.getElementById("statusField").innerHTML = result;
+            }
+        });
+    } 
+
+  }
 
 
 

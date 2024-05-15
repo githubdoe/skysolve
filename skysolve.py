@@ -941,7 +941,11 @@ def skyStatus():
     if setTimeDate:
         setTimeDate = False
         t = float(request.form['time'])/1000
-        #time.clock_settime(time.CLOCK_REALTIME, t)  #fixme  set the real time clock
+        try:
+            time.clock_settime(time.CLOCK_REALTIME, t)  
+        except BaseException as e:
+            print("could not set clock", e )
+            
     resp = copy.deepcopy(skyStatusText)
     skyStatusText = ''
     return Response(resp)
@@ -1218,30 +1222,6 @@ def processImageX():
     return(html)
 
 
-
-
-
-def returnImage():
-    global testNdx, solveThisImage
-    setupImageFromFile()
-    filename = 'quality'+datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpeg") 
-    copyfile(solveThisImage, os.path.join(solve_path, filename))
-    out = '<img style = "filter:brightness(500%%)" src="%s" width="50%%">'%('./static/'+filename)
-    print("file name",out)
-    from PIL import Image, ExifTags
-
-    img = Image.open('./static/' + filename)
-    img_exif = img._getexif()
-
-    for key, val in img_exif.items():
-        if key in ExifTags.TAGS:
-            if 'ExposureTime' in ExifTags.TAGS[key]:
-                print('EXP  ',f'{ExifTags.TAGS[key]}:{val[0]/val[1]}')
-                break
-
-    sendStatus(out)
-    return Response('%d %s'%(testNdx, solveThisImage))
-
 @app.route('/sqDelete', methods=['POST'])
 def deletecurrentHistoryImage():
     global testNdx, testFiles, state
@@ -1249,27 +1229,13 @@ def deletecurrentHistoryImage():
         return('%d %s'%('Replay Images must be selected first', ' '))
     fn = testFiles[testNdx]
     testFiles.remove(fn)
+    print("deleting history file- ", testNdx, fn)
     os.remove(fn)
-    if testNdx > len(testFiles):
-        testNdx -= 1
+
+    setupImageFromFile()
     
-    return returnImage()
+    return Response("deleted");
 
-@app.route('/sqPrevious', methods=['POST'])
-def sqPrevious():
-    global testNdx
-    testNdx -= 1
-    if testNdx < 0:
-        testNdx = len(testFiles)-1
-    return returnImage()
-
-@app.route('/sqNext', methods=['POST'])
-def sqNext():
-    global testNdx
-    testNdx += 1
-    if testNdx >= len(testFiles):
-        testNdx = 0
-    return returnImage()
 
 @app.route('/nextImage', methods=['POST'])
 def nextImagex():
