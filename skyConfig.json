@@ -1,6 +1,6 @@
 {
     "camera": {
-        "shutter": ".02",
+        "shutter": ".05",
         "ISO": "800",
         "frame": "800x600",
         "format": "jpeg"

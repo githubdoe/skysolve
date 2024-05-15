@@ -508,13 +508,6 @@
                         {% endfor %}
 
                 </select>
-                <label class=" text-danger" style="margin-left:20px;" for="formatSelect">Image Format:</label>
-                <select class=" form-control-sm nightColor"  id="formatSelect">
-                        {% for datum in skyFormatData %}
-                        <option class="bg_dark text-warning" value={{ datum}} >{{ datum }}</option> 
-                        {% endfor %}
-
-                </select>
             </div>
 
                 <div class = "grid">
@@ -567,7 +560,7 @@
                                 <Label for="profile">Profile</Label>
                                 <select class=" form-control-sm nightColor" name="currentProfile" id="solveProfile">
                                     {% for key, val in profiles.items() %}
-                                <option class="bg_dark text-warning" value={{ key}} </option>>{{ key }}</option> 
+                                <option class="bg_dark text-warning" value={{ key}} >{{ key }}</option> 
                                 {% endfor %}
                 
                                 </select> 
