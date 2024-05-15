@@ -486,7 +486,7 @@
                 <label class=" text-danger" for="shutterSelect" >Shutter Speed:</label>
                 <select class=" form-control-sm nightColor"  id="shutterSelect">
                     {% for datum in shutterData %}
-                  <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                  <option class="bg_dark text-warning" value={{ datum}} >{{ datum }}</option> 
                    {% endfor %}
 
                 </select> 
@@ -496,7 +496,7 @@
                 <select class=" form-control-sm nightColor"  id="ISOSelect">
 
                     {% for datum in skyIsoData %}
-                    <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                    <option class="bg_dark text-warning" value={{ datum}} >{{ datum }} </option> 
                     {% endfor %}
     
                 </select> 
@@ -504,14 +504,14 @@
                 <label class=" text-danger" style="margin-left:20px;" for="frameSelect">Image Resolution:</label>
                 <select class=" form-control-sm nightColor"  id="frameSelect">
                         {% for datum in skyFrameData %}
-                        <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                        <option class="bg_dark text-warning" value={{ datum}}>{{ datum }}</option> 
                         {% endfor %}
 
                 </select>
                 <label class=" text-danger" style="margin-left:20px;" for="formatSelect">Image Format:</label>
                 <select class=" form-control-sm nightColor"  id="formatSelect">
                         {% for datum in skyFormatData %}
-                        <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                        <option class="bg_dark text-warning" value={{ datum}} >{{ datum }}</option> 
                         {% endfor %}
 
                 </select>
