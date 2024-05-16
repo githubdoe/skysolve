@@ -312,6 +312,7 @@ def solveThread():
     # save the image to be solved in the file system  for the gen() routine to give to the client browser
     def saveImage(frame):
         global doDebug
+        #print("saving image using frame", solve_path)
         try:
             cv2.imwrite(os.path.join(solve_path, 'cap.jpg'),frame)
             return True
@@ -392,6 +393,8 @@ def solveThread():
                     time.sleep(1)
                 #print('got image')
                 frame = solveImage
+                cv2.imwrite(os.path.join(solve_path, imageName), solveImage)
+                
 
             except Exception as e:
                 cameraTry += 1
@@ -414,7 +417,7 @@ def solveThread():
                     if doDebug:
                         logging.error("empty frame after 10 retries")
                     debugLastState = "frame was none after 10 retries"
-                    saveImage(makeDeadImage("camera died. Restarting"))
+                    # saveImage(makeDeadImage("camera died. Restarting"))
                     print("camera died\nRestarting" )
                     camera_Died = True
                 continue
@@ -434,12 +437,10 @@ def solveThread():
             solveLog.append(skyStatusText + '\n')
             testNdx += 1
 
-            #print ("image", testNdx, fn)
+            print ("image in auto playback  ", testNdx, fn)
+     
+            copyfile(fn, os.path.join(solve_path, imageName))
 
-            with open(fn, 'rb') as infile:
-                frame = infile.read()
-
-        saveImage(frame)
         #debug to fake camera image with a real star image
         #copyfile("static/history/11_01_22_23_47_15.jpeg", os.path.join(solve_path, imageName))
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK :
@@ -466,21 +467,7 @@ def solveThread():
 
             continue
 
-        # else measaure contrast for focus bar
-        try:
-            img = Image.open(os.path.join(solve_path, imageName)).convert("L")
-            imgarr = np.array(img)
-            avg = imgarr.mean()
-            imax = imgarr.max()
-            if avg == 0:
-                avg = 1
-
-            contrast = (imax - avg)/avg
-
-            focusStd = f"{contrast:.2f}"
-
-        except Exception as e:
-            print(e)
+        
 
 
 solveT = None
@@ -586,7 +573,7 @@ def solve(fn, parms=[]):
                 stopTime = datetime.now()
                 duration = stopTime - startTime
                 #print ('duration', duration)
-                skyStatusText = skyStatusText + " solved "+str(duration)+'secs'
+                skyStatusText = skyStatusText + " solved. "+str(duration)+'secs'
             if stdoutdata and skyConfig['observing']['verbose']:
                 solveLog.append(stdoutdata)
                 print("stdout", str(stdoutdata))
