@@ -350,7 +350,7 @@ def solveThread():
             print('solving skyStatus', skyStatusText, solveThisImage)
             copyfile(solveThisImage, os.path.join(solve_path, imageName))
             skyStatusText = 'Solving'
-            print("solving", solveThisImage)
+            #print("solving", solveThisImage)
             if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
                 verboseSolveText = ""
                 s = tetraSolve(os.path.join(solve_path, imageName))
@@ -482,8 +482,10 @@ if skyConfig['solver']['startupSolveing']:
 
 def solve(fn, parms=[]):
     global doDebug, debugLastState
-    print("solving" )
+    found = ''
+
     if doDebug:
+        print("solving" )
         logging.warning("solving function")
     debugLastState = 'solving'
     global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, solveStatus,\
@@ -530,7 +532,7 @@ def solve(fn, parms=[]):
     cmd = ["solve-field", fn, "--depth", str(profile['solveDepth']), "--sigma", str(profile['solveSigma']),
            '--overwrite'] + parms
 
-    print("\n\nsolving ", cmd)
+    #print("\n\nsolving ", cmd)
     if skyConfig['observing']['verbose']:
         solveLog.append(' '.join(cmd) + '\n')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -542,7 +544,7 @@ def solve(fn, parms=[]):
     ra = 0
     dec = 0
     solveLog.append("solving:\n")
-    skyStatusText = skyStatusText + " solving"
+    #skyStatusText = skyStatusText + " solving"
     lastmessage = ''
     while not p.poll():
         stdoutdata = p.stdout.readline().decode(encoding='UTF-8')
@@ -551,8 +553,10 @@ def solve(fn, parms=[]):
                 continue
             lastmessage = stdoutdata
             if 'simplexy: found' in stdoutdata:
+                found = stdoutdata
+
                 skyStatusText = stdoutdata
-                print("stdoutdata", stdoutdata)
+                #print("stdoutdata", stdoutdata)
             elif stdoutdata.startswith('Field center: (RA,Dec) = ('):
                 solved = stdoutdata
                 fields = solved.split()[-3:-1]
@@ -573,30 +577,33 @@ def solve(fn, parms=[]):
                 stopTime = datetime.now()
                 duration = stopTime - startTime
                 #print ('duration', duration)
-                skyStatusText = skyStatusText + " solved. "+str(duration)+'secs'
+                skyStatusText = found + " solved. "+str(duration)+'secs'
             if stdoutdata and skyConfig['observing']['verbose']:
                 solveLog.append(stdoutdata)
-                print("stdout", str(stdoutdata))
-                skyStatusText = skyStatusText + '.'
+                #print("stdout", str(stdoutdata))
+                #skyStatusText = skyStatusText + '.'
                 if stdoutdata.startswith("Field 1: solved with"):
-                    ndx = stdoutdata.split("index-")[-1].strip()
-                    print("index", ndx, stdoutdata )
-                    usedIndexes[ndx] = usedIndexes.get(ndx, 0)+1
-                    pp = pprint.pformat(usedIndexes)
-                    print("Used indexes", pp )
-                    solveLog.append('used indexes ' + pp + '\n')
+                    if doDebug:
+                        ndx = stdoutdata.split("index-")[-1].strip()
+                        print("index", ndx, stdoutdata )
+                        usedIndexes[ndx] = usedIndexes.get(ndx, 0)+1
+                        pp = pprint.pformat(usedIndexes)
+                        print("Used indexes", pp )
+                        solveLog.append('used indexes ' + pp + '\n')
 
-                elif stdoutdata.startswith('Field size'):
-                    print("Field size", stdoutdata )
-                    solveLog.append(stdoutdata)
-                    solveStatus += (". " + stdoutdata.split(":")[1].rstrip())
-                elif stdoutdata.find('pixel scale') > 0:
-                    computedPPa = stdoutdata.split("scale ")[1].rstrip()
-                elif 'The star' in stdoutdata:
-                    stdoutdata = stdoutdata.replace(')', '')
-                    con = stdoutdata[-4:-1]
-                    if con not in starNames:
-                        starNames[con] = 1
+                elif doDebug:
+                    if stdoutdata.startswith('Field size'):
+                        print("Field size", stdoutdata )
+                        solveLog.append(stdoutdata)
+                        #solveStatus = found
+                    elif stdoutdata.find('pixel scale') > 0:
+                        computedPPa = stdoutdata.split("scale ")[1].rstrip()
+                elif skyConfig['observing']['verbose']:
+                    if 'The star' in stdoutdata:
+                        stdoutdata = stdoutdata.replace(')', '')
+                        con = stdoutdata[-4:-1]
+                        if con not in starNames:
+                            starNames[con] = 1
 
         else:
             break
@@ -622,7 +629,7 @@ def solve(fn, parms=[]):
             stdoutdata = p2.stdout.readline().decode(encoding='UTF-8')
             if stdoutdata:
                 stars.append(stdoutdata)
-                print(stdoutdata)
+                #print(stdoutdata)
 
                 if 'The star' in stdoutdata:
                     stdoutdata = stdoutdata.replace(')', '')
@@ -681,7 +688,7 @@ def solve(fn, parms=[]):
             logging.warning(verboseSolveText)
             logging.warning(radec)
     if not solved:
-        skyStatusText = skyStatusText + " Failed"
+        skyStatusText = skyStatusText + " Failed "
         ra = 0
         solveLog.append("Failed\n")
     solving = False
@@ -866,8 +873,7 @@ def setShutter(value):
 
     skyCam.setShutter(float(value))
     skyConfig['camera']['shutter'] = value
-    delayedStatus(2, "Setting shutter to "+str(value) +
-                  " may take about 10 seconds.")
+
     saveConfig()
 
     return Response(status=204)

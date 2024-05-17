@@ -1,7 +1,7 @@
 {
     "camera": {
-        "shutter": ".01",
-        "ISO": "800",
+        "shutter": ".02",
+        "ISO": "1000",
         "frame": "800x600",
         "format": "jpeg"
     },
@@ -41,8 +41,8 @@
         "25FL": {
             "name": "25FL",
             "solver_type": "solverAstromet",
-            "maxTime": 8.0,
-            "solveSigma": 4,
+            "maxTime": 20.0,
+            "solveSigma": 3,
             "solveDepth": 20,
             "UselastDelta": false,
             "FieldWidthMode": "FieldWidthModeOther",
