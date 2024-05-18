@@ -68,7 +68,7 @@ sudo mkdir skysolve
 sudo chmod 777 skkysolve
 cd skysolve
 sudo wget https://github.com/githubdoe/skysolve/archive/newCamLib.tar.gz
-sudo tar -xzvf main.tar.gz --strip-components=1
+sudo tar -xzvf newCamLib.tar.gz --strip-components=1
 ```
 4. Continue at step 7 of the ***Legacy*** instructions.
    
