@@ -46,9 +46,18 @@ If the "show stars button is dimmed out" you can enable it by pressing the "Solv
 ## Install
 
 When you are ready, you can follow these steps to install it on the Raspberry pi:
-Note: Do not change the default username on the pi from pi to anything else.  There is code that depends upon there being a using named lower case "pi".
 
+>[!NOTE]
+>Do not change the default username on the pi from pi to anything else.  There is code that depends upon there being a using named lower case "pi".`
 
+>[!IMPORTANT]
+>There are two versions of the code.
+>1. ***Legacy*** - Works only on RPI models 4 and earlier and only with 32 bit legacy app.
+>2. ***New camera library*** - To work with the newer and 64 bit RPI operating systems and all RPI models.
+
+### Process to use the ***New camera library*** version
+
+### Process to use the older RPI ***legacy*** system (for new installations use the previous instructions instead.)
 1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
       from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Note that the software to download is not the most recent version but an older 32 bit version.
       It can be found under Raspberry Pi OS (other) then Raspberry Pi OS (Legacy)
