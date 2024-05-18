@@ -56,6 +56,22 @@ When you are ready, you can follow these steps to install it on the Raspberry pi
 >2. ***New camera library*** - To work with the newer and 64 bit RPI operating systems and all RPI models.
 
 ### Process to use the ***New camera library*** version
+1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
+      from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Select the RPI model you have and then select the most recent 64 bit version of the operating system. Usually the first in the list.
+      
+      Download this software onto a computer that can write SD cards.  I use a Windows laptop.
+2. Follow steps 2 thru 5 in the ***Legacy*** version below.
+
+3. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type or copy and paste the following commands into Terminal to accomplish this goal.
+```bash
+sudo mkdir skysolve
+sudo chmod 777 skkysolve
+cd skysolve
+sudo wget https://github.com/githubdoe/skysolve/archive/newCamLib.tar.gz
+sudo tar -xzvf main.tar.gz --strip-components=1
+```
+4. Continue at step 7 of the ***Legacy*** instructions.
+   
 
 ### Process to use the older RPI ***legacy*** system (for new installations use the previous instructions instead.)
 1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
