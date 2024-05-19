@@ -403,7 +403,7 @@ fi
 
 #install python scipy
 echo "installing extra python modules"
-sudo apt install scipy
+sudo apt install python3-scipy
 sudo apt install python3-matplotlib
 echo "This next step may take 10 to 15 minutes."
 sudo apt install python3-numpy
