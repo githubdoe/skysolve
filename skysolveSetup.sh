@@ -273,7 +273,15 @@ then
 fi
 fi
 
-
+#install python scipy
+echo "installing extra python modules"
+sudo apt --fix-broken install
+sudo apt install python3-scipy
+sudo apt install python3-matplotlib
+echo "This next step may take 10 to 15 minutes."
+sudo apt install python3-numpy
+echo "installing opencv"
+sudo apt install python3-opencv
 # Installs the Astrometry.net package for supporting offline plate solves.  
 display "Installing Astrometry.net"
 sudo apt -y install astrometry.net
@@ -292,15 +300,7 @@ sudo apt -y install astrometry.net
 #	modify it under the terms of the GNU General Public
 #	License as published by the Free Software Foundation; either
 #	version 2 of the License, or (at your option) any later version.
-#install python scipy
-echo "installing extra python modules"
-sudo apt --fix-broken install
-sudo apt install python3-scipy
-sudo apt install python3-matplotlib
-echo "This next step may take 10 to 15 minutes."
-sudo apt install python3-numpy
-echo "installing opencv"
-sudo apt install python3-opencv
+
 read -p "do you want to install astrometry index files? (do at least once)" answer
 if [ "$answer" == "y" ]
     then
