@@ -408,7 +408,12 @@ fi
     sudo cp /home/pi/skysolve/skysolve.service /etc/systemd/system/skysolve.service
     sudo systemctl enable skysolve.service
 
+read -p "Is this an RPI 5 or later (y/n)? " pi5
 
+if [ "$pi5" != "y" ]
+then
+    sudo apt install python3-rpi-lgpio
+fi
 
 echo "Your requested installations are complete."
 display "Script Execution Complete.  Your Raspberry should now be ready to use for SkySolve.  You should restart your Pi."
