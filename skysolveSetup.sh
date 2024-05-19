@@ -410,7 +410,7 @@ fi
 
 read -p "Is this an RPI 5 or later (y/n)? " pi5
 
-if [ "$pi5" != "y" ]
+if [ "$pi5" == "y" ]
 then
     sudo apt install python3-rpi-lgpio
 fi
