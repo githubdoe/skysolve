@@ -405,7 +405,7 @@ fi
 sudo apt-get install scipy
 sudo apt install python3-matplotlib
 echo "This next step may take 10 to 15 minutes."
-sudo apt-get install numpy
+sudo apt-get install python3-numpy
 echo "installing opencv"
 sudo apt-get install python3-opencv
 echo "Your requested installations are complete."
