@@ -403,12 +403,11 @@ fi
 
 #install python scipy
 echo "installing extra python modules"
-sudo apt --fix-broken install
-sudo apt-get install scipy
+sudo apt install scipy
 sudo apt install python3-matplotlib
 echo "This next step may take 10 to 15 minutes."
-sudo apt-get install python3-numpy
+sudo apt install python3-numpy
 echo "installing opencv"
-sudo apt-get install python3-opencv
+sudo apt install python3-opencv
 echo "Your requested installations are complete."
 display "Script Execution Complete.  Your Raspberry should now be ready to use for SkySolve.  You should restart your Pi."
