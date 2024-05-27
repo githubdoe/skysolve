@@ -65,7 +65,7 @@ When you are ready, you can follow these steps to install it on the Raspberry pi
 3. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type or copy and paste the following commands into Terminal to accomplish this goal.
 ```bash
 sudo mkdir skysolve
-sudo chmod 777 skkysolve
+sudo chmod 777 skysolve
 cd skysolve
 sudo wget https://github.com/githubdoe/skysolve/archive/newCamLib.tar.gz
 sudo tar -xzvf newCamLib.tar.gz --strip-components=1
