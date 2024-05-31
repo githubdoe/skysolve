@@ -4,7 +4,7 @@ See video for a quick introduction.  https://youtu.be/IewMli4AJLw
 stl files for the case and mount can be found on Thingiverse at https://www.thingiverse.com/thing:4920959 and https://www.thingiverse.com/thing:5594916
 
 Uses RaspberryPi and plate solving to take images of the night sky and identify the location of the image.
- It uses a Raspberry PI 4 with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SkySafari.  It continually takes images and solves them about every 1 to 10 seconds so that Skysafari can always show where the scope is pointing.
+ It uses a Raspberry PI 4B (4gb) with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SkySafari.  It continually takes images and solves them about every 1 to 10 seconds so that Skysafari can always show where the scope is pointing.
  
 Below is a screen shot of the application's browser interface showing an image of Ursa Major in the lower left.  THe status field displays the names of stars it found in the image.
  
@@ -46,9 +46,34 @@ If the "show stars button is dimmed out" you can enable it by pressing the "Solv
 ## Install
 
 When you are ready, you can follow these steps to install it on the Raspberry pi:
-Note: Do not change the default username on the pi from pi to anything else.  There is code that depends upon there being a using named lower case "pi".
 
+>[!NOTE]
+>Do not change the default username on the pi from pi to anything else.  There is code that depends upon there being a using named lower case "pi".`
 
+>[!IMPORTANT]
+>There are two versions of the code.
+>1. ***Legacy*** - Works only on RPI models 4 and earlier and only with 32 bit legacy app.
+>2. ***New camera library*** - To work with the newer and 64 bit RPI operating systems and all RPI models.
+
+### Process to use the ***New camera library*** version
+1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
+      from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Select the RPI model you have and then select the most recent 64 bit version of the operating system. Usually the first in the list.
+      
+      Download this software onto a computer that can write SD cards.  I use a Windows laptop.
+2. Follow steps 2 thru 5 in the ***Legacy*** version below.
+
+3. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type or copy and paste the following commands into Terminal to accomplish this goal.
+```bash
+sudo mkdir skysolve
+sudo chmod 777 skysolve
+cd skysolve
+sudo wget https://github.com/githubdoe/skysolve/archive/newCamLib.tar.gz
+sudo tar -xzvf newCamLib.tar.gz --strip-components=1
+```
+4. Continue at step 7 of the ***Legacy*** instructions.
+   
+
+### Process to use the older RPI ***legacy*** system (for new installations use the previous instructions instead.)
 1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
       from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Note that the software to download is not the most recent version but an older 32 bit version.
       It can be found under Raspberry Pi OS (other) then Raspberry Pi OS (Legacy)
@@ -79,8 +104,12 @@ Note: Do not change the default username on the pi from pi to anything else.  Th
   	* Once logged into the RPI then type sudo raspi-config.
   	* Select 3. Interface Options then P3 VNC and enable it.  Then select yes and then OK.  Now VNC should be enabled.
 	* Chose display options and select resolution to be 1280 x 720
-	* Optionally enable the Raspberrypi camera now.  From Interface Options select the enable camera option.  Then reboot.
-  Back on the windows PC start the VNC viewer and connect to the IP address of the Raspberry PI.
+	* Optionally enable the Raspberrypi camera now.  From Interface Options select the enable camera option. 
+  	* UPDATE: November 2023:
+	There is another step needed to be done while still in the raspi-config.  That is to set all localization options to your local.
+	
+ 	Then reboot.
+  	Back on the windows PC start the VNC viewer and connect to the IP address of the Raspberry PI.
   
 
 
