@@ -187,7 +187,7 @@ fi
 
 display "Setting up hot spot"
 
-if [ -d AccessPopup.tar.gz ] 
+if [! -f AccessPopup.tar.gz ] 
 then
     display "setup networking hotpot"
     curl "https://www.raspberryconnect.com/images/scripts/AccessPopup.tar.gz" -o AccessPopup.tar.gz
