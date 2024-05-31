@@ -40,6 +40,12 @@ print('user', getpass.getuser())
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(7, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 initGPIO7 = GPIO.input(7)
+if ( not initGPIO7):
+    try:
+        os.system('sudo accesspopup -a')
+    except BaseException as e:
+        print('could not switch to access point')
+    
 print("gpio", initGPIO7)
 try:
     os.system('systemctl restart encodertoSkySafari.service ')
