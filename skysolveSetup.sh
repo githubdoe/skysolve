@@ -2,11 +2,13 @@
 #
 #   Installs files needed for skySolve program  Script based in part on
 #	AstroRaspbianPi Raspberry Pi Raspbian KStars/INDI Configuration Script
-#﻿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
+#ï»¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
 #	This script is free software; you can redistribute it and/or
 #	modify it under the terms of the GNU General Public
 #	License as published by the Free Software Foundation; either
 #	version 2 of the License, or (at your option) any later version.
+#Text Format
+
 
 if [ "$(whoami)" != "root" ]; then
 	echo "Please run this script with sudo due to the fact that it must do a number of sudo tasks.  Exiting now."
@@ -19,6 +21,11 @@ else
 fi
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+YEL='\e[38;2;255;255;0m'
+GRE='\e[38;0;255;0;0m'
+DEF='\e[m'
+BOL='\e[1m'
+
 
 function display
 {
@@ -47,10 +54,11 @@ function checkForConnection
 		fi
 }
 
-display "Welcome to the SKySolve Configuration Script."
 
-display "This will update, install and configure your Raspberry Pi 4 to work with SkySolve. Be sure to read the script first to see what it does and to customize it."
 
+display "This will update, install and configure your Raspberry Pi to work with SkySolve. Be sure to read the script first to see what it does and to customize it."
+echo -e $YEL"Welcome to the SKySolve Configuration Script."$DEF
+echo It can update the operating system, install the Field hot spot, and the plate solve code.
 read -p "Are you ready to proceed (y/n)? " proceed
 
 if [ "$proceed" != "y" ]
@@ -133,7 +141,7 @@ then
 	sed -i "s/#autologin-user-timeout=0/autologin-user-timeout=0/g" /etc/lightdm/lightdm.conf
 fi
 
-display "Setting HDMI settings in /boot/config.txt."
+
 
 # This pretends an HDMI display is connected at all times, otherwise, the pi might shut off HDMI
 # So that when you go to plug in an HDMI connector to diagnose a problem, it doesn't work
@@ -176,67 +184,71 @@ if [ -z "$(grep 'xserver-command=X -s 0 dpms' '/etc/lightdm/lightdm.conf')" ]
 then
 	sed -i "/\[Seat:\*\]/ a xserver-command=X -s 0 dpms" /etc/lightdm/lightdm.conf
 fi
-display "setup networking hotpot"
+
+display "Setting up hot spot"
+
+if [ -d AccessPopup.tar.gz ] 
+then
+    display "setup networking hotpot"
+    curl "https://www.raspberryconnect.com/images/scripts/AccessPopup.tar.gz" -o AccessPopup.tar.gz
+    tar -xvf ./AccessPopup.tar.gz
+
+fi
+# allow change of hot spot ap ssid name and password change
+ap_ssid_change()
+{   script_path="/usr/bin/"
+    scriptname="accesspopup"
+	if [ -f "$script_path$scriptname" ] >/dev/null 2>&1; then 
+		echo -e "The current ssid and password for the Field hot spot access point are:"
+		ss="$( grep -F 'ap_ssid=' $script_path$scriptname )"
+		echo "SSID:${ss:8}"
+		pw="$( grep -F 'ap_pw=' $script_path$scriptname )"
+		echo "Password:${pw:6}"
+		prof="$( grep -F 'ap_profile_name=' $script_path$scriptname )"
+		echo -e $YEL"Enter the new SSID"$DEF
+		echo "Press enter to keep the existing SSID"
+		read newss
+		if [ ! -z "$newss" ]; then
+			sed -i "s/ap_ssid=.*/ap_ssid='$newss'/" "$script_path$scriptname"
+		fi
+		echo -e $YEL"Enter the new Password"$DEF
+		echo "The password must be at least 8 characters"
+		echo "Press enter to keep the existing Pasword"
+		read newpw
+		if [ ! -z "Snewpw" ] && [ ${#newpw} -ge 8 ]; then
+			sed -i "s/ap_pw=.*/ap_pw='$newpw'/" "$script_path$scriptname"
+		fi
+		echo "The Access Points SSID and Password are:"
+		ss="$( grep -F 'ap_ssid=' $script_path$scriptname )"
+		pw="$( grep -F 'ap_pw=' $script_path$scriptname )"
+		echo "SSID:${ss:8}"
+		echo "Password: ${pw:6}"
+		#remove AP profile
+		pro="$(nmcli -t -f NAME con show | grep ${prof:17:-1} )"
+		if [ ! -z "$pro" ]; then
+			nmcli con delete "$pro" >/dev/null 2>&1
+			nmcli con reload
+		fi
+	else
+		echo "$scriptname is not available."
+		echo "Please install the script first"
+	fi
+}
 # This will install the autohotspot files so that the pi can connect to local wifi or be a hotspot.
-./Autohotspot/autohotspot-setup.sh 1
+echo -e $YEL"This will install the Field hotspot wifi into the PI"$DEF
+echo "It will ask you for options."
+echo "The two options keys to press are 1 - install hot spot and then 9 - to exit"
+echo "You can also setup you local/Home wifi by pressing option 5 before you exit with 9."
+echo
+echo -e $YEL"Press any key to start the setup."$DEF
+read   
 
-display "Making Utilities Folder with script shortcuts for the Desktop"
+cd AccessPopup
+sudo ./installconfig.sh
+ap_ssid_change
+cd ..
 
-# This will make a folder on the desktop for the launchers if it doesn't exist already
-if [ ! -d "$USERHOME/Desktop/utilities" ]
-then
-	mkdir -p $USERHOME/Desktop/utilities
-	sudo chown $SUDO_USER:$SUDO_USER $USERHOME/Desktop/utilities
-fi
-
-
-
-
-# This will create a shortcut on the desktop in the utilities folder for Installing Astrometry Index Files.
-##################
-sudo cat > $USERHOME/Desktop/utilities/InstallAstrometryIndexFiles.desktop <<- EOF
-#!/usr/bin/env xdg-open
-[Desktop Entry]
-Version=1.0
-Type=Application
-Terminal=true
-Icon[en_US]=mate-preferences-desktop-display
-Exec=sudo $(echo $DIR)/astrometryIndexInstaller.sh
-Name[en_US]=Install Astrometry Index Files
-Name=Install Astrometry Index Files
-Icon=$(echo $DIR)/icons/mate-preferences-desktop-display.svg
-EOF
-##################
-sudo chmod +x $USERHOME/Desktop/utilities/InstallAstrometryIndexFiles.desktop
-sudo chown $SUDO_USER:$SUDO_USER $USERHOME/Desktop/utilities/InstallAstrometryIndexFiles.desktop
-
-# This will create a shortcut on the desktop folder for Updating the System.
-##################
-sudo cat > $USERHOME/Desktop/utilities/systemUpdater.desktop <<- EOF
-#!/usr/bin/env xdg-open
-[Desktop Entry]
-Version=1.0
-Type=Application
-Terminal=true
-Icon[en_US]=system-software-update
-Exec=sudo $(echo $DIR)/systemUpdater.sh
-Name[en_US]=Software Update
-Name=Software Update
-Icon=$(echo $DIR)/icons/system-software-update.svg
-EOF
-##################
-sudo chmod +x $USERHOME/Desktop/utilities/systemUpdater.desktop
-sudo chown $SUDO_USER:$SUDO_USER $USERHOME/Desktop/utilities/systemUpdater.desktop
-
-
-# Adds yourself to the user group of who can use samba, but checks first if you are already in the list
-if [ -z "$(sudo pdbedit -L | grep $SUDO_USER)" ]
-then
-	sudo smbpasswd -a $SUDO_USER
-	sudo adduser $SUDO_USER sambashare
-fi
-fi
-
+display "setting up pyhton libraries"
 #install python scipy
 echo "installing extra python modules"
 sudo apt --fix-broken install
@@ -259,7 +271,7 @@ sudo apt -y install astrometry.net
 #!/bin/bash
 
 #	AstroPi3 Astrometry Index File Installer
-#﻿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
+#ï»¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
 #	This script is free software; you can redistribute it and/or
 #	modify it under the terms of the GNU General Public
 #	License as published by the Free Software Foundation; either
@@ -361,6 +373,7 @@ if [ "$answer" == "y" ]
     sudo rm *.deb
 fi
 
+display "Enabling skysolve and Skysafari interface"
 
 #setup auto run of encoder and skysolve at boot.
 
@@ -377,7 +390,8 @@ read -p "Is this an RPI 5 or later (y/n)? " pi5
 if [ "$pi5" == "y" ]
 then
     sudo apt install python3-rpi-lgpio
+    apt --fix-broken install
 fi
 
-echo "Your requested installations are complete."
-display "Script Execution Complete.  Your Raspberry should now be ready to use for SkySolve.  You should restart your Pi."
+echo -e $YEL"Your requested installations are complete.You should restart your Pi by typing: sudo reboot"$DEF 
+display "Script Execution Complete.  Your Raspberry should now be ready to use for SkySolve."
