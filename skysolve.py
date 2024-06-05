@@ -678,8 +678,7 @@ def solve(fn, parms=[]):
                     saveimage = True
             if state is Mode.SOLVING and saveimage:
                 lastObs = radec
-                fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.") + \
-                    skyConfig['camera']['format']
+                fn = datetime.now().strftime("%m_%d_%y_%H_%M_%S.jpg")
                 copyfile(os.path.join(solve_path, imageName),
                          os.path.join(solve_path, 'history', fn))
 
