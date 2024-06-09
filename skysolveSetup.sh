@@ -2,7 +2,7 @@
 #
 #   Installs files needed for skySolve program  Script based in part on
 #	AstroRaspbianPi Raspberry Pi Raspbian KStars/INDI Configuration Script
-#ï»¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
+#Ã¯Â»Â¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
 #	This script is free software; you can redistribute it and/or
 #	modify it under the terms of the GNU General Public
 #	License as published by the Free Software Foundation; either
@@ -245,7 +245,13 @@ read
 
 cd AccessPopup
 sudo ./installconfig.sh
-ap_ssid_change
+
+read -p "Do you want to change the hot spot SSID (y/n)?" proceed
+
+if [ "$proceed" == "y" ]
+then
+    ap_ssid_change
+fi
 cd ..
 
 display "setting up pyhton libraries"
@@ -271,7 +277,7 @@ sudo apt -y install astrometry.net
 #!/bin/bash
 
 #	AstroPi3 Astrometry Index File Installer
-#ï»¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
+#Ã¯Â»Â¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
 #	This script is free software; you can redistribute it and/or
 #	modify it under the terms of the GNU General Public
 #	License as published by the Free Software Foundation; either
