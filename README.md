@@ -20,7 +20,7 @@ The RPI and the skysolve application can talk to both another computer as a web 
 
 There are two options for the network.   It can be your local WIFI network or the RPI can be the Hot Spot for it's own network that the other computers can connect to,  This is handy for when the Telescope is out of range of your local WIFI.  To begin with the setup process will be done with the RPI connected to your local WIFI.
 
-After setup if the RPI is booted out of range from the WIFI it knows then it will create it's own network that other computers can log into.  This will usually be the case when out on the observing field.  There is also an option to force the RPI to be it's own network (Hot Spot, Access point) even when already connected to the local WIFI.
+After setup if the RPI is booted out of range from the WIFI it knows then it will create it's own network that other computers can log into. It's IP address will be 192.168.50.5. This will usually be the case when out on the observing field.  There is also an option to force the RPI to be it's own network (Hot Spot, Access point) even when already connected to the local WIFI.
 
 ## Field/Home Switch
 	This is optional.   The software on startup will sense the state of this switch.   If in the Field position is will create a WIfII hot spot even if within range of a known WIFI router.   In the Home position it will nuot create the hot spot if it can see the known router but will if it does not see it.
