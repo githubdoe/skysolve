@@ -60,7 +60,7 @@ When you are ready, you can follow these steps to install it on the Raspberry pi
       from [Raspberry Pi org](https://www.raspberrypi.org/software/).  Select the RPI model you have and then select the most recent 64 bit version of the operating system. Usually the first in the list.
       
       Download this software onto a computer that can write SD cards.  I use a Windows laptop.
-2. Follow steps 2 thru 5 in the ***Legacy*** version below.
+2. Follow steps 2 thru 5 in the ***Legacy*** version below. But ignore the instruction  to set the resolution to 1280 x 720
 
 3. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type or copy and paste the following commands into Terminal to accomplish this goal.
 ```bash
