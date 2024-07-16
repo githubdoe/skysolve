@@ -61,8 +61,9 @@ When you are ready, you can follow these steps to install it on the Raspberry pi
       
       Download this software onto a computer that can write SD cards.  I use a Windows laptop.
 2. Follow steps 2 thru 5 in the ***Legacy*** version below. But ignore the instruction  to set the resolution to 1280 x 720
+2a. When running the setup script you will be asked to setup the hotspot.  That is where you can change the wifi network name that the hot spot will use.  The default name is AccessPopup. You can change it to something like skypi004.  Make the number different so it not the same as others at a star party.
 
-3. Using either you command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type or copy and paste the following commands into Terminal to accomplish this goal.
+4. Using either your command line connection to the RPI or VNC  Make a direcotry for skysolve then download the skysolve app from GIT Repo to your RPI and Open a Terminal Window.  You could type or copy and paste the following commands into Terminal to accomplish this goal.
 ```bash
 sudo mkdir skysolve
 sudo chmod 777 skysolve
