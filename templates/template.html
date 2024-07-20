@@ -270,7 +270,10 @@
                     <button title="Get Next image in history"
                         type="button" class="btn nightColor" style="display: none;" id="stepNext">Next Image</button>
                     <button title="Jump to specified history file number"
-                        type="button" class="btn nightColor" data-toggle="collapse" data-target="#historyNdx" style="display: inline;" id="historyIndex">#</button>
+                        type="button" class="btn nightColor" data-toggle="collapse" data-target="#historyNdx" id="historyIndex">#</button>
+                    <button title="Delete history file"
+                        type="button" class="btn nightColor" onClick="confirmDeleteFile()" style="display: none;" id="deleteFile">Delete</button>
+                    
                     <button title="Solve the current history image"
                         type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#skyConfig" id="cameraParms">camera params</button>
@@ -280,15 +283,6 @@
                     <!-- Trigger/Open The solver params -->
                     <button id="openSolverConfig" class="btn nightColor">Solver Params</button>
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#helpButtons">help</button>
-                    
-                    <script>
-                    var swapScreen = () => {
-                        window.location.href = "/StarHistory";
-                      }
-                    </script>
-
-                    <button class="btn nightColor" onclick="swapScreen()" id="ShowQualityScreen">History</button>
-
                     <buton type=""button" class = "btn nightColor" id="showMore">...</buton>
 
                 </div>
@@ -492,7 +486,7 @@
                 <label class=" text-danger" for="shutterSelect" >Shutter Speed:</label>
                 <select class=" form-control-sm nightColor"  id="shutterSelect">
                     {% for datum in shutterData %}
-                  <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                  <option class="bg_dark text-warning" value={{ datum}} >{{ datum }}</option> 
                    {% endfor %}
 
                 </select> 
@@ -502,7 +496,7 @@
                 <select class=" form-control-sm nightColor"  id="ISOSelect">
 
                     {% for datum in skyIsoData %}
-                    <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                    <option class="bg_dark text-warning" value={{ datum}} >{{ datum }} </option> 
                     {% endfor %}
     
                 </select> 
@@ -510,14 +504,7 @@
                 <label class=" text-danger" style="margin-left:20px;" for="frameSelect">Image Resolution:</label>
                 <select class=" form-control-sm nightColor"  id="frameSelect">
                         {% for datum in skyFrameData %}
-                        <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
-                        {% endfor %}
-
-                </select>
-                <label class=" text-danger" style="margin-left:20px;" for="formatSelect">Image Format:</label>
-                <select class=" form-control-sm nightColor"  id="formatSelect">
-                        {% for datum in skyFormatData %}
-                        <option class="bg_dark text-warning" value={{ datum}} </option>>{{ datum }}</option> 
+                        <option class="bg_dark text-warning" value={{ datum}}>{{ datum }}</option> 
                         {% endfor %}
 
                 </select>
@@ -525,8 +512,8 @@
 
                 <div class = "grid">
                     <div class="row ">
-                        <button type="button" class="btn  nightColor" onclick="increaseMagnification()">+</button>
-                        <button type="button" class="btn  nightColor" onclick="decreaseMagnification()">-</button>
+                        <button type="button" class="pl-5 btn  nightColor" onclick="increaseMagnification()">+++</button>
+                        <button type="button" class="btn  nightColor" onclick="decreaseMagnification()">---</button>
                         <button type="button" class="btn  nightColor" onclick="brighten()">Bright</button> 
                         <button type="button" class="btn  nightColor" onclick="brightNormal()"> norm</button> 
                         <button type="button" class="btn  nightColor" onclick="darken()">dark</button> 
@@ -573,7 +560,7 @@
                                 <Label for="profile">Profile</Label>
                                 <select class=" form-control-sm nightColor" name="currentProfile" id="solveProfile">
                                     {% for key, val in profiles.items() %}
-                                <option class="bg_dark text-warning" value={{ key}} </option>>{{ key }}</option> 
+                                <option class="bg_dark text-warning" value={{ key}} >{{ key }}</option> 
                                 {% endfor %}
                 
                                 </select> 
@@ -808,7 +795,7 @@
 
                 setIniFrame("{{cameraParms['frame'] }}");
 
-                setIniFormat("{{cameraParms['format']}}");
+
             });
             // Get the modal solve param config
             var solveParamsModal = document.getElementById("solveParamsModal");
@@ -985,7 +972,7 @@
                              if (data.includes('Failed')){
 
                                 beep(300);
-                            }else if (data.includes('solved') && !data.includes('sources')) {
+                            }else if (data.includes('solved.')) {
                                 beep(1840);
                             }
                         }
