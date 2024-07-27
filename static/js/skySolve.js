@@ -137,21 +137,9 @@ function setProfiles(profiles){
     sks.consts.profiles = x;
 
 }
-function setIniShutter( shutVal){
-    console.log("shutter value", shutVal)
-    sks.consts.shutter().val(shutVal);
-    var shutr = document.getElementById('setShutter');
-    shutr.value = shutVal;
-}
-function setIniISO( ISOVal){
-    console.log("ISO val", ISOVal)
-    sks.consts.ISO().val(ISOVal);
-    var iso2 = document.getElementById('setISO');
-    iso2.value = ISOVal;
-}
-function setIniFrame( frameVal){
-    sks.consts.frame().val(frameVal);
-}
+
+
+
 function setIniFormat(formatVal){
     sks.consts.format().val(formatVal);
 }
@@ -173,11 +161,7 @@ $(document).ready(function(){
         return false;
     });
 
-    var checkBox = document.getElementById("autoStatusCB");
-    console.log("checkBox", checkBox)
-    if (checkBox.checked == true) {
-        setTimeout(updateStatusField, 1000);
-    }
+
 
     var cb = document.getElementById('showStars')
     var btn = document.getElementById('ShowStars')

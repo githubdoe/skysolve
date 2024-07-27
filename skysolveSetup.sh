@@ -2,7 +2,7 @@
 #
 #   Installs files needed for skySolve program  Script based in part on
 #	AstroRaspbianPi Raspberry Pi Raspbian KStars/INDI Configuration Script
-#Ã¯Â»Â¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
+#ï»¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
 #	This script is free software; you can redistribute it and/or
 #	modify it under the terms of the GNU General Public
 #	License as published by the Free Software Foundation; either
@@ -245,13 +245,7 @@ read
 
 cd AccessPopup
 sudo ./installconfig.sh
-
-read -p "Do you want to change the hot spot SSID (y/n)?" proceed
-
-if [ "$proceed" == "y" ]
-then
-    ap_ssid_change
-fi
+ap_ssid_change
 cd ..
 
 display "setting up pyhton libraries"
@@ -264,6 +258,8 @@ echo "This next step may take 10 to 15 minutes."
 sudo apt install python3-numpy
 echo "installing opencv"
 sudo apt install python3-opencv
+sudo pip install --break-system-packages flask-sock
+
 # Installs the Astrometry.net package for supporting offline plate solves.  
 display "Installing Astrometry.net"
 sudo apt -y install astrometry.net
@@ -277,7 +273,7 @@ sudo apt -y install astrometry.net
 #!/bin/bash
 
 #	AstroPi3 Astrometry Index File Installer
-#Ã¯Â»Â¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
+#ï»¿  Copyright (C) 2018 Robert Lancaster <rlancaste@gmail.com>
 #	This script is free software; you can redistribute it and/or
 #	modify it under the terms of the GNU General Public
 #	License as published by the Free Software Foundation; either
@@ -391,12 +387,15 @@ display "Enabling skysolve and Skysafari interface"
     sudo cp /home/pi/skysolve/skysolve.service /etc/systemd/system/skysolve.service
     sudo systemctl enable skysolve.service
 
+
 read -p "Is this an RPI 5 or later (y/n)? " pi5
 
 if [ "$pi5" == "y" ]
 then
     sudo apt install python3-rpi-lgpio
     apt --fix-broken install
+
+
 fi
 
 echo -e $YEL"Your requested installations are complete.You should restart your Pi by typing: sudo reboot"$DEF 
