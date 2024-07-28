@@ -137,9 +137,19 @@ function setProfiles(profiles){
     sks.consts.profiles = x;
 
 }
+function setIniShutter( shutVal){
+    console.log("shutter value", shutVal)
+    sks.consts.shutter().val(shutVal);
 
+}
+function setIniISO( ISOVal){
+    console.log("ISO val", ISOVal)
+    sks.consts.ISO().val(ISOVal);
 
-
+}
+function setIniFrame( frameVal){
+    sks.consts.frame().val(frameVal);
+}
 function setIniFormat(formatVal){
     sks.consts.format().val(formatVal);
 }
@@ -161,7 +171,11 @@ $(document).ready(function(){
         return false;
     });
 
-
+    var checkBox = document.getElementById("autoStatusCB");
+    console.log("checkBox", checkBox)
+    if (checkBox.checked == true) {
+        setTimeout(updateStatusField, 1000);
+    }
 
     var cb = document.getElementById('showStars')
     var btn = document.getElementById('ShowStars')
@@ -175,8 +189,7 @@ $(document).ready(function(){
             $.post("/setShutter/" + x, data = {
                 suggest: x
             }, function(result) {});
-            var numberVal = document.getElementById('setShutter');
-            numberVal.value = x;
+
     });
 
     sks.consts.ISO().change(
@@ -188,8 +201,7 @@ $(document).ready(function(){
                 suggest: x
             }, function(result) {});
 
-            var numberVal = document.getElementById('setISO');
-            numberVal.value = x;
+
     });
 
     sks.consts.frame().change(
@@ -226,8 +238,6 @@ $(document).ready(function(){
             }
         });
     }
-
-    
     $('#solveProfile').change(
         function() {
             console.log("this", this.value)
@@ -400,18 +410,15 @@ $(document).ready(function(){
         var x = document.getElementById("stepNext");
         var y = document.getElementById("stepPrev");
         var z = document.getElementById("solveThis");
-        var zz = document.getElementById("deleteFile");
 
         if (show) {
             x.style.display = "inline";
             y.style.display = "inline";
             z.style.display = "inline";
-            zz.style.display = "inline";
 
         }  else {
             x.style.display = "none";
             y.style.display = "none";
-            z.style.display = "none";
             z.style.display = "none";
 
         }              
@@ -564,19 +571,6 @@ $(document).ready(function(){
 
 
 });
-function confirmDeleteFile() {
-    let text = "Delete this file?";
-    if (confirm(text) == true) {
-        $.ajax({
-            url: "/sqDelete",
-            method: 'POST',
-            success: function(result) {
-                document.getElementById("statusField").innerHTML = result;
-            }
-        });
-    } 
-
-  }
 
 
 

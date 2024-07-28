@@ -104,7 +104,11 @@ class skyCamera():
         self.camera.controls.AnalogueGain = ISO/100
         self.camera.exposure_mode = 'off'
         self.camera.controls.AeEnable = False
-        self.camera.controls.AwbEnable = False
+        try:
+            pass
+            #self.camera.controls.AwbEnable = False
+        except:
+            pass
         self.camera.start()
         time.sleep(1)
         #self.camera.controls.ExposureTime = int(100000 * shutter)

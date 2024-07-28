@@ -276,7 +276,6 @@
                     
                     <button title="Solve the current history image"
                         type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
-
                     <button type="button" class="btn nightColor" data-toggle="collapse" data-target="#solveHistory" id="resultsCfg">results Config</button>
                     <button type="button" class="btn nightColor" style="margin:10px;" id="demoMode" >Demo</button>
                 
@@ -447,11 +446,17 @@
                 </ul>
             </div>
             <div class="row">
-              
+                <div class="col mx-2">
+                    <label class="form-check-label nightColor">
+                      <input  type="checkbox" id="autoStatusCB" checked="checked"  class=" pl-5 form-check-input" 
+                        onclick="updateStatusField() ; checked">Update every second 
+                    </label>
+                </div>
                 <div class="nightColor">Status:</div>
                 <div id="statusField" class="col-10 nightColor">
                 </div>
-
+                <div id="verboseSolve" class = "col-10 nightColor">
+                </div>
             </div>
 
         </div>
@@ -459,15 +464,30 @@
 
         
         <div id="skyConfig">
-            
+            <div id="advancedShutter" class="collapse">
+                <div class = "row">
+                        <form action="/setShutter" class="btn  nightColor" method="POST">
+                            <label for="setShutter"class="btn nightColor">Shutter</label>
+                            <input type="number" class="nightColor"  style="background-color: rgb(70, 48, 48);" id="setShutter" name="setShutter" step=".0005">
+                            <input class="btn nightColor"type="submit" value="Apply" style="background-color: rgb(70, 48, 48);">
+                        </form> 
+
+                        <form action="/setISO" class="btn  nightColor" method="POST">
+                            <label for="setISO"class="btn nightColor">ISO</label>
+                            <input type="number" class="nightColor"  style="background-color: rgb(70, 48, 48);" id="setISO" name="setISO" step="1">
+                            <input class="btn nightColor"type="submit" value="Apply" style="background-color: rgb(70, 48, 48);">
+                        </form> 
+                </div>
+            </div>
             <div class="btn-group" role="group" aria-label="b">
 
                 
                 <label class=" text-danger" for="shutterSelect" >Shutter Speed:</label>
                 <select class=" form-control-sm nightColor"  id="shutterSelect">
                     {% for datum in shutterData %}
-                  <option class="bg_dark text-warning" value = {{ datum }} {%if  datum  == shutterValue %}   selected {% endif %}>{{ datum }} </option> 
+                    <option class="bg_dark text-warning" value = {{ datum }} {%if  datum  == shutterValue %}   selected {% endif %}>{{ datum }} </option> 
                    {% endfor %}
+
 
                 </select> 
 
@@ -768,6 +788,14 @@
                 console.log("solveP", "{{ solveP }}")
                 setSolverParams( "{{ solveP }}");
                 $('#solveProfile').val("{{ solveP }}");
+
+                setIniShutter("{{cameraParms['shutter']}}");
+
+                setIniISO("{{cameraParms['ISO']}}");
+
+                setIniFrame("{{cameraParms['frame'] }}");
+
+
             });
             // Get the modal solve param config
             var solveParamsModal = document.getElementById("solveParamsModal");
@@ -862,42 +890,57 @@
                     debugScreen.style.display = "none";
                 }
             }
+            var position = 0;
+            var output = document.getElementById('solveStatusText')
+            function handleNewData() {
+                $.ajax({
+                            url: '/solveLog',
+                            type: 'get',
+                            success: function(data) {
+                                if (data != ''){
+                                    // the response text include the entire response so far
+                                    // split the messages, then take the messages that haven't been handled yet
+                                    // position tracks how many messages have been handled
+                                    // messages end with a newline, so split will always show one extra empty message at the end
+                                    var messages = data.split('\n');
 
-            //Process log text from the app
-            var logArea = document.getElementById('solveStatusText');
+                                    messages.forEach(function(value) {
 
-            const logsocket = new WebSocket('ws://' + location.host + '/getLog');
-      
-            logsocket.addEventListener('message', ev => { 
-                logArea.innerHTML += ('<br>' + ev.data);
+                                        // build and append a new item to a list to log all output
+                                        //value = "<br>" + value;
+                                        output.innerHTML += ('<br>' + value);
+                                   
+                                    });
+                                    position = messages.length - 1;
+                                    if (output.innerHTML.length > 10000){
+                                        var list = output.innerHTML.split('<br>')
+                                        var shorter = list.splice(1,list.length/2)
+                                        //output.innerHTML = shorter.join('<br>')
+                                    }
+                                    position = messages.length - 1;
+                                    output.scrollTop = output.scrollHeight;
+                                }
 
-                if (logArea.innerHTML.length > 10000){
-                    var list = logArea.innerHTML.split('<br>')
-                    var shorter = list.splice(1,list.length/2)
-                    logArea.innerHTML = shorter.join('<br>')
-                }
-            });
-           
 
 
-        // status processor  
-        const socket = new WebSocket('ws://' + location.host + '/getStatus');
-      
-        socket.addEventListener('message', ev => { 
-            var statusField = document.getElementById('statusField');
-            statusField.innerHTML = ev.data
 
-            if (ev.data.includes('Failed')){
+                            },
+                            complete: function(data) {
 
-                beep(300);
-            }else if (ev.data.includes('solved.')) {
-                beep(1840);
-            }
-        });
+                        }
+                    });
+            
+            }    
 
-           
+ 
         
+        
+            var timer;
+            timer = setInterval(function() {
+                // check the response for new dat
+                handleNewData();
 
+            }, 500);
         </script>
 
         <script>
@@ -914,38 +957,75 @@
         </script>
 
         <!-- Update status and clear timeout if needed-->
-        
+        <script>
+            var lastStatus = '';
+            function updateStatusField() {
+                var time = new Date()
+                $.ajax({
+                    url: '/skyStatus',
+                    data: {'time': Date.now().toString()},
+                    type: 'post',
+                    success: function(data) {
+ 
+                            // Perform operation on return value
+                        var st = document.getElementById("statusField");
+                        
+                        if (data != lastStatus){
+                            lastStatus = data
+                            st.innerHTML = data;
+                             if (data.includes('Failed')){
+                                    beep(300);
+
+                            }else if (data.includes('solved.')) {
+                                    beep(1840);
+                            }
+                        }
+
+                    },
+                    complete: function(data) {
+
+                        var checkBox = document.getElementById("autoStatusCB");
+                        if (checkBox.checked == true) {
+                            setTimeout(updateStatusField, 200);
+                        } else {
+                            clearTimeout(updateStatusField);
+                        }
+                    }
+                
+
+                });
+                var verb = document.getElementById('idverbose').checked;
+                var st = document.getElementById("verboseSolve");
+                if (verb == true) {
+                    st.style.display = "inline";
+                    $.ajax({
+                            url: '/lastVerboseSolve',
+                            data: {'time': Date.now().toString()},
+                            type: 'post',
+                            success: function(data) {
+                                    // Perform operation on return value
+                                var st = document.getElementById("verboseSolve");
+                                st.innerHTML = data
+                            },
+                            complete: function(data) {
+
+                        }
+                    });
+                }
+                else{
+
+                    st.style.display = "none";
+                }
+            }
+        </script>
 
 
         <script>
             var intervalID;
 
-            function showFocus() {
-                var f = document.getElementById("collapseFocusBar")
-                var shown = f.getAttribute("data-shown");
-                console.log("shown value is ", shown);
-                if (shown == 'false') {
-                    intervalID = setInterval(updateFocus, 1000);
-                    console.log('setup focus');
-                    f.setAttribute("data-shown", true);
-                } else {
-                    console.log('clear focus');
-                    f.setAttribute("data-shown", false);
-                    clearInterval(intervalID);
-                };
+           
 
-                function updateFocus() {
-                    var elem = document.getElementById("myBar");
-                    $.ajax({
-                        url: '/Focus',
-                        method: 'POST',
-                        success: function(result) {
-                            elem.innerHTML = result;
 
-                        }
-                    });
-                }
-            }
         </script>
 
 

@@ -2,7 +2,7 @@ from subprocess import call
 from zipfile import ZipFile
 from flask import Flask, render_template, request, Response, send_file, send_from_directory
 from flask import stream_with_context
-from flask_sock import Sock
+
 
 import time
 from flask.wrappers import Request
@@ -90,7 +90,7 @@ solving = False
 maxTime = 50
 searchEnable = False
 searchRadius = 90
-solveLog = deque(maxlen=100)
+solveLog = deque(maxlen=1000)
 ra = 0
 dec = 0
 solveStatus = ''
@@ -509,12 +509,12 @@ def solve(fn, parms=[]):
                      "none"]
     cmd = ["solve-field", fn, "--depth", str(profile['solveDepth']), "--sigma", str(profile['solveSigma']),
            '--overwrite'] + parms
-
+    solveLog.append(cmd)
     #print("\n\nsolving ", cmd)
     if skyConfig['observing']['verbose']:
         solveLog.append(' '.join(cmd) + '\n')
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    solveLog.clear()
+
     ppa = ''
     starNames = {}
     duration = None
@@ -529,6 +529,7 @@ def solve(fn, parms=[]):
         if stdoutdata:
             if stdoutdata == lastmessage:
                 continue
+            solveLog.append(stdoutdata)
             lastmessage = stdoutdata
             if 'simplexy: found' in stdoutdata:
                 found = stdoutdata
@@ -557,7 +558,7 @@ def solve(fn, parms=[]):
                 #print ('duration', duration)
                 skyStatusText = found + " solved. "+str(duration.total_seconds())+'secs'
             if stdoutdata and skyConfig['observing']['verbose']:
-                solveLog.append(stdoutdata)
+
                 #print("stdout", str(stdoutdata))
                 #skyStatusText = skyStatusText + '.'
                 if stdoutdata.startswith("Field 1: solved with"):
@@ -572,7 +573,7 @@ def solve(fn, parms=[]):
                 elif doDebug:
                     if stdoutdata.startswith('Field size'):
                         print("Field size", stdoutdata )
-                        solveLog.append(stdoutdata)
+
                         #solveStatus = found
                     elif stdoutdata.find('pixel scale') > 0:
                         computedPPa = stdoutdata.split("scale ")[1].rstrip()
@@ -660,6 +661,7 @@ def solve(fn, parms=[]):
         duration = stopTime - startTime
         skyStatusText = "solved "+str(duration.total_seconds()) + ' secs'
         verboseSolveText = foundStars
+        solveLog.append(foundStars)
         if doDebug:
             logging.warning(skyStatusText)
             logging.warning(verboseSolveText)
@@ -770,29 +772,6 @@ def index():
                             shutterValue = currentShutter, ISOValue = currentISO, frameValue = currentFrameValue,
                             startup=skyConfig['solver']['startupSolveing'], solveP=skyConfig['solver']['currentProfile'], obsParms=skyConfig['observing'], cameraParms=skyConfig['camera'])
 
-#
-
-sock = Sock(app)
-
-
-@sock.route('/getLog')
-def getLog(sock):
-    global skyStatusText,last_status
-    print('getStatus socket')
-    while True:
-        while len(solveLog) > 0:
-            sock.send(solveLog.popleft())
-
-
-last_status = ''
-@sock.route('/getStatus')
-def getStatus(sock):
-    global skyStatusText,last_status
-    print('getStatus socket')
-    while True:
-        if skyStatusText != last_status:
-            last_status = skyStatusText
-            sock.send(skyStatusText)
 
 @app.route('/pause', methods=['POST'])
 def pause():
@@ -945,6 +924,19 @@ def verboseSolveUpdate():
     global verboseSolveText
     return Response(verboseSolveText)
 
+@app.route("/solveLog")
+def streamSolveLog():
+    global solveLog
+    #print (len(solveLog))
+    str = ''
+    while True:
+        try:
+            s = solveLog.popleft()
+            str += s
+        except:
+            break
+
+    return Response(str)
 
 @app.route('/skyStatus', methods=['post'])
 def skyStatus():
@@ -958,8 +950,10 @@ def skyStatus():
             print("could not set clock", e )
             
     resp = copy.deepcopy(skyStatusText)
-    print('old status method', resp)
-    skyStatusText = ''
+
+
+    
+    #skyStatusText = ''
     return Response(resp)
 
  
