@@ -25,6 +25,7 @@ import io
 import getpass
 import copy
 import sys
+import re
 sys.path.append('/home/pi/cedar/cedar-solve/tetra3')
 print('PYTHONPath is',sys.path)
 #from tetra3old import Tetra3
@@ -408,9 +409,10 @@ def solveThread():
         # if solving history one after the other in auto playback
         if (state is Mode.AUTOPLAYBACK):
             if testNdx == len(testFiles):
-                state = Mode.PLAYBACK
-                skyStatusText = "Complete."
-                continue
+                testNdx = 0
+                #state = Mode.PLAYBACK
+                #skyStatusText = "Complete."
+                #continue
             fn = testFiles[testNdx]
 
             solveThisImage = fn
@@ -524,40 +526,58 @@ def solve(fn, parms=[]):
     solveLog.append("solving:\n")
     #skyStatusText = skyStatusText + " solving"
     lastmessage = ''
+    verbose = skyConfig['observing']['verbose']
     while not p.poll():
         stdoutdata = p.stdout.readline().decode(encoding='UTF-8')
         if stdoutdata:
             if stdoutdata == lastmessage:
                 continue
-            solveLog.append(stdoutdata)
+            if verbose:
+                solveLog.append(stdoutdata)
             lastmessage = stdoutdata
             if 'simplexy: found' in stdoutdata:
-                found = stdoutdata
+                if  not verbose:
+                    found = stdoutdata
+                    solveLog.append(stdoutdata)
 
                 skyStatusText = stdoutdata
                 #print("stdoutdata", stdoutdata)
-            elif stdoutdata.startswith('Field center: (RA,Dec) = ('):
-                solved = stdoutdata
-                fields = solved.split()[-3:-1]
-                #print ('f',fields)
-                ra = fields[0][1:-1]
-                dec = fields[1][0:-1]
-                ra = float(fields[0][1:-1])
-                dec = float(fields[1][0:-1])
-                radec = "%s %6.6lf %6.6lf \n" % (
-                    time.strftime('%H:%M:%S'), ra, dec)
-                file1 = open(os.path.join(
-                    solve_path, "radec.txt"), "w")  # write mode
-                file1.write(radec)
-                file1.close()
-                if doDebug:
-                    logging.warning('here is RAdec')
-                    logging.warning(radec)
-                stopTime = datetime.now()
-                duration = stopTime - startTime
-                #print ('duration', duration)
-                skyStatusText = found + " solved. "+str(duration.total_seconds())+'secs'
-            if stdoutdata and skyConfig['observing']['verbose']:
+            elif 'RA,Dec =' in stdoutdata:
+                try:
+                    solved = stdoutdata
+                    import re
+                    pattern = re.compile(r'(-*[0-9]+\.*[0-9]*),(-*[0-9]+\.*[0-9]*).*pixel scale ([0-9]+\.[0-9]*)\s')
+                    numbers = pattern.split(stdoutdata)[1:]
+
+
+                    #print ('f',fields)
+                    ra = float(numbers[0])
+                    dec = float(numbers[1])
+                    ppa = float(numbers[2])
+
+                    radec = "%s %6.6lf %6.6lf \n" % (
+                        time.strftime('%H:%M:%S'), ra, dec)
+                    file1 = open(os.path.join(
+                        solve_path, "radec.txt"), "w")  # write mode
+                    file1.write(radec)
+                    file1.close()
+                    if not verbose:
+                        solveLog.append(radec)
+                        solveLog.append('pixel scale %6.2lf arcsec/pix\n'%(ppa))
+                    if doDebug:
+                        logging.warning('here is RAdec')
+                        logging.warning(radec)
+                    stopTime = datetime.now()
+                    duration = stopTime - startTime
+                    #print ('duration', duration)
+                    skyStatusText = " solved. "+str(duration.total_seconds())+'secs'
+                    solveLog.append(skyStatusText + '\n')
+                except e:
+                    solveLog.append(traceback.format_exc())
+                    solveLog.append('++++++++++++++++++++++++++++++++++')
+
+                    pass
+            if stdoutdata and verbose:
 
                 #print("stdout", str(stdoutdata))
                 #skyStatusText = skyStatusText + '.'
