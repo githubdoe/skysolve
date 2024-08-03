@@ -302,8 +302,8 @@
             "additionalParms": "",
             "verbose": false
         },
-        "FOV 14": {
-            "name": "FOV 14",
+        "FOV 17": {
+            "name": "FOV 17",
             "solver_type": "solverAstromet",
             "maxTime": 30.0,
             "solveSigma": 7,
@@ -315,8 +315,8 @@
             "FieldWidthModeOther": "",
             "aPPLoValue": "25",
             "aPPHiValue": "82",
-            "fieldLoValue": "13",
-            "fieldHiValue": "15",
+            "fieldLoValue": "16",
+            "fieldHiValue": "18",
             "searchRadius": 45.0,
             "solveVerbose": false,
             "showStars": false,
