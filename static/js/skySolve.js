@@ -105,7 +105,7 @@ sks.consts = {
     showSolution: 0,
     profiles : {"a": 1, "b":2},
     currentProfile: ''
-};
+}
 
 
 function setSolverParams(  cur){
@@ -113,7 +113,7 @@ function setSolverParams(  cur){
     console.log('cur profile',cur)
     // console.log('profiles', sks.consts.profiles)
     console.log("const.profiles",cur, JSON.stringify(sks.consts.profiles[cur]));
-    sks.consts.showStars()[0].checked =sks.consts.profiles[cur]["showStars"];
+    //sks.consts.showStars()[0].checked =sks.consts.profiles[cur]['showStars']
     sks.consts.SolveDepth().val(sks.consts.profiles[cur]['solveDepth'])
     sks.consts.SolveSigma().val(sks.consts.profiles[cur]['solveSigma'])
     sks.consts.FieldWidthaPPLow().val(sks.consts.profiles[cur]['aPPLoValue'])
@@ -240,7 +240,7 @@ $(document).ready(function(){
     }
     $('#solveProfile').change(
         function() {
-            console.log("this", this.value)
+            console.log("the profiles list", this, this.value)
             sks.consts.currentProfile = this.value;
             setSolverParams(this.value);
         }
@@ -343,6 +343,11 @@ $(document).ready(function(){
     $('#shutdown').click(
         function(){
             ajax_get_Status('/shutdown')
+        }
+    )
+    $('#update').click(
+        function(){
+            ajax_get_Status('/update')
         }
     )
 
@@ -572,5 +577,17 @@ $(document).ready(function(){
 
 });
 
+function confirmDeleteFile() {
+    let text = "Delete this file?";
+    if (confirm(text) == true) {
+        $.ajax({
+            url: "/sqDelete",
+            method: 'POST',
+            success: function(result) {
+                document.getElementById("statusField").innerHTML = result;
+            }
+        });
+    } 
 
+  }
 

@@ -53,13 +53,13 @@ initGPIO7 = GPIO.input(7)
 if ( not initGPIO7):
     try:
         os.system('sudo accesspopup -a')
-    except BaseException as e:
+    except Exception as e:
         print('could not switch to access point')
     
 print("gpio", initGPIO7)
 try:
     os.system('systemctl restart encodertoSkySafari.service ')
-except BaseException as e:
+except Exception as e:
     print("did not start encoder", e )
 
 usedIndexes = {}
@@ -90,10 +90,9 @@ app = 30
 solving = False
 maxTime = 50
 searchEnable = False
-searchRadius = 90
 solveLog = deque(maxlen=1000)
-ra = 0
-dec = 0
+ra = 0      #last solved 
+dec = 0     #last solved
 solveStatus = ''
 computedPPa = ''
 
@@ -114,7 +113,7 @@ solve_path = os.path.join(root_path, 'static')
 capPath = os.path.join(solve_path, 'cap.jpeg')
 guiPath = os.path.join(solve_path, 'gui.jpeg')
 history_path = os.path.join(solve_path, 'history')
-doDebug = True
+doDebug = False
 logging.basicConfig(filename=os.path.join(solve_path,'skysolve.log'),\
      format='%(levelname)s %(asctime)s %(message)s',filemode='w',level=logging.WARNING)
 if not os.path.exists(history_path):
@@ -124,7 +123,7 @@ test_path = '/home/pi/pyPlateSolve/data'
 solveThisImage = ''
 
 solveCurrent = False
-triggerSolutionDisplay = False
+
 saveObs = False
 
 obsList = []
@@ -154,9 +153,9 @@ skyConfig = {'camera': {'shutter': 1, 'ISO':800, 'frame': '800x600','format': 'j
 import builtins
 class ListStream:
     def write(self, s):
-        global doDebug
-        if doDebug:
-            logging.warning(s)
+        global doDebug, logging
+        pass
+            
     def flush(self):
         pass
 
@@ -185,7 +184,7 @@ capPath = os.path.join(solve_path, imageName)
 skyCam = None
 skyStatusText = ''
 verboseSolveText = ''
-
+enableSoldisplay = False
 
 def delayedStatus(delay, status):
     global skyStatusText
@@ -459,20 +458,23 @@ if skyConfig['solver']['startupSolveing']:
     solveT = threading.Thread(target=solveThread)
     solveT.start()
 
-
+solveAvg = 0.
+solveCnt = 0
 def solve(fn, parms=[]):
-    global doDebug, debugLastState, skyStatusText
+    global doDebug, debugLastState, skyStatusText, enableSoldisplay, solveAvg, solveCnt,\
+        app, solving, maxTime, solveLog, ra, dec, searchEnable, solveStatus,\
+        skyStatusText, lastObs, verboseSolveText
     found = ''
 
     if doDebug:
         print("solving" )
         logging.warning("solving function")
     debugLastState = 'solving'
-    global app, solving, maxTime, searchRaius, solveLog, ra, dec, searchEnable, solveStatus,\
-        triggerSolutionDisplay, skyStatusText, lastObs, verboseSolveText
+
     startTime = datetime.now()
     solving = True
     solved = ''
+    wroteWcsFile = False
     profile = skyConfig['solverProfiles'][skyConfig['solver']
                                           ['currentProfile']]
     fieldwidthParm = ''
@@ -505,13 +507,16 @@ def solve(fn, parms=[]):
         parms = parms + ['--ra', str(ra), '--dec', str(dec),
                          '--radius', str(profile['searchRadius'])]
     #print('show stars', profile['showStars'])
-    if not profile['showStars']:
+    if  enableSoldisplay == False:
         parms = parms + ['-p']
     parms = parms + ["--uniformize", "0", "--no-remove-lines", "--new-fits", "none",  "--pnm", "none", "--rdls",
                      "none"]
     cmd = ["solve-field", fn, "--depth", str(profile['solveDepth']), "--sigma", str(profile['solveSigma']),
            '--overwrite'] + parms
-    solveLog.append(cmd)
+    #if doDebug:
+        #solveLog.append(' '.join(cmd))
+
+
     #print("\n\nsolving ", cmd)
     if skyConfig['observing']['verbose']:
         solveLog.append(' '.join(cmd) + '\n')
@@ -530,6 +535,8 @@ def solve(fn, parms=[]):
     while not p.poll():
         stdoutdata = p.stdout.readline().decode(encoding='UTF-8')
         if stdoutdata:
+            if doDebug:
+                print(stdoutdata)
             if stdoutdata == lastmessage:
                 continue
             if verbose:
@@ -544,7 +551,7 @@ def solve(fn, parms=[]):
                 #print("stdoutdata", stdoutdata)
             elif 'RA,Dec =' in stdoutdata:
                 try:
-                    solved = stdoutdata
+
                     import re
                     pattern = re.compile(r'(-*[0-9]+\.*[0-9]*),(-*[0-9]+\.*[0-9]*).*pixel scale ([0-9]+\.[0-9]*)\s')
                     numbers = pattern.split(stdoutdata)[1:]
@@ -564,92 +571,68 @@ def solve(fn, parms=[]):
                     if not verbose:
                         solveLog.append(radec)
                         solveLog.append('pixel scale %6.2lf arcsec/pix\n'%(ppa))
-                    if doDebug:
-                        logging.warning('here is RAdec')
-                        logging.warning(radec)
-                    stopTime = datetime.now()
-                    duration = stopTime - startTime
-                    #print ('duration', duration)
-                    skyStatusText = " solved. "+str(duration.total_seconds())+'secs'
-                    solveLog.append(skyStatusText + '\n')
-                except e:
+
+
+                except BaseException as e:
                     solveLog.append(traceback.format_exc())
-                    solveLog.append('++++++++++++++++++++++++++++++++++')
+
 
                     pass
-            if stdoutdata and verbose:
+            if 'Field size:' in stdoutdata and not verbose:
+                solveLog.append(stdoutdata)
+            if 'solved with' in stdoutdata:
+                if not verbose:
+                    solveLog.append(stdoutdata)
+                solved = stdoutdata
+                stopTime = datetime.now()
+                duration = stopTime - startTime
+                solveAvg += duration.total_seconds()
+                solveCnt += 1
+                solveLog.append('average solved time %6.2lf\n'%( solveAvg/solveCnt))
+                #print ('duration', duration)
+                solved = " solved. "+str(duration.total_seconds())+'secs\n'
+                solveLog.append(solved)
+                skyStatusText = solved
 
-                #print("stdout", str(stdoutdata))
-                #skyStatusText = skyStatusText + '.'
-                if stdoutdata.startswith("Field 1: solved with"):
-                    if doDebug:
-                        ndx = stdoutdata.split("index-")[-1].strip()
-                        print("index", ndx, stdoutdata )
-                        usedIndexes[ndx] = usedIndexes.get(ndx, 0)+1
-                        pp = pprint.pformat(usedIndexes)
-                        print("Used indexes", pp )
-                        solveLog.append('used indexes ' + pp + '\n')
-
-                elif doDebug:
-                    if stdoutdata.startswith('Field size'):
-                        print("Field size", stdoutdata )
-
-                        #solveStatus = found
-                    elif stdoutdata.find('pixel scale') > 0:
-                        computedPPa = stdoutdata.split("scale ")[1].rstrip()
-                elif skyConfig['observing']['verbose']:
-                    if 'The star' in stdoutdata:
-                        stdoutdata = stdoutdata.replace(')', '')
-                        con = stdoutdata[-4:-1]
-                        if con not in starNames:
-                            starNames[con] = 1
-
-        else:
-            break
-
-
-
-    # create solved plot
-    if solved and (state is Mode.PLAYBACK or skyConfig['observing']['verbose']):
-
-        # Write-Overwrites
-        file1 = open(os.path.join(solve_path, "radec.txt"), "w")  # write mode
-        file1.write(radec)
-        file1.close()
-        cmdPlot = ['/usr/bin/plot-constellations', '-v', '-w', os.path.join(solve_path, 'cap.wcs'),
-                   '-B', '-C', '-N', '-o', os.path.join(solve_path, 'cap-ngc.png')]
-        p2 = subprocess.Popen(cmdPlot, stdout=subprocess.PIPE)
-        ndx = 0
-        stars = []
-        while not p2.poll():
-            if ndx > 1000:
-                break
-            ndx += 1
-            stdoutdata = p2.stdout.readline().decode(encoding='UTF-8')
-            if stdoutdata:
-                stars.append(stdoutdata)
-                #print(stdoutdata)
-
-                if 'The star' in stdoutdata:
+            if 'The star' in stdoutdata:
                     stdoutdata = stdoutdata.replace(')', '')
                     con = stdoutdata[-4:-1]
                     if con not in starNames:
                         starNames[con] = 1
-        foundStars = ', '.join(stars).replace("\n", "")
-        foundStars = foundStars.replace("The star", "")
-        #solveLog.append(foundStars + "\n")
-        constellations = ', '.join(starNames.keys())
-        # copy the index over the ngc file so stars will display with the index triangle
-        if profile['showStars']:
-            os.remove(os.path.join(solve_path, 'cap-objs.png'))
-            copyfile(os.path.join(solve_path, 'cap-indx.png'),
-                     os.path.join(solve_path, 'cap-objs.png'))
 
-        if skyConfig['observing']['savePosition'] and state is Mode.SOLVING:
-            obsfile = open(os.path.join(solve_path, "obs.log"), "a+")
-            obsfile.write(radec.rstrip() + " " + constellations + '\n')
-            obsfile.close()
-            #print ("wrote obs log")
+        else:
+            break
+
+    if solved:
+        skyStatusText = solved
+
+    # create solved plot
+    if solved:
+        if enableSoldisplay:
+            try:
+                # put a plus in the center of the solution image
+                solution = cv2.imread(os.path.join(solve_path, 'cap-ngc.png'), cv2.IMREAD_UNCHANGED)
+                h,w,s = solution.shape
+                w = int(w/2)
+                h = int(h/2)
+                dl = 10
+                c = (0x0,0x0,0xff,255)
+                cv2.line(solution,(w-dl,h), (w -3 * dl, h),c,3)
+                cv2.line(solution,(w + dl, h),(w + 3 * dl, h),c,3)
+                cv2.line(solution,(w,h-dl), (w, h-3 * dl),c,3)
+                cv2.line(solution,(w, h+dl),(w, h+3 * dl),c,3)
+
+                cv2.imwrite(os.path.join(solve_path, 'cap-ngcc.png'), solution)
+                #time.sleep(1)
+                solveLog.append('annotation ready\n')
+
+                # if skyConfig['observing']['savePosition'] and state is Mode.SOLVING:
+                #     obsfile = open(os.path.join(solve_path, "obs.log"), "a+")
+                #     obsfile.write(radec.rstrip() + " " + constellations + '\n')
+                #     obsfile.close()
+                #     #print ("wrote obs log")
+            except:
+                pass
 
         if skyConfig['observing']['saveImages']:
             saveimage = False
@@ -675,22 +658,17 @@ def solve(fn, parms=[]):
                 copyfile(os.path.join(solve_path, imageName),
                          os.path.join(solve_path, 'history', fn))
 
-        if skyConfig['observing']['showSolution']:
-            triggerSolutionDisplay = True
-        stopTime = datetime.now()
-        duration = stopTime - startTime
-        skyStatusText = "solved "+str(duration.total_seconds()) + ' secs'
-        verboseSolveText = foundStars
-        solveLog.append(foundStars)
+        #verboseSolveText = foundStars
+        #solveLog.append(foundStars)
         if doDebug:
             logging.warning(skyStatusText)
             logging.warning(verboseSolveText)
             logging.warning(radec)
     if not solved:
         skyStatusText = skyStatusText + " Failed "
-
         ra = 0
         solveLog.append("Failed\n")
+
     solving = False
     solvestatestr = 'solved'
     if  not solved:
@@ -701,7 +679,7 @@ def solve(fn, parms=[]):
 
 
 def tetraSolve(img):
-    global skyStatusText, solveLog, t3
+    global skyStatusText, solveLog, t3, solveLog
 
     #solveLog.append("solving " + imageName + '\n')
     #img = Image.open(os.path.join(solve_path, imageName))
@@ -717,7 +695,8 @@ def tetraSolve(img):
             image = image.squeeze(axis=2)
     else:
         assert image.ndim == 2, 'Image must be 2D or 3D array'
-    print('solving', imageName)
+    if doDebug:
+        print('solving', imageName)
     profile = skyConfig['solverProfiles'][skyConfig['solver']
                                           ['currentProfile']]
     t0 = precision_timestamp()
@@ -738,9 +717,10 @@ def tetraSolve(img):
     solution.pop('cache_hit_fraction', None)
 
     if solution['RA'] == None:
+        solveLog.append('Failed')
         return solution
     tdel = precision_timestamp() - t0
- 
+    solveLog.append('solved with tetra in %6.2lf secs\n'%(tdel))
     print('solution',tdel,solution)
     solution['T_solve'] = tdel
     radec = "%6.2lf %6.6lf  %6.6lf \n" % (tdel, solution['RA'], solution['Dec'])
@@ -753,7 +733,7 @@ def tetraSolve(img):
 
 
 app = Flask(__name__)
-doDebug = False
+
 skyStatusText = 'Initilizing Camera'
 
 
@@ -813,7 +793,37 @@ def Align():
         state = Mode.ALIGN
         skyStatusText = 'Align Mode'
     return Response(skyStatusText)
+from subprocess import PIPE, run
+@app.route('/update',methods=['POST'])
+def updateskysolve():
+    global solveLog
+    solveLog.append(' update started')
+    try:
+        resp = os.remove(os.path.join(root_path,  'newCamLib.tar.gz'))
+        print('remove tar',resp)
+    except:
+        pass
 
+
+    command = ['wget', '-nv','https://github.com/githubdoe/skysolve/archive/newCamLib.tar.gz']
+    result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+
+
+    solveLog.append(result.stderr)
+    solveLog.append('update failed\n')
+
+    solveLog.append(result.stdout)
+    command = ['tar', 
+               '--exclude', 'skysolve-newCamlib/history',
+                '--exclude','skysolve-newCamLib/.skyConfig.json',
+                '-zxvf',
+                'newCamLib.tar.gz',
+                '--strip-components','1']
+    result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    solveLog.append(result.stderr)
+    solveLog.append(result.stdout)
+    solveLog.append('Reboot to install these updates\n')
+    return Response(' update complete')
 
 @app.route('/saveCurrent', methods=['POST'])
 def saveCurrent():
@@ -938,6 +948,12 @@ def clearObsLog():
 
 setTimeDate = True
 
+@app.route('/enablesolutionDisplay', methods=['post'])
+def enablesolutionDisplay():
+    global enableSoldisplay
+    t = request.form['checked']
+    enableSoldisplay = t == 'true'
+    return Response('ok')
 
 @app.route('/lastVerboseSolve', methods=['post'])
 def verboseSolveUpdate():
@@ -949,11 +965,13 @@ def streamSolveLog():
     global solveLog
     #print (len(solveLog))
     str = ''
-    while True:
+    while solveLog:
         try:
             s = solveLog.popleft()
             str += s
-        except:
+        except Exception as e:
+
+            print(e)
             break
 
     return Response(str)
@@ -966,7 +984,7 @@ def skyStatus():
         t = float(request.form['time'])/1000
         try:
             time.clock_settime(time.CLOCK_REALTIME, t)  
-        except BaseException as e:
+        except Exception as e:
             print("could not set clock", e )
             
     resp = copy.deepcopy(skyStatusText)
@@ -984,7 +1002,7 @@ def Focus():
 
 lastmode = state
 def gen():
-    global skyStatusText, solveT, testNdx,  triggerSolutionDisplay,\
+    global skyStatusText, solveT, testNdx,\
             doDebug, state, solveCurrent,  framecnt, lastDisplayedFile,lastmode,\
                 GUIReadyForImage, GUIImage, imageName
     # Video streaming generator function.
@@ -1293,11 +1311,13 @@ def historyNdx():
 @app.route('/Debug', methods= ['POST'])
 def debugcommands():
     global doDebug
-    doDebug = request.form.get("enableDebug") == "on"
-    if (doDebug):
-        sys.stdout = x = ListStream()
-    else:
-        sys.stdout = sys.__stdout__
+    print('do debug called', request.form)
+    if request.form.get("enableDebug"):
+        doDebug = True
+    else :
+        doDebug = False
+    
+
     print("debug",doDebug, request.form.get("enableDebug"))
     return Response(status=205)
 

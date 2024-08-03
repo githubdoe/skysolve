@@ -252,8 +252,6 @@
     </style>
     </head>
     <body >
-
-
         <div class="container-fluid ">
             <div class="row backgroud-color:white">
                 <div class="row">
@@ -272,7 +270,7 @@
                     <button title="Jump to specified history file number"
                         type="button" class="btn nightColor" data-toggle="collapse" data-target="#historyNdx" id="historyIndex">#</button>
                     <button title="Delete history file"
-                        type="button" class="btn nightColor" onClick="confirmDeleteFile()" style="display: none;" id="deleteFile">Delete</button>
+                        type="button" class="btn nightColor" onClick="confirmDeleteFile()"  id="deleteFile">Delete</button>
                     
                     <button title="Solve the current history image"
                         type="button" class="btn nightColor" style="display: none;" id="solveThis">Solve This one</button>
@@ -306,6 +304,8 @@
                         <button type="button" class="btn  nightColor" id="reboot" style="margin-left:100px;" ">Reboot</button>
                         <button type="button" class="btn  nightColor" id="restartc" style="margin-left:30px;" ">Restart</button>
                         <button type="button" class="btn  nightColor" id="shutdown" style="margin-left:30px;" ">Shutdown</button>
+                        <button type="button" class="btn  nightColor" id="update" style="margin-left:30px;" ">update</button>
+                     
                         <button type="button" class="btn  nightColor" data-toggle="collapse" data-target="#debugScreen" id="debug" style="margin-left:30px;" ">Debug</button>      
                     </div>
             </div>
@@ -323,7 +323,7 @@
                     <li>
                         <p>
                             The current image is displayed below the status display.<br>
-                            The status display updates every  second or at the end of various commands.<br>
+                            
                             The log is displayed below the image.   The log will display data from the solve operation as well as from other commands.
                         </p>
                     </li>
@@ -446,14 +446,13 @@
                 </ul>
             </div>
             <div class="row">
-                <div class="col mx-2">
-                    <label class="form-check-label nightColor">
-                      <input  type="checkbox" id="autoStatusCB" checked="checked"  class=" pl-5 form-check-input" 
-                        onclick="updateStatusField() ; checked">Update every second 
+                <form>
+                      <input  type="checkbox" id="autoStatusCB" checked="checked"  
+                        onclick="updateStatusField() ; checked">-
                     </label>
-                </div>
-                <div class="nightColor">Status:</div>
-                <div id="statusField" class="col-10 nightColor">
+                </form>
+                <div class="nightColor">Status:&nbsp</div>
+                <div id="statusField" class="nightColor">
                 </div>
                 <div id="verboseSolve" class = "col-10 nightColor">
                 </div>
@@ -560,7 +559,7 @@
                                 <Label for="profile">Profile</Label>
                                 <select class=" form-control-sm nightColor" name="currentProfile" id="solveProfile">
                                     {% for key, val in profiles.items() %}
-                                <option class="bg_dark text-warning" value={{ key}} >{{ key }}</option> 
+                                <option class="bg_dark text-warning" value="{{key}}" >{{ key }}</option> 
                                 {% endfor %}
                 
                                 </select> 
@@ -648,7 +647,7 @@
                     <fieldset class = "nightColor" style="background-color: rgb(48, 12, 2);" >  <legend>Debug </legend>
 
                     <div>
-                        <input type="checkbox" id="enableDebug", name="enableDebug" {{ 'checked' if obsParms['saveImages'] else ''}} >
+                        <input type="checkbox" id="enableDebug", name="enableDebug"  >
                         <label for="enableDebug">Enable debug write to log file</label>  
                         
 
@@ -676,7 +675,7 @@
         <div id="solvedImageModal" class="modal">
             <div class="modal-content">
                 <span id="solutionClose" class="close">&times;</span>
-                <img src="/static/cap-ngc.png" id="solutionSrc"/>
+                <img src="/static/cap-ngcc.png" id="solutionSrc"/>
             </div>
         </div>
 
@@ -741,10 +740,20 @@
             <div id="myProgress"></div>
             <div id="myBar"></div>
         </div>
+    </div>
+    <div style="margin-top:5px; margin-left:20px"class="btn nightColor"
+         class="col mx-2">
+            <label class="form-check-label nightColor">
+              <input  type="checkbox" id="enableSolution"  class=" pl-5 form-check-input" 
+                onclick="enableSolution()">show last solution 
+            </label>
         
+      
+    </div>
         <div ,class = "img-magnifier-container " style="position: relative; left: 100; top: 100;">
-            <img src="{{ url_for('video_feed') }}" id="skyImage" class="fishes" style="filter: brightness(600%);">
-            <img src="/static/cap-ngc.png" id="solu"  class="fish" style = "display : none;">
+            <img src="{{ url_for('video_feed') }}" id="skyImage" style="filter: brightness(600%);">
+            <img src="/static/cap-ngc.png" id="solu"  style = "display: none;" class="fishes">
+
         </div>
         <p><div style="color:rgb(160, 0, 0); background:rgb(2, 0, 0);" >Log:</div>
             
@@ -754,8 +763,12 @@
 
         <!-- SCRIPTS  -------------------------------------------->
 
-        <script>
-            audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+        <script>   
+
+        
+
+        
+    audioCtx = new(window.AudioContext || window.webkitAudioContext)();
             function beep(freq) {
                 var oscillator = audioCtx.createOscillator();
                 var gainNode = audioCtx.createGain();
@@ -778,22 +791,24 @@
             };
             $(document).ready(function(){
   
-                var v = "{{ profiles|safe }}"
+                var v = "{{profiles|safe}}"
    
                 v = v.replace(/False/g,"false")
                 v = v.replace(/True/g,"true")
 
                 setProfiles(v.replace(/'/g,"\""));
 
-                console.log("solveP", "{{ solveP }}")
-                setSolverParams( "{{ solveP }}");
-                $('#solveProfile').val("{{ solveP }}");
+                console.log("solveP", "{{solveP}}")
+                setSolverParams( "{{solveP}}");
+                $('#solveProfile').val("{{solveP}}");
 
                 setIniShutter("{{cameraParms['shutter']}}");
 
                 setIniISO("{{cameraParms['ISO']}}");
 
                 setIniFrame("{{cameraParms['frame'] }}");
+                increaseMagnification();
+                decreaseMagnification() ;
 
 
             });
@@ -890,6 +905,53 @@
                     debugScreen.style.display = "none";
                 }
             }
+            var lastStatus = '';
+            var solutionDisplayEnabled = false;
+            function enableSolution() {
+                var time = new Date()
+                var ischecked = document.getElementById("enableSolution").checked;
+                solutionDisplayEnabled = ischecked;
+                var src = document.getElementById("solu");
+                if ( ischecked){
+
+                    src.style.display = 'inline'
+                }
+                else {
+                    src.style.display = 'none'
+                }
+
+                
+                $.ajax({
+                    url: '/enablesolutionDisplay',
+                    data: {'checked':ischecked},
+                    type: 'post',
+                    success: function(data) {
+
+   
+                    },
+
+
+                    complete: function(data) {
+
+
+                    }
+                
+
+                });
+            }
+            function  showSolution(){
+
+                if ( !solutionDisplayEnabled || sks.consts.currentProfile === 'Tetra3')
+                    return
+
+                var src = document.getElementById("solu");
+                var d = new Date();
+                var n = d.getTime();
+                var fn = "/static/cap-ngcc.png";
+                var x = fn.concat( "?dummy=",n,"?");
+                src.src = x
+                //src.style.display = "inline";
+            }
             var position = 0;
             var output = document.getElementById('solveStatusText')
             function handleNewData() {
@@ -909,6 +971,17 @@
                                         // build and append a new item to a list to log all output
                                         //value = "<br>" + value;
                                         output.innerHTML += ('<br>' + value);
+                                        if (value.includes('annotation ready')){
+                                            console.log('aready',value)
+                                            setTimeout(showSolution,500)
+                                          
+                                        }
+                                        else if (value.includes('solved with')){
+                                            beep(1840);
+                                        }
+                                        else if (value.includes('Failed')){
+                                            beep(200);
+                                        }
                                    
                                     });
                                     position = messages.length - 1;
@@ -932,15 +1005,9 @@
             
             }    
 
- 
-        
-        
             var timer;
-            timer = setInterval(function() {
-                // check the response for new dat
-                handleNewData();
-
-            }, 500);
+            console.log('setting timer')
+            setInterval(handleNewData, 500);
         </script>
 
         <script>
@@ -958,6 +1025,7 @@
 
         <!-- Update status and clear timeout if needed-->
         <script>
+           
             var lastStatus = '';
             function updateStatusField() {
                 var time = new Date()
@@ -971,14 +1039,12 @@
                         var st = document.getElementById("statusField");
                         
                         if (data != lastStatus){
-                            lastStatus = data
-                            st.innerHTML = data;
-                             if (data.includes('Failed')){
-                                    beep(300);
-
-                            }else if (data.includes('solved.')) {
-                                    beep(1840);
+                            if (data == ''){
+                                data = '-'
                             }
+                            lastStatus = data
+
+                            st.innerHTML = data;
                         }
 
                     },
@@ -1041,10 +1107,13 @@
                 var sky = document.getElementById("skyImage");
                 var solve = document.getElementById('solu');
 
+
                 sky.style.width = (100 * zoom) + "%";
                 sky.style.height = (100 * zoom) + "%";
                 solve.style.width = (100 * zoom) + "%";
                 solve.style.width = (100 * zoom) + "%";
+
+
 
             }
             function brightNormal() {
@@ -1072,11 +1141,12 @@
                 var zoom = skyimageMag
                 var sky = document.getElementById("skyImage");
                 var solve = document.getElementById('solu');
+
                 sky.style.width = (100 * zoom) + "%";
                 sky.style.height = (100 * zoom) + "%";
                 solve.style.width = (100 * zoom) + "%";
                 solve.style.width = (100 * zoom) + "%";
-    
+
             }
         </script>
         <script src= '../static/js/skySolve.js'></script>
