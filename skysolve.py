@@ -26,10 +26,9 @@ import getpass
 import copy
 import sys
 import re
-sys.path.append('/home/pi/cedar/cedar-solve/tetra3')
+
 print('PYTHONPath is',sys.path)
-#from tetra3old import Tetra3
-from tetra3 import Tetra3, get_centroids_from_image
+
 #import cedar_detect_client
 #import cedar_detect_pb2, cedar_detect_pb2_grpc
 import RPi.GPIO as GPIO  # Import Raspberry Pi GPIO library
@@ -64,14 +63,8 @@ except Exception as e:
 
 usedIndexes = {}
 
-# Create instance and load default_database (built with max_fov=12 and the rest as default)
-t3 = None
-print("what is t3", t3)
-if t3 == None:
-    t3 = Tetra3('default_database')
-    #cedar_detect = cedar_detect_client.CedarDetectClient()
-    print("tetra t3", t3)
-print('after tetra')
+
+
 class Mode(Enum):
     PAUSED = auto()
     ALIGN = auto()
@@ -174,9 +167,7 @@ print('cwd', os.getcwd())
 
 with open(os.path.join(root_path, 'skyConfig.json')) as f:
     skyConfig = json.load(f)
-print(json.dumps(skyConfig['solverProfiles']['25FL'], indent=4))
-print(json.dumps(skyConfig['observing'], indent=4))
-print(json.dumps(skyConfig['camera'], indent=4) )
+
 
 imageName = 'cap.'+skyConfig['camera']['format']
 capPath = os.path.join(solve_path, imageName)
@@ -338,27 +329,13 @@ def solveThread():
             copyfile(solveThisImage, os.path.join(solve_path, imageName))
             skyStatusText = 'Solving'
             #print("solving", solveThisImage)
-            if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
-                verboseSolveText = ""
-                s = tetraSolve(Image.open(os.path.join(solve_path, imageName)))
-                if s['RA'] != None:
-                    ra = s['RA']
-                    dec = s['Dec']
-                    fov = s['FOV']
-                    dur = (s['T_solve'])
-                    result = "RA:%6.3lf    Dec:%6.3lf    FOV:%6.3lf time %6.3lf  secs" % (
-                        ra/15, dec,  fov, dur)
-                    skyStatusText = result
-                else:
-                    skyStatusText = str(s)
-            else:
 
-                if not solve(os.path.join(solve_path, imageName)) and skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['searchRadius'] > 0:
-                    skyStatusText = 'Failed. Retrying with no position hint.'
-                    if doDebug:
-                        logging.warning("did not solve first try")
-                    # try again but this time since the previous failed it will not use a starting guess possition
-                    solve(os.path.join(solve_path, imageName))
+            if not solve(os.path.join(solve_path, imageName)) and skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['searchRadius'] > 0:
+                skyStatusText = 'Failed. Retrying with no position hint.'
+                if doDebug:
+                    logging.warning("did not solve first try")
+                # try again but this time since the previous failed it will not use a starting guess possition
+                solve(os.path.join(solve_path, imageName))
 
             state = Mode.PLAYBACK
             solveCompleted = True
@@ -427,27 +404,14 @@ def solveThread():
         #copyfile("static/history/11_01_22_23_47_15.jpeg", os.path.join(solve_path, imageName))
         if state is Mode.SOLVING or state is Mode.AUTOPLAYBACK :
             imagePath = os.path.join(solve_path, imageName)
-            if skyConfig['solverProfiles'][skyConfig['solver']['currentProfile']]['solver_type'] == 'solverTetra3':
-                s = tetraSolve(frame)
-                # print(str(s))
-                if s['RA'] != None:
-                    ra = s['RA']
-                    dec = s['Dec']
-                    fov = s['FOV']
-                    dur = s['T_solve']
-                    result = "RA:%6.3lf    Dec:%6.3lf     FOV:%6.3lf     %6.3lf secs" % (
-                        ra/15, dec,  fov, dur)
-                    skyStatusText = result
-                else:
-                    skyStatusText = str(s)
-            else:
-                if state is Mode.SOLVING:
-                    skyStatusText = ""
 
-                    cv2.imwrite(imagePath, frame)
-                f = solve(imagePath)
-                if f == False:
-                    state = Mode.PLAYBACK
+            if state is Mode.SOLVING:
+                skyStatusText = ""
+
+                cv2.imwrite(imagePath, frame)
+            f = solve(imagePath)
+            if f == False:
+                state = Mode.PLAYBACK
             solveCompleted = True
             continue
 
@@ -678,58 +642,7 @@ def solve(fn, parms=[]):
     return solved
 
 
-def tetraSolve(img):
-    global skyStatusText, solveLog, t3, solveLog
 
-    #solveLog.append("solving " + imageName + '\n')
-    #img = Image.open(os.path.join(solve_path, imageName))
-
-    image = np.asarray(img, dtype=np.float32)
-    if image.ndim == 3:
-        assert image.shape[2] in (1, 3), 'Colour image must have 1 or 3 colour channels'
-        if image.shape[2] == 3:
-            # Convert to greyscale
-            image = image[:, :, 0]*.299 + image[:, :, 1]*.587 + image[:, :, 2]*.114
-        else:
-            # Delete empty dimension
-            image = image.squeeze(axis=2)
-    else:
-        assert image.ndim == 2, 'Image must be 2D or 3D array'
-    if doDebug:
-        print('solving', imageName)
-    profile = skyConfig['solverProfiles'][skyConfig['solver']
-                                          ['currentProfile']]
-    t0 = precision_timestamp()
-    (width, height) = image.shape
-    centroids = get_centroids_from_image(image)
-    print('centroids', len(centroids), precision_timestamp() - t0)
-    trimmed_centroids = centroids[:30]
-    solution = t3.solve_from_centroids(
-                        trimmed_centroids, (height, width),
-                        return_matches=True, solve_timeout=5000)
-                            # Don't clutter printed solution with these fields.
-    solution.pop('matched_centroids', None)
-    solution.pop('matched_stars', None)
-    solution.pop('matched_catID', None)
-    solution.pop('pattern_centroids', None)
-    solution.pop('epoch_equinox', None)
-    solution.pop('epoch_proper_motion', None)
-    solution.pop('cache_hit_fraction', None)
-
-    if solution['RA'] == None:
-        solveLog.append('Failed')
-        return solution
-    tdel = precision_timestamp() - t0
-    solveLog.append('solved with tetra in %6.2lf secs\n'%(tdel))
-    print('solution',tdel,solution)
-    solution['T_solve'] = tdel
-    radec = "%6.2lf %6.6lf  %6.6lf \n" % (tdel, solution['RA'], solution['Dec'])
-    solveLog.append(str(solution) + '\n')
-    file1 = open(os.path.join(solve_path, "radec.txt"), "w")  # write mode
-    file1.write(radec)
-    file1.close()
-    skyStatusText = str(solution['RA'])
-    return solution
 
 
 app = Flask(__name__)

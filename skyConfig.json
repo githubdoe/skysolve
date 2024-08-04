@@ -7,7 +7,7 @@
     },
     "solver": {
         "currentProfile": "default",
-        "startupSolveing": false
+        "startupSolveing": true
     },
     "observing": {
         "saveImages": "on",
@@ -22,7 +22,7 @@
             "solver_type": "solverAstromet",
             "maxTime": 10.0,
             "solveSigma": 7,
-            "solveDepth": 10,
+            "solveDepth": 20,
             "UselastDelta": false,
             "FieldWidthMode": "FieldWidthModeField",
             "FieldWidthModeaPP": "checked",
@@ -33,28 +33,6 @@
             "fieldLoValue": "10",
             "fieldHiValue": "30",
             "searchRadius": 10.0,
-            "solveVerbose": false,
-            "showStars": false,
-            "plots": true,
-            "additionalParms": "",
-            "verbose": false
-        },
-        "Tetra3": {
-            "name": "Tetra3",
-            "solver_type": "solverTetra3",
-            "maxTime": 10.0,
-            "solveSigma": 9,
-            "solveDepth": 20,
-            "UselastDelta": false,
-            "FieldWidthMode": "FieldWidthModeOther",
-            "FieldWidthModeaPP": "",
-            "FieldWidthModeField": "",
-            "FieldWidthModeOther": "",
-            "aPPLoValue": "",
-            "aPPHiValue": "",
-            "fieldLoValue": "14",
-            "fieldHiValue": "15",
-            "searchRadius": 0.0,
             "solveVerbose": false,
             "showStars": false,
             "plots": true,
@@ -220,7 +198,7 @@
             "solver_type": "solverAstromet",
             "maxTime": 20.0,
             "solveSigma": 7,
-            "solveDepth": 10,
+            "solveDepth": 20,
             "UselastDelta": false,
             "FieldWidthMode": "FieldWidthModeOther",
             "FieldWidthModeaPP": "checked",
@@ -235,7 +213,7 @@
             "showStars": false,
             "plots": true,
             "additionalParms": "",
-            "verbose": true
+            "verbose": false
         }
     }
 }
