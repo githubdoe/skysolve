@@ -7,7 +7,7 @@
     },
     "solver": {
         "currentProfile": "default",
-        "startupSolveing": false
+        "startupSolveing": true
     },
     "observing": {
         "saveImages": "on",
