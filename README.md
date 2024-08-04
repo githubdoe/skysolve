@@ -54,6 +54,7 @@ When you are ready, you can follow these steps to install it on the Raspberry pi
 >There are two versions of the code.
 >1. ***Legacy*** - Works only on RPI models 4 and earlier and only with 32 bit legacy app.
 >2. ***New camera library*** - To work with the newer and 64 bit RPI operating systems and all RPI models.
+	There is a significant advantage to the latest New camera library version because it provides faster solves and operation.
 
 ### Process to use the ***New camera library*** version
 1.  First you need to get the Raspberry Pi software installed on an SD card.  The easiest way to do this is to use the RaspberryPi imager
