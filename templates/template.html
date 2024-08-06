@@ -540,17 +540,13 @@
 
 
                 <form id="solverParamsForm" action="/applySolve2" method="POST">
-                    <input type="radio" id="solverTetra3" name="solver_type" value="solverTetra3">
-                    <label for="solverTetra3">Tetra3</label>
-                    <input type="radio" id="solverAstromet" name="solver_type" value="solverAstromet"  data-toggle="collapse" data-target="#astrometryForm">
-                    <label for="solverAstromet">Astrometry</label> 
-                    <br>
+                   
                     <label for="solveatStartup"> Start Solver at startup </label>
                     <input type="checkbox"  style="margin:10px;" id="solveatStartup" name="startupType" {{ 'checked' if startup else ''}}>
-                    ><br>
+                    <br>
                     <input type="submit" class="btn btn-primary"  value="Apply">
 
-                    <div id="astrometryForm" class="collapse">
+                    <div id="astrometryForm" >
                         <p>These default values are good for the RPI High Quality Camera with 25mm  lens"<br>
                             For more info about the solver see <a href=" http://astrometry.net/doc/readme.html"> astrometry.net/doc/readme.html</a> 
                             Under solving heading.</p>
