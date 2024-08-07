@@ -39,9 +39,8 @@ from collections import deque
 from time import perf_counter as precision_timestamp
 debugLastState = 'startup'
 
-solveReadyForImage = False
 solveImage = None
-GUIReadyForImage = False
+
 GUIImage = None
 
 print("argssss", sys.argv, len(sys.argv))
@@ -114,8 +113,6 @@ if not os.path.exists(history_path):
 demo_path = os.path.join(solve_path, 'demo')
 test_path = '/home/pi/pyPlateSolve/data'
 solveThisImage = ''
-
-solveCurrent = False
 
 saveObs = False
 
@@ -211,25 +208,7 @@ def getImage():
     frame = skyCam.camera.capture_array('main')
     return frame
     
-# obsolete can be removed later
-def frameGrabberThread():
-    global solveReadyForImage, GUIReadyForImage, solveImage, GUIImage,skyCam
-    while(True):
-        frame = skyCam.camera.capture_array('main')
-        if solveReadyForImage:
-            #print('getting solve image')
-            solveImage = copy.deepcopy(frame)
-            #print('image shape', solveImage.shape)
 
-            #convert to black and white
-            gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            #print('gray image', gray_image.shape)
-            solveImage = copy.deepcopy(gray_image)
-            solveReadyForImage = False
-        if GUIReadyForImage:
-            #print('getting gui image')
-            GUIImage = JPEG = cv2.imencode('.jpeg', frame)[1].tobytes()
-            GUIReadyForImage = False
 setupCamera()
 #frameGrabberT = threading.Thread(target=frameGrabberThread)
 #frameGrabberT.start()
@@ -283,9 +262,9 @@ switcherWatcherThread.start()
 #
 #  this is responsible for getting images from the camera even in align mod
 def solveThread():
-    global skyStatusText, focusStd, solveCurrent, state, skyCam,  testNdx, camera_Died,\
+    global skyStatusText, focusStd, state, skyCam,  testNdx, camera_Died,\
         solveLog, solveCompleted, debugLastState, lastpictureTime,\
-            solveReadyForImage,solveImage,solveThisImage
+            solveImage,solveThisImage
 
     # save the image to be solved in the file system  for the gen() routine to give to the client browser
     def saveImage(frame):
@@ -296,10 +275,8 @@ def solveThread():
             return True
 
         except Exception as e:
-
-            if doDebug:
-                logging.error(str(e))
-            print(e)
+        
+            print(str(e))
             solveLog.append(str(e) + '\n')
             return False
 
@@ -343,21 +320,22 @@ def solveThread():
             continue
 
         else:  # live solving loop path
-            #print("getting image in solve" )
+            if doDebug:
+                print("getting image in solve" )
             if cameraNotPresent:
                 continue
-            try: #why get image at top of loop
+            try:
                 debugLastState = "waiting for image"
                 if doDebug:
                     logging.warning("waiting for image frame")
-                solveReadyForImage = True
+
                 frame = getImage()
                 
                 
             except Exception as e:
                 cameraTry += 1
-                if doDebug:
-                    logging.error("no image after timeout retry count %s",cameraTry)
+            
+                print("no image after timeout retry count %s",cameraTry)
                 if cameraTry > 10:
 
                     debugLastState = "no image after timeout"
@@ -916,8 +894,8 @@ def Focus():
 lastmode = state
 def gen():
     global skyStatusText, solveT, testNdx,\
-            doDebug, state, solveCurrent,  framecnt, lastDisplayedFile,lastmode,\
-                GUIReadyForImage, GUIImage, imageName
+            doDebug, state,  framecnt, lastDisplayedFile,lastmode,\
+                 GUIImage, imageName
     # Video streaming generator function.
     print("gen called")
     lastImageTime = datetime.now()
@@ -939,12 +917,11 @@ def gen():
 
 
         else:
-            GUIReadyForImage = True
             frame = cv2.imencode('.jpeg', getImage())[1].tobytes()
 
         if doDebug:
-            logging.warning("frame sent to GUI %d", framecnt)
-            if state is Mode.SOLVING:
+            print("frame sent to GUI %d", framecnt)
+            if state is Mode.SOLVING:   #count even solve frames in debug
                 framecnt = framecnt + 1
             
         if state is Mode.ALIGN:
@@ -955,9 +932,6 @@ def gen():
 
         # this send the image and also the header for the next image
         yield (frame + b'\r\n--framex\r\n' b'Content-Type: image/jpeg\r\n\r\n')
-
-        if state is Mode.SOLVING:
-            solveCurrent = True
 
 
 @app.route('/deleteProfile/<value>', methods=['POST'])
@@ -1285,8 +1259,8 @@ def prevObs():
 
 @app.route('/solveThis', methods=['POSt'])
 def solveThis():
-    global solveCurrent, state
-    solveCurrent = True
+    global  state
+
     state = Mode.SOLVETHIS
     skyStatusText = "Solving"
     return Response(skyStatusText)

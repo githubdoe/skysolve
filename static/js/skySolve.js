@@ -172,7 +172,7 @@ $(document).ready(function(){
     });
 
     var checkBox = document.getElementById("autoStatusCB");
-    console.log("checkBox", checkBox)
+
     if (checkBox.checked == true) {
         setTimeout(updateStatusField, 1000);
     }
