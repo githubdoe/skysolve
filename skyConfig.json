@@ -32,7 +32,7 @@
             "aPPHiValue": "41",
             "fieldLoValue": "10",
             "fieldHiValue": "30",
-            "searchRadius": 10.0,
+            "searchRadius": 20.0,
             "solveVerbose": false,
             "showStars": false,
             "plots": true,

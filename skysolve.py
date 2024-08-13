@@ -26,6 +26,7 @@ import getpass
 import copy
 import sys
 import re
+import traceback
 
 print('PYTHONPath is',sys.path)
 
@@ -603,17 +604,20 @@ def solve(fn, parms=[]):
             if skyConfig['observing']['obsDelta'] > 0:
                 #print ("checking delta")
                 if lastObs:
-                    old = lastObs.split(" ")
-                    ra1 = math.radians(float(old[1]))
-                    dec1 = math.radians(float(old[2]))
-                    ra2 = math.radians(float(ra))
-                    dec2 = math.radians(float(dec))
+                    try:
+                        old = lastObs.split(" ")
+                        ra1 = math.radians(float(old[1]))
+                        dec1 = math.radians(float(old[2]))
+                        ra2 = math.radians(float(ra))
+                        dec2 = math.radians(float(dec))
 
-                    delta = math.degrees(math.acos(math.sin(
-                        dec1) * math.sin(dec2) + math.cos(dec1) * math.cos(dec2)*math.cos(ra1 - ra2)))
-                    #print("image delta", delta)
-                    if delta > skyConfig['observing']['obsDelta']:
-                        saveimage = True
+                        delta = math.degrees(math.acos(math.sin(
+                            dec1) * math.sin(dec2) + math.cos(dec1) * math.cos(dec2)*math.cos(ra1 - ra2)))
+                        #print("image delta", delta)
+                        if delta > skyConfig['observing']['obsDelta']:
+                            saveimage = True
+                    except Exception as e:
+                        solveLog.append(traceback.format_exc())
                 else:
                     saveimage = True
             if state is Mode.SOLVING and saveimage:
@@ -1130,7 +1134,7 @@ measureHtmlStack = []
 measureStackLock = threading.Lock()
 allDone = False
 # measure transparency of current image
-import traceback
+
 
 
 readytoSend = False
