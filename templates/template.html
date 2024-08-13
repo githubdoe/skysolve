@@ -764,7 +764,7 @@
         
 
         
-    audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            audioCtx = new(window.AudioContext || window.webkitAudioContext)();
             function beep(freq) {
                 var oscillator = audioCtx.createOscillator();
                 var gainNode = audioCtx.createGain();
@@ -808,6 +808,17 @@
 
 
             });
+
+            window.onload = function () {
+
+                var logo = document.getElementById('skyImage');
+
+                logo.onload = function () {
+                    console.log ("The image has loaded!");		
+                };
+
+
+            };
             // Get the modal solve param config
             var solveParamsModal = document.getElementById("solveParamsModal");
 
