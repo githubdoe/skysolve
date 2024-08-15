@@ -1,8 +1,15 @@
-# skysolve
+# skysolve version 1
 ![screen](images/hand_1.2.1.jpg)
+Version 1 skysolve
 See video for a quick introduction.  https://youtu.be/IewMli4AJLw  
 stl files for the case and mount can be found on Thingiverse at https://www.thingiverse.com/thing:4920959 and https://www.thingiverse.com/thing:5594916
 
+## skysolve case version 2
+This case was designed to be used with the inno-maker CAM-IMX296Mono-GS camera at  https://www.inno-maker.com/product/cam-mipi296raw-trigger.  This camera is more sensitive to light than the RPI HQ camera used in the skysolve version 1.  The stl files can be found at https://www.thingiverse.com/thing:6731268
+![newcaseside](https://github.com/user-attachments/assets/3f1a01fc-cba6-46cf-b290-c1bba2e66c6d)
+
+
+## Description.
 Uses RaspberryPi and plate solving to take images of the night sky and identify the location of the image.
  It uses a Raspberry PI 4B (4gb) with the RPI High Quality camera and can send the solved position of were the camera is looking to a computer running SkySafari.  When mounted to a telescope and aligned to where the scope is pointing it can then be used to guide the manual pushing of the telesopce to the desired target without using any encoders on the telescope.  It communicates with SkySafari over WIFI so that no hard wired connections are needed to the computer running SkySafari.  It continually takes images and solves them about every 1 to 10 seconds so that Skysafari can always show where the scope is pointing.
  
