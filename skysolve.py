@@ -151,7 +151,31 @@ class ListStream:
         pass
 
 
+os.system("echo '0' | sudo tee /sys/class/leds/PWR/brightness >>/dev/null")
+flashrequest = 0
 
+def flashled(t):
+    os.system("echo '1' | sudo tee /sys/class/leds/PWR/brightness >>/dev/null")
+    time.sleep(t)
+    os.system("echo '0' | sudo tee /sys/class/leds/PWR/brightness >>/dev/null")
+
+for i in range(10):
+    flashled(.1)
+    time.sleep(.1)
+
+def flasher():
+    global flashrequest
+    while True:
+        if flashrequest == 1:
+            flashled(.1)
+            flashrequest = 0
+        elif flashrequest == 2:
+            flashled(.1)
+            flashrequest = 0
+            time.sleep(.2)
+            flashled(.1)
+flasherThread  = threading.Thread(target = flasher)
+flasherThread.start()
 
 def saveConfig():
     with open('skyConfig.json', 'w') as f:
@@ -406,7 +430,7 @@ solveCnt = 0
 def solve(fn, parms=[]):
     global doDebug, debugLastState, skyStatusText, enableSoldisplay, solveAvg, solveCnt,\
         app, solving, maxTime, solveLog, ra, dec, searchEnable, solveStatus,\
-        skyStatusText, lastObs, verboseSolveText
+        skyStatusText, lastObs, verboseSolveText, flashrequest
     found = ''
 
     if doDebug:
@@ -548,6 +572,7 @@ def solve(fn, parms=[]):
 
     if solved:
         skyStatusText = solved
+        flashrequest = 1
 
     # create solved plot
     if solved:
@@ -611,6 +636,7 @@ def solve(fn, parms=[]):
             logging.warning(verboseSolveText)
             logging.warning(radec)
     if not solved:
+        flashrequest = 2
         skyStatusText = skyStatusText + " Failed "
         ra = 0
         solveLog.append("Failed\n")
@@ -924,7 +950,7 @@ def gen():
             frame = cv2.imencode('.jpeg', getImage())[1].tobytes()
 
         if doDebug:
-            print("frame sent to GUI %d", framecnt)
+            print("frame sent to GUI ", framecnt)
             if state is Mode.SOLVING:   #count even solve frames in debug
                 framecnt = framecnt + 1
             
@@ -968,21 +994,21 @@ def apply():
     profile['FieldWidthMode'] = mode
 
     profile['name'] = cur
-    profile['fieldLoValue'] = req.get("fieldLoValue")
-    profile['fieldHiValue'] = req.get("fieldHiValue")
-    profile['aPPLoValue'] = req.get("aPPLowValue")
-    profile['aPPHiValue'] = req.get("aPPHiValue")
+    profile['fieldLoValue'] = req.get("fieldLoValue" ,default = 10)
+    profile['fieldHiValue'] = req.get("fieldHiValue", default = 30)
+    profile['aPPLoValue'] = req.get("aPPLowValue", default = 1)
+    profile['aPPHiValue'] = req.get("aPPHiValue", default = 100)
     if req.get("searchRadius") != "":
-        profile['searchRadius'] = float(req.get("searchRadius"))
+        profile['searchRadius'] = float(req.get("searchRadius"), default = 10)
     else:
         profile['searchRadius'] = 0
-    profile['solveSigma'] = int(req.get("solveSigma"))
-    profile['solveDepth'] = int(req.get("solveDepth"))
+    profile['solveSigma'] = int(req.get("solveSigma"), default = 7)
+    profile['solveDepth'] = int(req.get("solveDepth"), default = 20)
     profile['solveVerbose'] = bool(req.get("solveVerbose"))
     profile['showStars'] = bool(req.get("showStars"))
     profile['verbose'] = bool(req.get("verbose"))
     profile['maxTime'] = float(req.get('CPUTimeout'))
-    profile['additionalParms'] = req.get('additionalParms')
+    profile['additionalParms'] = req.get('additionalParms', default = '')
     #print("curprofile", profile)
     saveConfig()
     print('\n\n\nskyconfig', json.dumps(
@@ -1084,7 +1110,7 @@ def restartThread():
 @app.route('/restartc', methods=['POST'])
 def restartc():
     global skyStatusText, skyCam, state
-
+    os.system("echo '1' | sudo tee /sys/class/leds/PWR/brightness >>/dev/null")
     state = Mode.PAUSED
     th = threading.Thread(target=restartThread)
     th.start()
@@ -1194,6 +1220,8 @@ def historyNdx():
     if state is Mode.PLAYBACK:
         req = request.form
         testNdx = int(req.get("hNdx"))
+        if testNdx > len(testFiles):
+            testndx = len(testFiles) -1
 
 
     setupImageFromFile()
