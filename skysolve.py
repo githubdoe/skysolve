@@ -999,11 +999,11 @@ def apply():
     profile['aPPLoValue'] = req.get("aPPLowValue", default = 1)
     profile['aPPHiValue'] = req.get("aPPHiValue", default = 100)
     if req.get("searchRadius") != "":
-        profile['searchRadius'] = float(req.get("searchRadius"), default = 10)
+        profile['searchRadius'] = float(req.get("searchRadius", default = 10))
     else:
         profile['searchRadius'] = 0
-    profile['solveSigma'] = int(req.get("solveSigma"), default = 7)
-    profile['solveDepth'] = int(req.get("solveDepth"), default = 20)
+    profile['solveSigma'] = int(req.get("solveSigma", default = 7))
+    profile['solveDepth'] = int(req.get("solveDepth", default = 20))
     profile['solveVerbose'] = bool(req.get("solveVerbose"))
     profile['showStars'] = bool(req.get("showStars"))
     profile['verbose'] = bool(req.get("verbose"))
