@@ -166,6 +166,7 @@ for i in range(10):
 def flasher():
     global flashrequest
     while True:
+        time.sleep(.05)
         if flashrequest == 1:
             flashled(.1)
             flashrequest = 0
