@@ -8,6 +8,13 @@ stl files for the case and mount can be found on Thingiverse at https://www.thin
 This case was designed to be used with the inno-maker CAM-IMX296Mono-GS camera at  https://www.inno-maker.com/product/cam-mipi296raw-trigger.  This camera is more sensitive to light than the RPI HQ camera used in the skysolve version 1.  The stl files can be found at https://www.thingiverse.com/thing:6731268
 ![newcaseside](https://github.com/user-attachments/assets/3f1a01fc-cba6-46cf-b290-c1bba2e66c6d)
 
+The camera and lens can be bought here:
+Camera:
+https://www.amazon.com/dp/B093BY2TK2?ref=ppx_yo2ov_dt_b_fed_asin_title&th=1
+ 
+Lens:
+https://www.amazon.com/dp/B01IEDSKHE?psc=1&ref=ppx_pop_dt_b_product_details
+
 
 ## Description.
 Uses RaspberryPi and plate solving to take images of the night sky and identify the location of the image.
